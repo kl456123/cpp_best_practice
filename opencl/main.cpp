@@ -4,8 +4,9 @@
 #include <fstream>
 
 #include <opencv2/opencv.hpp>
+//#define __NO_STD_VECTOR // Use cl::vector instead of STL version
+#define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
-#include <CL/cl.h>
 
 using namespace cl;
 using namespace std;
@@ -33,8 +34,8 @@ float * createBlurMask(float sigma, int * maskSizePointer) {
 cl::Program buildProgramFromSource(cl::Context context, std::string filename, std::string buildOptions="") {
     // Read source file
     std::ifstream sourceFile(filename.c_str());
-    // if(sourceFile.fail())
-    // throw Error(1, "Failed to open OpenCL source file");
+    if(sourceFile.fail())
+        throw Error(1, "Failed to open OpenCL source file");
     std::string sourceCode(
             std::istreambuf_iterator<char>(sourceFile),
             (std::istreambuf_iterator<char>()));
@@ -46,14 +47,14 @@ cl::Program buildProgramFromSource(cl::Context context, std::string filename, st
     VECTOR_CLASS<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
     // Build program for these specific devices
-    // try{
-    program.build(devices, buildOptions.c_str());
-    // } catch(cl::Error error) {
-    // if(error.err() == CL_BUILD_PROGRAM_FAILURE) {
-    // std::cout << "Build log:" << std::endl << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
-    // }
-    // throw error;
-    // }
+    try{
+        program.build(devices, buildOptions.c_str());
+    } catch(cl::Error error) {
+        if(error.err() == CL_BUILD_PROGRAM_FAILURE) {
+            std::cout << "Build log:" << std::endl << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(devices[0]) << std::endl;
+        }
+        throw error;
+    }
     return program;
 
 }
