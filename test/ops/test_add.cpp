@@ -3,6 +3,5 @@
 class TestAddCase: public TestCase{
     public:
         virtual bool run(){
-
         }
 };
