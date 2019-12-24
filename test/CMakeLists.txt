@@ -1,8 +1,9 @@
 
-aux_source_directory(. MODULE_SRCS)
+
+file(GLOB_RECURSE Files "*.cpp")
+include_directories(.)
+
+add_executable(testsuite ${Files})
 
 
-add_executable(test_pool ${MODULE_SRCS})
-
-
-target_link_libraries(test_pool  pool)
+target_link_libraries(testsuite pool)
