@@ -1,5 +1,5 @@
-#include "Pool.h"
-#include "test_suite.h"
+#include "pool/Pool.h"
+#include "test/test_suite.h"
 #include <cstdlib>
 #include <ctime>
 
