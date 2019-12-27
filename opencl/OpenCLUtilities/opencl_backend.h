@@ -17,7 +17,16 @@ class OpenclBackend {
             bool mAllocateImage(const int kHeight, const int kWidth, const float* kImageDataPtr, cl::Memory*& image);
 
         template<typename DTYPE>
-            bool mCopyBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host);
+            bool mReadBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host);
+
+        template<typename DTYPE>
+            bool mWriteBufferToDevice(const DTYPE* src_host, int size, cl::Buffer* buffer);
+
+        template<typename DTYPE>
+        bool mMapBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host);
+
+        template<typename DTYPE>
+        bool mMapHostToBuffer(const DTYPE* src_host, int size, cl::Buffer* buffer);
 
         Context* runtime_ptr(){
             return mOpenCLRuntime.get();
@@ -25,6 +34,7 @@ class OpenclBackend {
     private:
         std::shared_ptr<Context> mOpenCLRuntime;
         std::map<cl::Memory*, std::shared_ptr<cl::Memory>> mMemoryObjectsMap;
+        cl_mem_flags mFlags;
 };
 
 

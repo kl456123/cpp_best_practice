@@ -64,6 +64,7 @@ cl::Kernel Context::BuildKernel(const std::string& kProgramName, const std::stri
     if(map_iter==mBuildProgramMap.end()){
         BuildProgram(kProgramName);
     }
+    map_iter = mBuildProgramMap.find(kProgramName);
     auto program = map_iter->second;
     cl::Kernel kernel = cl::Kernel(program, kKernelName.c_str());
     return kernel;
