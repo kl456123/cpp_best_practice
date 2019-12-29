@@ -1,28 +1,32 @@
-#ifndef POOL_H_
-#define POOL_H_
+#ifndef CORE_POOL_H_
+#define CORE_POOL_H_
 #include <iostream>
 #include <map>
 #include <vector>
 #include <list>
 #include <memory>
+#include "core/backend.h"
 
 
 using namespace std;
 
 
-template<class T>
 class Pool{
     struct Node{
         int size;
         shared_ptr<T> chunk;
     };
     public:
-        Pool();
-        virtual ~Pool(){}
+        Pool(Backend::ForwardType type);
+        virtual ~CPUBackend(){}
 
-        T* alloc(int size);
-        void recycle(T*);
-        void clear();
+        template<typename T>
+        T* Alloc(int size);
+
+        template<typename T>
+        void Recycle(T*);
+
+        void Clear();
     private:
         std::map<T*, shared_ptr<Node>> mAllChunks;
         std::list<shared_ptr<Node>> mFreeList;

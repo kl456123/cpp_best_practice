@@ -4,9 +4,8 @@
 #include <CL/cl.hpp>
 #include <stdlib.h>
 
-#include "pool/Pool.h"
-#include "test/test_suite.h"
-#include "opencl/OpenCLUtilities/opencl_backend.h"
+#include "test_suite.h"
+#include "backends/opencl/opencl_backend.h"
 
 
 template<typename T>
@@ -66,7 +65,8 @@ void Conv2dNaive(const float *input,
         int* inputStride,
         int* outputStride,
         int* inputShape,
-        int out_ind
+        int out_ind,
+        int pad
         )
 {
     // filter: C_out*K*K*C_in (c_out, k1, k2, c_in)
@@ -74,7 +74,7 @@ void Conv2dNaive(const float *input,
     // input: N*C_in*H*W (b, c_in, h+k1-K/2, w+k2-K/2)
     // bias: N*C_out
 
-    kernel_size = kernel_size * dilation - 1;
+    // kernel_size = (kernel_size-1) * dilation + 1;
     int out_channels = outputStride[0]/outputStride[1];
     int in_channels = inputStride[0]/inputStride[1];
 
@@ -82,14 +82,17 @@ void Conv2dNaive(const float *input,
     int channel_block = outputStride[1];
     int height_block = outputStride[2];
     int width_block = outputStride[3];
-    int out_b_ind = out_ind / batch_block;
-    out_ind = out_ind % batch_block;
-    int out_c_ind = out_ind / channel_block;
-    out_ind = out_ind % channel_block;
-    int out_h_ind = out_ind / height_block;
-    out_ind = out_ind % height_block;
-    int out_w_ind = out_ind / width_block;
-    float sum = 0;
+    int out_ind_tmp = out_ind;
+    int out_b_ind = out_ind_tmp / batch_block;
+    out_ind_tmp = out_ind_tmp % batch_block;
+    int out_c_ind = out_ind_tmp / channel_block;
+    out_ind_tmp = out_ind_tmp % channel_block;
+    int out_h_ind = out_ind_tmp / height_block;
+    out_ind_tmp = out_ind_tmp % height_block;
+    int out_w_ind = out_ind_tmp / width_block;
+
+    int bias_index = out_c_ind+ out_b_ind*out_channels;
+    float sum =  bias[bias_index];
     for (int k1 = 0; k1 < kernel_size; k1++)
     {
         for (int k2 = 0; k2 < kernel_size; k2++)
@@ -97,8 +100,8 @@ void Conv2dNaive(const float *input,
             for (int in_c_ind = 0; in_c_ind < in_channels; in_c_ind++)
             {
                 int filter_index = ((out_c_ind * kernel_size + k1) * kernel_size + k2) * in_channels + in_c_ind;
-                int in_h_ind = out_h_ind * stride;
-                int in_w_ind = out_w_ind * stride;
+                int in_h_ind = out_h_ind * stride - pad + k1*dilation;
+                int in_w_ind = out_w_ind * stride - pad + k2*dilation;
                 // check insane
                 if (in_h_ind < 0 || in_h_ind >= inputShape[0] || in_w_ind < 0 || in_w_ind >= inputShape[1])
                 {
@@ -106,12 +109,26 @@ void Conv2dNaive(const float *input,
                 }
                 int input_index = out_b_ind * inputStride[0] + in_c_ind * inputStride[1] +
                     in_h_ind * inputStride[2] + in_w_ind * inputStride[3];
-                int bias_index = out_c_ind+ out_b_ind*out_channels;
-                sum += filter[filter_index] * input[input_index] + bias[bias_index];
+                sum += filter[filter_index] * input[input_index];
             }
         }
     }
     output[out_ind] = sum;
+}
+
+float get_random(int max_value){
+    return (rand()%int(max_value)+1)/max_value;
+}
+
+void ComputeShape(const std::vector<int> input_shape, int dilation, int stride, int pad,int out_channels,
+        int kernel_size, std::vector<int>& output_shape){
+    output_shape.resize(4);
+    output_shape[0] = input_shape[0];
+    output_shape[1] = out_channels;
+    kernel_size = dilation*(kernel_size-1)+1;
+
+    output_shape[2] = (input_shape[2]-kernel_size + 2*pad)/stride+1;
+    output_shape[3] = (input_shape[3]-kernel_size + 2*pad)/stride+1;
 }
 
 class ConvTestCase : public TestCase{
@@ -121,12 +138,21 @@ class ConvTestCase : public TestCase{
             std::unique_ptr<Pool<float>> pool_ptr(new Pool<float>());
 
             // input image
-            std::vector<int> input_shape({1,3,224,224});
+            int batch_size = 1;
+            int input_channels = 3;
+            int output_channels = 3;
+            int kernel_size = 3;
+            int dilation = 2;
+            int stride = 2;
+            int pad = 2;
+            std::vector<int> input_shape({batch_size,input_channels,5,5});
             // filter and bias
             // C_in, C_out, K, K
-            std::vector<int> filter_shape({3,4, 3,3});
-            std::vector<int> bias_shape({4});
-            std::vector<int> output_shape({1,4,224,224});
+            std::vector<int> filter_shape({output_channels,input_channels, kernel_size, kernel_size});
+            std::vector<int> bias_shape({output_channels});
+            std::vector<int> output_shape;
+            ComputeShape(input_shape,dilation, stride, pad, output_channels,
+                    kernel_size, output_shape);
 
             Tensor<float> input;
             Tensor<float> filter;
@@ -157,23 +183,22 @@ class ConvTestCase : public TestCase{
             AllocateTensorHost<float>(pool_ptr.get(), output_shape, output.host);
             float max_value = 10000;
             for(int i=0; i<input_size; i++){
-                input.host[i] = (rand()%int(max_value)+1)/max_value;
+                input.host[i] = 1;
             }
             for(int i=0;i<filter_size; i++){
-                filter.host[i] = (rand()%int(max_value)+1)/max_value;
+                filter.host[i] = 1;
             }
             for(int i=0;i<bias_size;i++){
-                bias.host[i] = 0;
+                bias.host[i] = 1;
             }
 
             // copy to device
             backend_ptr->mMapHostToBuffer<float>(filter.host,filter_size, filter.buffer);
             backend_ptr->mMapHostToBuffer<float>(input.host,input_size, input.buffer);
 
-            cl::Kernel kernel = backend_ptr->runtime_ptr()->BuildKernel("/home/indemind/Documents/Learning/cpp/opencl/cl/conv_2d.cl", "conv2d_buffer");
-            int kernel_size = filter_shape[2];
-            int dilation = 1;
-            int stride = 1 ;
+            cl::Kernel kernel = backend_ptr->runtime_ptr()->BuildKernel("./opencl/cl/conv_2d.cl", "conv2d_buffer");
+
+
             int input_stride[4];
             ComputeStride(input_shape, input_stride);
             // nchw
@@ -198,19 +223,32 @@ class ConvTestCase : public TestCase{
                     cl::NDRange(output_buffer_size),
                     cl::NullRange
                     );
-            // for(int i=0;i<output_buffer_size;i++){
-                // Conv2dNaive(input.host, filter.host, bias.host, output.host, kernel_size, dilation, stride,\
-                        // input_stride, output_stride, input_spatial_shape,i);
-            // }
+            for(int i=0;i<output_buffer_size;i++){
+                Conv2dNaive(input.host, filter.host, bias.host, output.host, kernel_size, dilation, stride,\
+                        input_stride, output_stride, input_spatial_shape,i, pad);
+            }
 
 
             // host data
             // std::shared_ptr<float> data;
             // data.reset(new float[output_buffer_size]);
-            backend_ptr->mMapBufferToHost<float>(output.buffer, output_buffer_size, output.host);
-            for(int i=0;i<100;i++){
-                std::cout<<output.host[i]<<" ";
+            // backend_ptr->mMapBufferToHost<float>(output.buffer, output_buffer_size, output.host);
+            for(int i=0;i<batch_size;i++){
+                for(int j=0;j<output_channels;j++){
+                    for(int k=0;k<output_shape[2];k++){
+                        for(int l=0;l<output_shape[3];l++){
+                            int index = ((i*output_channels+j)*output_shape[2]+k)*output_shape[3]+l;
+                            std::cout<<output.host[index] <<" ";
+                        }
+                        std::cout<<std::endl;
+                    }
+                    std::cout<<std::endl;
+                }
+                std::cout<<std::endl;
             }
+            // for(int i=0;i<output_buffer_size;i++){
+            // std::cout<<output.host[i]<<" ";
+            // }
             std::cout<<std::endl;
             return true;
         }

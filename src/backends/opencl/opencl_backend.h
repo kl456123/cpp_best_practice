@@ -4,8 +4,12 @@
 #include <memory>
 #include <map>
 #include "context.h"
+#include "register/backend.h"
 
-class OpenclBackend {
+
+class Tensor;
+
+class OpenclBackend : public Backend{
     public:
         OpenclBackend();
         virtual ~OpenclBackend(){}
@@ -27,6 +31,10 @@ class OpenclBackend {
 
         template<typename DTYPE>
         bool mMapHostToBuffer(const DTYPE* src_host, int size, cl::Buffer* buffer);
+
+        void Clear()override;
+        void Alloc(const Tensor* )override;
+        void Recycle(const Tensor* )override;
 
         Context* runtime_ptr(){
             return mOpenCLRuntime.get();

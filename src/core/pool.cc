@@ -1,9 +1,9 @@
-#include "Pool.h"
+#include "core/pool.h"
 #include <limits>
 
 
-template<class T>
-T* Pool<T>::alloc(int size){
+template<typename T>
+T* Pool<T>::Alloc(int size){
     auto finalIter = mFreeList.end();
     int minWaste = numeric_limits<int>::max();
     for(auto iterP=mFreeList.begin();iterP!=mFreeList.end();iterP++){
@@ -42,7 +42,7 @@ template <typename T>
 Pool<T>::Pool(){
 }
 template<typename T>
-void Pool<T>::recycle(T* chunk){
+void Pool<T>::Recycle(T* chunk){
     auto iter = mAllChunks.find(chunk);
     if(iter==mAllChunks.end()){
         std::cout<<"Error "<<std::endl;
@@ -53,13 +53,16 @@ void Pool<T>::recycle(T* chunk){
 
 
 template<typename T>
-void Pool<T>::clear(){
+void CPUBackend<T>::Clear(){
     mFreeList.clear();
     mAllChunks.clear();
 }
 
 
 template class Pool<float>;
+
+
+
 
 
 
