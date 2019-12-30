@@ -1,16 +1,20 @@
-#include "opencl_backend.h"
+#include "backends/opencl/opencl_backend.h"
 
+void* OpenCLPool::Malloc(size_t size, int alignment){
+    Backend *bn = ExtractBackend(Backend::ForwardType::OPENCL);
+    cl::Memory* out_buffer=nullptr;
+    dynamic_cast<OpenclBackend*>(bn)->mAllocateBuffer(size, out_buffer);
+    return (void*)out_buffer;
+}
 
-
-OpenclBackend::OpenclBackend(){
+OpenclBackend::OpenclBackend(Backend::ForwardType type):Backend(type){
     mOpenCLRuntime.reset(new Context);
     mFlags = CL_MEM_READ_WRITE;
 }
 
 
-template<typename DTYPE>
-bool OpenclBackend::mAllocateBuffer(const int kSize, cl::Memory*& out_buffer){
-    out_buffer = (cl::Memory*)(new cl::Buffer(mOpenCLRuntime->context(), mFlags, sizeof(DTYPE)*kSize));
+bool OpenclBackend::mAllocateBuffer(const size_t kSize, cl::Memory*& out_buffer){
+    out_buffer = (cl::Memory*)(new cl::Buffer(mOpenCLRuntime->context(), mFlags, kSize));
 
     std::shared_ptr<cl::Memory> buffer;
     buffer.reset(out_buffer);
@@ -20,7 +24,6 @@ bool OpenclBackend::mAllocateBuffer(const int kSize, cl::Memory*& out_buffer){
     return true;
 }
 
-template<typename DTYPE>
 bool OpenclBackend::mAllocateImage(const int kHeight, const int kWidth, const float* kImageDataPtr, cl::Memory*& image){
     std::shared_ptr<cl::Memory> image_ptr;
     image_ptr.reset(new cl::Image2D(mOpenCLRuntime->context(), mFlags, \
@@ -30,42 +33,41 @@ bool OpenclBackend::mAllocateImage(const int kHeight, const int kWidth, const fl
     return true;
 }
 
-template<typename DTYPE>
-bool OpenclBackend::mReadBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host){
-    mOpenCLRuntime->command_queue().enqueueReadBuffer(*buffer, CL_TRUE, 0, sizeof(DTYPE)*size, dst_host);
+bool OpenclBackend::mReadBufferToHost(const cl::Buffer* buffer, int size, void* dst_host){
+    mOpenCLRuntime->command_queue().enqueueReadBuffer(*buffer, CL_TRUE, 0, size, dst_host);
     return true;
 }
 
-template<typename DTYPE>
-bool OpenclBackend::mMapBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host){
+bool OpenclBackend::mMapBufferToHost(const cl::Buffer* buffer, int size, void* dst_host){
     auto buffer_ptr = mOpenCLRuntime->command_queue().enqueueMapBuffer(*buffer, CL_TRUE, CL_MAP_READ, 0, size);
     memcpy( dst_host, buffer_ptr,size);
     mOpenCLRuntime->command_queue().enqueueUnmapMemObject(*buffer, buffer_ptr);
     return true;
 }
 
-template<typename DTYPE>
-bool OpenclBackend::mMapHostToBuffer(const DTYPE* src_host, int size, cl::Buffer* buffer){
+bool OpenclBackend::mMapHostToBuffer(const void* src_host, int size, cl::Buffer* buffer){
     auto buffer_ptr = mOpenCLRuntime->command_queue().enqueueMapBuffer(*buffer, CL_TRUE, CL_MAP_WRITE, 0, size);
     memcpy(buffer_ptr, src_host, size);
     mOpenCLRuntime->command_queue().enqueueUnmapMemObject(*buffer, buffer_ptr);
     return true;
 }
 
-template<typename DTYPE>
-bool OpenclBackend::mWriteBufferToDevice(const DTYPE* src_host,int size, cl::Buffer* buffer){
-    mOpenCLRuntime->command_queue().enqueueWriteBuffer(*buffer, CL_TRUE, 0, sizeof(DTYPE)*size, src_host);
+bool OpenclBackend::mWriteBufferToDevice(const void* src_host,int size, cl::Buffer* buffer){
+    mOpenCLRuntime->command_queue().enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, src_host);
     return true;
+}
+
+void OpenclBackend::Clear(){}
+void OpenclBackend::Alloc(Tensor* ){}
+void OpenclBackend::Recycle(Tensor* ){
 }
 
 
 
-template bool OpenclBackend::mAllocateBuffer<float>(int kSize, cl::Memory*& out_buffer);
-template bool OpenclBackend::mReadBufferToHost<float>(const cl::Buffer*, int, float*);
-template bool OpenclBackend::mWriteBufferToDevice<float>(const float*, int, cl::Buffer*);
-template bool OpenclBackend::mMapHostToBuffer<float>(const float*, int, cl::Buffer*);
-template bool OpenclBackend::mMapBufferToHost<float>(const cl::Buffer*, int, float*);
 
 
-
-
+void RegisterOpenCLBackend(){
+    std::shared_ptr<Backend> ptr;
+    ptr.reset(new OpenclBackend(Backend::ForwardType::OPENCL));
+    InsertBackend(Backend::ForwardType::OPENCL, ptr);
+}

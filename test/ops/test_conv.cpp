@@ -6,13 +6,14 @@
 
 #include "test_suite.h"
 #include "backends/opencl/opencl_backend.h"
+#include "core/tensor.h"
 
 
-template<typename T>
-struct Tensor{
-    cl::Buffer *buffer;
-    T* host;
-};
+// template<typename T>
+// struct Tensor{
+    // cl::Buffer *buffer;
+    // T* host;
+// };
 
 int ComputeSize(const std::vector<int>& tensor_shape){
     int input_buffer_size = 1;
@@ -27,18 +28,18 @@ bool AllocateTensorBuffer(OpenclBackend* backend_ptr, std::vector<int>& tensor_s
     const int input_buffer_size = ComputeSize(tensor_shape);
 
     cl::Memory* buffer;
-    bool is_success = backend_ptr->mAllocateBuffer<float>(input_buffer_size, buffer);
+    bool is_success = backend_ptr->mAllocateBuffer(input_buffer_size, buffer);
     // cannot use dynamic cast here
     tensor_buffer = (cl::Buffer*)buffer;
     return is_success;
 }
 
 
-template<typename T>
-void AllocateTensorHost(Pool<T>* pool_ptr, std::vector<int>& tensor_shape, T*& data_ptr){
-    const int input_size = ComputeSize(tensor_shape);
-    data_ptr = pool_ptr->alloc(input_size);
-}
+// template<typename T>
+// void AllocateTensorHost(Pool<T>* pool_ptr, std::vector<int>& tensor_shape, T*& data_ptr){
+    // const int input_size = ComputeSize(tensor_shape);
+    // data_ptr = pool_ptr->alloc(input_size);
+// }
 
 void ComputeStride(const std::vector<int>& shape, std::vector<int>& stride){
     stride.resize(shape.size(), 1);
@@ -134,8 +135,9 @@ void ComputeShape(const std::vector<int> input_shape, int dilation, int stride, 
 class ConvTestCase : public TestCase{
     public:
         virtual bool run(){
-            std::unique_ptr<OpenclBackend> backend_ptr(new OpenclBackend());
-            std::unique_ptr<Pool<float>> pool_ptr(new Pool<float>());
+            // std::unique_ptr<OpenclBackend> backend_ptr(new OpenclBackend());
+            // std::unique_ptr<Pool<float>> pool_ptr(new Pool<float>());
+
 
             // input image
             int batch_size = 1;
@@ -154,102 +156,103 @@ class ConvTestCase : public TestCase{
             ComputeShape(input_shape,dilation, stride, pad, output_channels,
                     kernel_size, output_shape);
 
-            Tensor<float> input;
-            Tensor<float> filter;
-            Tensor<float> output;
-            Tensor<float> bias;
+            // Tensor<float> input;
+            // Tensor<float> filter;
+            // Tensor<float> output;
+            // Tensor<float> bias;
+            // auto input = shared_ptr<Tensor>();
 
-            if(!AllocateTensorBuffer(backend_ptr.get(), input_shape, input.buffer)){
-                std::cout<<"fail to allocate opencl buffer"<<std::endl;
-                return false;
-            }
-
-
-            if(!AllocateTensorBuffer(backend_ptr.get(), bias_shape, bias.buffer)){
-                return false;
-            }
-            if(!AllocateTensorBuffer(backend_ptr.get(), filter_shape, filter.buffer)){
-                return false;
-            }
-            if(!AllocateTensorBuffer(backend_ptr.get(), output_shape, output.buffer)){
-                return false;
-            }
-            int input_size = ComputeSize(input_shape);
-            int filter_size = ComputeSize(filter_shape);
-            int bias_size = ComputeSize(bias_shape);
-            AllocateTensorHost<float>(pool_ptr.get(), input_shape, input.host);
-            AllocateTensorHost<float>(pool_ptr.get(), bias_shape, bias.host);
-            AllocateTensorHost<float>(pool_ptr.get(), filter_shape, filter.host);
-            AllocateTensorHost<float>(pool_ptr.get(), output_shape, output.host);
-            float max_value = 10000;
-            for(int i=0; i<input_size; i++){
-                input.host[i] = 1;
-            }
-            for(int i=0;i<filter_size; i++){
-                filter.host[i] = 1;
-            }
-            for(int i=0;i<bias_size;i++){
-                bias.host[i] = 1;
-            }
-
-            // copy to device
-            backend_ptr->mMapHostToBuffer<float>(filter.host,filter_size, filter.buffer);
-            backend_ptr->mMapHostToBuffer<float>(input.host,input_size, input.buffer);
-
-            cl::Kernel kernel = backend_ptr->runtime_ptr()->BuildKernel("./opencl/cl/conv_2d.cl", "conv2d_buffer");
-
-
-            int input_stride[4];
-            ComputeStride(input_shape, input_stride);
-            // nchw
-            int output_stride[4];
-            ComputeStride(output_shape, output_stride);
-            int output_buffer_size = ComputeSize(output_shape);
-            // h,w
-            int input_spatial_shape[] = {input_shape[2], input_shape[3]};
-            kernel.setArg(0, *input.buffer);
-            kernel.setArg(1, *filter.buffer);
-            kernel.setArg(2, *bias.buffer);
-            kernel.setArg(3, *output.buffer);
-            kernel.setArg(4, kernel_size);
-            kernel.setArg(5, dilation);
-            kernel.setArg(6, stride);
-            kernel.setArg(7, input_stride);
-            kernel.setArg(8, output_stride);
-            kernel.setArg(9, input_spatial_shape);
-            backend_ptr->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                    kernel,
-                    cl::NullRange,
-                    cl::NDRange(output_buffer_size),
-                    cl::NullRange
-                    );
-            for(int i=0;i<output_buffer_size;i++){
-                Conv2dNaive(input.host, filter.host, bias.host, output.host, kernel_size, dilation, stride,\
-                        input_stride, output_stride, input_spatial_shape,i, pad);
-            }
-
-
-            // host data
-            // std::shared_ptr<float> data;
-            // data.reset(new float[output_buffer_size]);
-            // backend_ptr->mMapBufferToHost<float>(output.buffer, output_buffer_size, output.host);
-            for(int i=0;i<batch_size;i++){
-                for(int j=0;j<output_channels;j++){
-                    for(int k=0;k<output_shape[2];k++){
-                        for(int l=0;l<output_shape[3];l++){
-                            int index = ((i*output_channels+j)*output_shape[2]+k)*output_shape[3]+l;
-                            std::cout<<output.host[index] <<" ";
-                        }
-                        std::cout<<std::endl;
-                    }
-                    std::cout<<std::endl;
-                }
-                std::cout<<std::endl;
-            }
-            // for(int i=0;i<output_buffer_size;i++){
-            // std::cout<<output.host[i]<<" ";
+            // if(!AllocateTensorBuffer(backend_ptr.get(), input_shape, input.buffer)){
+                // std::cout<<"fail to allocate opencl buffer"<<std::endl;
+                // return false;
             // }
-            std::cout<<std::endl;
+
+
+            // if(!AllocateTensorBuffer(backend_ptr.get(), bias_shape, bias.buffer)){
+                // return false;
+            // }
+            // if(!AllocateTensorBuffer(backend_ptr.get(), filter_shape, filter.buffer)){
+                // return false;
+            // }
+            // if(!AllocateTensorBuffer(backend_ptr.get(), output_shape, output.buffer)){
+                // return false;
+            // }
+            // int input_size = ComputeSize(input_shape);
+            // int filter_size = ComputeSize(filter_shape);
+            // int bias_size = ComputeSize(bias_shape);
+            // AllocateTensorHost<float>(pool_ptr.get(), input_shape, input.host);
+            // AllocateTensorHost<float>(pool_ptr.get(), bias_shape, bias.host);
+            // AllocateTensorHost<float>(pool_ptr.get(), filter_shape, filter.host);
+            // AllocateTensorHost<float>(pool_ptr.get(), output_shape, output.host);
+            // float max_value = 10000;
+            // for(int i=0; i<input_size; i++){
+                // input.host[i] = 1;
+            // }
+            // for(int i=0;i<filter_size; i++){
+                // filter.host[i] = 1;
+            // }
+            // for(int i=0;i<bias_size;i++){
+                // bias.host[i] = 1;
+            // }
+
+            // // copy to device
+            // backend_ptr->mMapHostToBuffer<float>(filter.host,filter_size, filter.buffer);
+            // backend_ptr->mMapHostToBuffer<float>(input.host,input_size, input.buffer);
+
+            // cl::Kernel kernel = backend_ptr->runtime_ptr()->BuildKernel("./opencl/cl/conv_2d.cl", "conv2d_buffer");
+
+
+            // int input_stride[4];
+            // ComputeStride(input_shape, input_stride);
+            // // nchw
+            // int output_stride[4];
+            // ComputeStride(output_shape, output_stride);
+            // int output_buffer_size = ComputeSize(output_shape);
+            // // h,w
+            // int input_spatial_shape[] = {input_shape[2], input_shape[3]};
+            // kernel.setArg(0, *input.buffer);
+            // kernel.setArg(1, *filter.buffer);
+            // kernel.setArg(2, *bias.buffer);
+            // kernel.setArg(3, *output.buffer);
+            // kernel.setArg(4, kernel_size);
+            // kernel.setArg(5, dilation);
+            // kernel.setArg(6, stride);
+            // kernel.setArg(7, input_stride);
+            // kernel.setArg(8, output_stride);
+            // kernel.setArg(9, input_spatial_shape);
+            // backend_ptr->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                    // kernel,
+                    // cl::NullRange,
+                    // cl::NDRange(output_buffer_size),
+                    // cl::NullRange
+                    // );
+            // for(int i=0;i<output_buffer_size;i++){
+                // Conv2dNaive(input.host, filter.host, bias.host, output.host, kernel_size, dilation, stride,\
+                        // input_stride, output_stride, input_spatial_shape,i, pad);
+            // }
+
+
+            // // host data
+            // // std::shared_ptr<float> data;
+            // // data.reset(new float[output_buffer_size]);
+            // // backend_ptr->mMapBufferToHost<float>(output.buffer, output_buffer_size, output.host);
+            // for(int i=0;i<batch_size;i++){
+                // for(int j=0;j<output_channels;j++){
+                    // for(int k=0;k<output_shape[2];k++){
+                        // for(int l=0;l<output_shape[3];l++){
+                            // int index = ((i*output_channels+j)*output_shape[2]+k)*output_shape[3]+l;
+                            // std::cout<<output.host[index] <<" ";
+                        // }
+                        // std::cout<<std::endl;
+                    // }
+                    // std::cout<<std::endl;
+                // }
+                // std::cout<<std::endl;
+            // }
+            // // for(int i=0;i<output_buffer_size;i++){
+            // // std::cout<<output.host[i]<<" ";
+            // // }
+            // std::cout<<std::endl;
             return true;
         }
 };

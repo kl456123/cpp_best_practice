@@ -22,7 +22,7 @@ class Backend{
         virtual ~Backend(){}
 
 
-        virtual Tensor Alloc(int size)=0;
+        virtual void Alloc(Tensor* tensor)=0;
         virtual void Recycle(Tensor* tensor)=0;
         virtual void Clear()=0;
 

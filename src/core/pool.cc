@@ -1,9 +1,10 @@
-#include "core/pool.h"
 #include <limits>
+#include "core/pool.h"
+#include "core/define.h"
 
+Backend* ExtractBackend(Backend::ForwardType type_name);
 
-template<typename T>
-T* Pool<T>::Alloc(int size){
+void* Pool::Alloc(int size){
     auto finalIter = mFreeList.end();
     int minWaste = numeric_limits<int>::max();
     for(auto iterP=mFreeList.begin();iterP!=mFreeList.end();iterP++){
@@ -18,31 +19,32 @@ T* Pool<T>::Alloc(int size){
     }
 
     if(finalIter!=mFreeList.end()){
-        T* chunk = (*finalIter)->chunk.get();
+        void* chunk = (*finalIter)->chunk;
         mFreeList.erase(finalIter);
         return chunk;
         // return nullptr;
     }
 
     // alloc new
-    shared_ptr<Node> node(new Node);
-    node->chunk.reset(new T[size]);
+    Node* node = new Node;
+
     node->size = size;
+    node->chunk = Malloc(size, MEMORY_ALIGN_DEFAULT);
+
     if(node->chunk==nullptr){
         std::cout<<"Error when alloc"<<std::endl;
         return nullptr;
     }
 
-    mAllChunks.insert(make_pair(node->chunk.get(), node));
-    return node->chunk.get();
+    mAllChunks.insert(make_pair(node->chunk, node));
+    return node->chunk;
 }
 
 
-template <typename T>
-Pool<T>::Pool(){
+Pool::Pool(){
 }
-template<typename T>
-void Pool<T>::Recycle(T* chunk){
+
+void Pool::Recycle(void* chunk){
     auto iter = mAllChunks.find(chunk);
     if(iter==mAllChunks.end()){
         std::cout<<"Error "<<std::endl;
@@ -52,17 +54,10 @@ void Pool<T>::Recycle(T* chunk){
 }
 
 
-template<typename T>
-void CPUBackend<T>::Clear(){
+void Pool::Clear(){
     mFreeList.clear();
     mAllChunks.clear();
 }
-
-
-template class Pool<float>;
-
-
-
 
 
 

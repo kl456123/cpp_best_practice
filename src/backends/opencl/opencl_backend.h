@@ -4,37 +4,37 @@
 #include <memory>
 #include <map>
 #include "context.h"
-#include "register/backend.h"
+#include "core/backend.h"
+#include "core/pool.h"
 
 
 class Tensor;
 
+class OpenCLPool final: public Pool{
+    public:
+        void* Malloc(size_t size, int alignment)override;
+};
+
 class OpenclBackend : public Backend{
     public:
-        OpenclBackend();
+        OpenclBackend(Backend::ForwardType type);
         virtual ~OpenclBackend(){}
 
-        template<typename DTYPE>
-            bool mAllocateBuffer(const int kSize, cl::Memory*& out_buffer);
+        bool mAllocateBuffer(const size_t kSize, cl::Memory*& out_buffer);
 
-        template<typename DTYPE>
-            bool mAllocateImage(const int kHeight, const int kWidth, const float* kImageDataPtr, cl::Memory*& image);
+        bool mAllocateImage(const int kHeight, const int kWidth, const float* kImageDataPtr, cl::Memory*& image);
 
-        template<typename DTYPE>
-            bool mReadBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host);
+        bool mReadBufferToHost(const cl::Buffer* buffer, int size, void* dst_host);
 
-        template<typename DTYPE>
-            bool mWriteBufferToDevice(const DTYPE* src_host, int size, cl::Buffer* buffer);
+        bool mWriteBufferToDevice(const void* src_host, int size, cl::Buffer* buffer);
 
-        template<typename DTYPE>
-        bool mMapBufferToHost(const cl::Buffer* buffer, int size, DTYPE* dst_host);
+        bool mMapBufferToHost(const cl::Buffer* buffer, int size, void* dst_host);
 
-        template<typename DTYPE>
-        bool mMapHostToBuffer(const DTYPE* src_host, int size, cl::Buffer* buffer);
+        bool mMapHostToBuffer(const void* src_host, int size, cl::Buffer* buffer);
 
         void Clear()override;
-        void Alloc(const Tensor* )override;
-        void Recycle(const Tensor* )override;
+        void Alloc(Tensor* )override;
+        void Recycle(Tensor* )override;
 
         Context* runtime_ptr(){
             return mOpenCLRuntime.get();

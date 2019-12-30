@@ -2,25 +2,30 @@
 #define BACKENDS_CPU_CPU_BACKEND_H_
 #include <memory>
 #include "core/backend.h"
+#include "core/pool.h"
 
 
-class Pool;
 class Tensor;
 
-
-
-class CPUBackend: public Backend{
+class CPUPool final: public Pool{
     public:
-        CPUBackend();
+        void* Malloc(size_t size, int alignment)override;
+};
+
+
+
+class CPUBackend final: public Backend{
+    public:
+        CPUBackend(Backend::ForwardType type);
         virtual ~CPUBackend();
 
-        void Alloc(const Tensor* );
-        void Clear();
-        void Recycle(const Tensor* );
+        void Alloc(Tensor* )override;
+        void Clear()override;
+        void Recycle(Tensor* )override;
 
-        const Pool* pool()const{return mPool.get();}
+        const CPUPool* pool()const{return mPool.get();}
     private:
-        std::shared_ptr<Pool> mPool;
+        std::shared_ptr<CPUPool> mPool;
 
 };
 

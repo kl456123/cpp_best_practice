@@ -3,37 +3,26 @@
 #include "core/backend.h"
 
 #include "backends/cpu/cpu_backend.h"
+#include "core/tensor.h"
+#include "core/pool.h"
 
 
-class Backend;
-class Tensor;
 
 typedef Tensor::DataType DataType;
+void* CPUPool::Malloc(size_t size, int alignment)
+{
+    return port::AlignMalloc(size, alignment);
+}
 
 
-CPUBackend::CPUBackend(){
-    mPool.reset(new Pool());
+CPUBackend::CPUBackend(Backend::ForwardType type):Backend(type){
+    mPool.reset(new CPUPool());
 }
 
 
 
-void CPUBackend::Alloc(Tensor* tensor, DataType data_type){
-    switch(data_type){
-        case DataType::FLOAT32:
-            tensor->mHost = mPool->Alloc<float>(tensor->mSize);
-            break;
-        case DataType::DOUBLE:
-            tensor->mHost = mPool->Alloc<double>(tensor->mSize);
-            break;
-        case DataType::INT32:
-            tensor->mHost = mPool->Alloc<int32_t>(tensor->mSize);
-            break;
-        case DataType::INT8:
-            tensor->mHost = mPool->Alloc<int8_t>(tensor->mSize);
-            break;
-        default:
-            ;
-    }
+void CPUBackend::Alloc(Tensor* tensor){
+    tensor->set_host(mPool->Alloc(tensor->size()));
 }
 
 CPUBackend::~CPUBackend(){
@@ -43,28 +32,15 @@ void CPUBackend::Clear(){
     mPool->Clear();
 }
 
-void CPUBackend::Recycle(Tensor* tensor, DataType data_type){
-    switch(data_type){
-        case DataType::FLOAT32:
-            mPool->Recycle<float>(tensor->mHost);
-            break;
-        case DataType::DOUBLE:
-            mPool->Recycle<double>(tensor->mHost);
-            break;
-        case DataType::INT32:
-            mPool->Recycle<int32_t>(tensor->mHost);
-            break;
-        case DataType::INT8:
-            mPool->Recycle<int8_t>(tensor->mHost);
-            break;
-        default:
-            ;
-    }
+void CPUBackend::Recycle(Tensor* tensor){
+    mPool->Recycle(static_cast<void*>(tensor->host()));
 }
 
 
 void RegisterCPUBackend(){
     shared_ptr<Backend> ptr;
-    ptr.reset(new CPU());
+    ptr.reset(new CPUBackend(Backend::ForwardType::CPU));
     InsertBackend(Backend::ForwardType::CPU, ptr);
 }
+
+

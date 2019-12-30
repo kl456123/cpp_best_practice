@@ -4,32 +4,39 @@
 #include <map>
 #include <vector>
 #include <list>
-#include <memory>
 #include "core/backend.h"
-
+#include "core/port.h"
 
 using namespace std;
 
 
+/* Note that Pool cannot be template class,
+ * it should allocate memory and return void*
+ * */
+
 class Pool{
     struct Node{
         int size;
-        shared_ptr<T> chunk;
+        void* chunk;
     };
     public:
-        Pool(Backend::ForwardType type);
-        virtual ~CPUBackend(){}
+    Pool();
+    virtual ~Pool(){Clear();}
 
-        template<typename T>
-        T* Alloc(int size);
+    virtual void* Malloc(size_t size, int alignment)=0;
 
-        template<typename T>
-        void Recycle(T*);
+    void* Alloc(int size);
 
-        void Clear();
+    void Recycle(void* ptr);
+
+    void Clear();
+
     private:
-        std::map<T*, shared_ptr<Node>> mAllChunks;
-        std::list<shared_ptr<Node>> mFreeList;
+    std::map<void*, Node*> mAllChunks;
+    std::list<Node*> mFreeList;
 };
+
+
+
 
 #endif

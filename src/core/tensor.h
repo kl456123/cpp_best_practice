@@ -1,11 +1,13 @@
-#ifndef TENSOR_H_
-#define TENSOR_H_
+#ifndef CORE_TENSOR_H_
+#define CORE_TENSOR_H_
 #include <vector>
 #include <memory>
 #include <CL/cl.hpp>
 
 
 class TensorShape;
+class TensorBuffer;
+class Backend;
 
 
 class Tensor{
@@ -44,16 +46,21 @@ class Tensor{
         DOUBLE
     };
     Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, bool alloc);
+    Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, void* user_data);
+    Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, Backend* backend);
     virtual ~Tensor();
 
 
-    static Tensor* Create(std::vector<int>tensor_shape);
+    // static Tensor* Create(const std::vector<int>&tensor_shape, Tensor::DataType data_type);
 
-    static Tensor* Zero(const std::vector<int>& tensor_shape);
+    template<typename T>
+        static Tensor* Zeros(const std::vector<int>& tensor_shape,Tensor::DataType data_type);
 
-    static Tensor* One(const std::vector<int>& tensor_shape);
+    template<typename T>
+        static Tensor* Ones(const std::vector<int>& tensor_shape,Tensor::DataType data_type);
 
-    static Tensor* Random(const std::vector<int>& tensor_shape);
+    template<typename T>
+        static Tensor* Random(const std::vector<int>& tensor_shape,Tensor::DataType data_type);
 
     static int ComputeSize(const std::vector<int>& shape){
         int size=1;
@@ -75,14 +82,34 @@ class Tensor{
     template<typename T>
         inline T* host(){return (T*)mHost;}
 
-    template<typename T>
-        inline T* device(){return (T*)mDevice;}
+    inline void* host(){
+        return mHost;
+    }
+    inline int size(){
+        return mSize;
+    }
+
+    inline size_t buffer_size(){
+        return mBufferSize;
+    }
+
+    void set_host(void* ptr){
+        mHost = ptr;
+    }
+
+    void set_device(void* ptr){
+        mDevice = ptr;
+    }
+
+    // template<typename T>
+    // inline T* device(){return (T*)mDevice;}
 
     private:
     void* mHost;
     void* mDevice;
     std::vector<int> mShape;
     int mSize;
+    size_t mBufferSize;
     bool mOwnMemory;
     DataType mDataType;
 

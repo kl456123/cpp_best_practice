@@ -9,12 +9,17 @@ option(BUILD_TEST "build tests or not" ON)
 option(BUILD_SHARED_LIBS "build shared library" ON)
 
 
+find_package(OpenCV REQUIRED)
+find_package(OpenCL REQUIRED)
+
+
 
 
 set(SRC_ROOT_PATH ${CMAKE_CURRENT_LIST_DIR}/src)
 set(SRC_DIR
     ${SRC_ROOT_PATH}/core
-    ${SRC_ROOT_PATH}/backends
+    ${SRC_ROOT_PATH}/backends/cpu
+    ${SRC_ROOT_PATH}/backends/opencl
     ${SRC_ROOT_PATH}/ops
 )
 
@@ -49,6 +54,7 @@ message(STATUS "[*] searching *.cpp")
 
 if(BUILD_SHARED_LIBS)
     add_library(DLCL ${SRC_FILES})
+    target_link_libraries(DLCL ${OpenCV_LIBS} -lOpenCL)
 endif()
 
 
