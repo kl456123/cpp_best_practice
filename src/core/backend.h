@@ -26,6 +26,8 @@ class Backend{
         virtual void Recycle(Tensor* tensor)=0;
         virtual void Clear()=0;
 
+        virtual void CopyFromHostToDevice(Tensor* tensor){};
+
     private:
         ForwardType mType;
 

@@ -6,9 +6,9 @@
 #include "context.h"
 #include "core/backend.h"
 #include "core/pool.h"
+#include "core/tensor.h"
 
 
-class Tensor;
 
 class OpenCLPool final: public Pool{
     public:
@@ -35,6 +35,7 @@ class OpenclBackend : public Backend{
         void Clear()override;
         void Alloc(Tensor* )override;
         void Recycle(Tensor* )override;
+        virtual void CopyFromHostToDevice(Tensor* tensor)override;
 
         Context* runtime_ptr(){
             return mOpenCLRuntime.get();

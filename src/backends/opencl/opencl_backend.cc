@@ -57,6 +57,15 @@ bool OpenclBackend::mWriteBufferToDevice(const void* src_host,int size, cl::Buff
     return true;
 }
 
+void OpenclBackend::CopyFromHostToDevice(Tensor* tensor){
+    cl::Memory* device = (cl::Memory*)(tensor->device());
+    if(device==nullptr){
+        mAllocateBuffer(tensor->buffer_size(),  device);
+    }
+
+    mMapHostToBuffer(tensor->host(), tensor->buffer_size(), reinterpret_cast<cl::Buffer*>(device));
+}
+
 void OpenclBackend::Clear(){}
 void OpenclBackend::Alloc(Tensor* ){}
 void OpenclBackend::Recycle(Tensor* ){

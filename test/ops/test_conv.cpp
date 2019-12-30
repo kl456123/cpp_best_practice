@@ -156,6 +156,13 @@ class ConvTestCase : public TestCase{
             ComputeShape(input_shape,dilation, stride, pad, output_channels,
                     kernel_size, output_shape);
 
+            shared_ptr<Tensor> input, filter, output, bias;
+
+            input.reset(Tensor::Random(input_shape));
+            filter.reset(Tensor::Random(filter_shape));
+            bias.reset(Tensor::Random(bias_shape));
+            output.reset(Tensor::Random(output_shape));
+
             // Tensor<float> input;
             // Tensor<float> filter;
             // Tensor<float> output;

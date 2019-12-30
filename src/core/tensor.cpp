@@ -62,24 +62,17 @@ Tensor::Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type,
 
 
 
-// Tensor* Tensor::Create(const std::vector<int>& tensor_shape, Tensor::DataType data_type){
-// // allocate to cpu default
-// return new Tensor(tensor_shape, data_type, true);
-// }
 
-
-template<typename T>
 Tensor* Tensor::Ones(const std::vector<int>& tensor_shape, Tensor::DataType data_type){
     Tensor* tensor = new Tensor(tensor_shape, data_type, true);
-    Tensor::Filler::FillTensorByVal<T>(tensor, static_cast<T>(1.0));
+    Tensor::Filler::FillTensorByVal(tensor, 1.0);
 }
-template<typename T>
 Tensor* Tensor::Zeros(const std::vector<int>& tensor_shape, Tensor::DataType data_type){
     auto tensor = new Tensor(tensor_shape, data_type, true);
-    Tensor::Filler::FillTensorByVal<T>(tensor, static_cast<T>(0.0));
+    Tensor::Filler::FillTensorByVal(tensor, 0.0);
 }
-template<typename T>
+
 Tensor* Tensor::Random(const std::vector<int>& tensor_shape,Tensor::DataType data_type){
     auto tensor = new Tensor(tensor_shape, data_type, true);
-    Tensor::Filler::FillTensorRandomly<T>(tensor);
+    Tensor::Filler::FillTensorRandomly(tensor);
 }
