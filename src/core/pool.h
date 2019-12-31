@@ -4,7 +4,6 @@
 #include <map>
 #include <vector>
 #include <list>
-#include "core/backend.h"
 #include "core/port.h"
 
 using namespace std;
@@ -30,6 +29,17 @@ class Pool{
     void Recycle(void* ptr);
 
     void Clear();
+
+    const int free_size(){
+        return mFreeList.size();
+    }
+    const int total_size(){
+        return mAllChunks.size();
+    }
+
+    const int used_size(){
+        return total_size() - free_size();
+    }
 
     private:
     std::map<void*, Node*> mAllChunks;

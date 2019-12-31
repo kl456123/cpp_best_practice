@@ -28,10 +28,6 @@ void CPUBackend::Alloc(Tensor* tensor){
 CPUBackend::~CPUBackend(){
 }
 
-void CPUBackend::Clear(){
-    mPool->Clear();
-}
-
 void CPUBackend::Recycle(Tensor* tensor){
     mPool->Recycle(static_cast<void*>(tensor->host()));
 }

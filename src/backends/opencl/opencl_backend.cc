@@ -9,6 +9,7 @@ void* OpenCLPool::Malloc(size_t size, int alignment){
 
 OpenclBackend::OpenclBackend(Backend::ForwardType type):Backend(type){
     mOpenCLRuntime.reset(new Context);
+    mPool.reset(new OpenCLPool());
     mFlags = CL_MEM_READ_WRITE;
 }
 
@@ -58,17 +59,23 @@ bool OpenclBackend::mWriteBufferToDevice(const void* src_host,int size, cl::Buff
 }
 
 void OpenclBackend::CopyFromHostToDevice(Tensor* tensor){
-    cl::Memory* device = (cl::Memory*)(tensor->device());
+    void* device = tensor->device();
     if(device==nullptr){
-        mAllocateBuffer(tensor->buffer_size(),  device);
+        Alloc(tensor);
+        device = tensor->device();
     }
-
     mMapHostToBuffer(tensor->host(), tensor->buffer_size(), reinterpret_cast<cl::Buffer*>(device));
 }
 
-void OpenclBackend::Clear(){}
-void OpenclBackend::Alloc(Tensor* ){}
-void OpenclBackend::Recycle(Tensor* ){
+void OpenclBackend::Alloc(Tensor* tensor){
+    tensor->set_device(mPool->Alloc(tensor->buffer_size()));
+}
+void OpenclBackend::Recycle(Tensor* tensor){
+    mPool->Recycle(tensor->device());
+}
+
+void OpenclBackend::CopyFromDeviceToHost(Tensor* tensor){
+    mMapBufferToHost((cl::Buffer*)(tensor->device()), tensor->buffer_size(), tensor->host());
 }
 
 

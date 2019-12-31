@@ -77,6 +77,8 @@ class Tensor{
     Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, bool alloc);
     Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, void* user_data);
     Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type, Backend* backend);
+    Tensor(const std::vector<int>& tensor_shape, Tensor::DataType data_type=Tensor::DataType::FLOAT32,
+            Backend::ForwardType type=Backend::ForwardType::CPU);
     virtual ~Tensor();
 
 
@@ -96,9 +98,77 @@ class Tensor{
         return size;
     }
 
+    static void ComputeStride(const std::vector<int>& shape, std::vector<int>& stride){
+        stride.resize(shape.size(), 1);
+        for(int i=shape.size()-2;i>=0;i--){
+            stride[i] = stride[i+1]* shape[i+1];
+        }
+    }
+
+
+
+
+    static int ComputeBufferSize(const int size, Tensor::DataType data_type){
+        int buffer_size = 1;
+        switch(data_type){
+            case Tensor::DataType::FLOAT32:
+                buffer_size = sizeof(float) * size;
+                break;
+            case Tensor::DataType::INT32:
+                buffer_size = sizeof(int32_t) * size;
+                break;
+            case Tensor::DataType::DOUBLE:
+                buffer_size = sizeof(double) * size;
+                break;
+            case Tensor::DataType::INT8:
+                buffer_size = sizeof(int8_t) * size;
+                break;
+        }
+        return buffer_size;
+    }
+
     void CopyToDevice(Backend::ForwardType type_name){
         Backend* backend = ExtractBackend(type_name);
         backend->CopyFromHostToDevice(this);
+        mDeviceType = type_name;
+    }
+
+    void CopyToHost(){
+        Backend* backend = ExtractBackend(mDeviceType);
+        if(mHost==nullptr){
+            Backend* cpu_backend = ExtractBackend(Backend::ForwardType::CPU);
+            cpu_backend->Alloc(this);
+        }
+        backend->CopyFromHostToDevice(this);
+    }
+    int Offset(int i, int j, int k, int l){
+        std::vector<int> offset({i,j,k,l});
+        return Offset(offset);
+    }
+    int Offset(int* offset){
+        std::vector<int> offset_tmp(offset, offset+4);
+        return Offset(offset_tmp);
+    }
+
+    int Offset(const std::vector<int>& offset){
+        int index=0;
+        for(int i=0;i<offset.size();i++){
+            index+=offset[i]*mStride[i];
+        }
+        return index;
+    }
+
+    template<typename T>
+    void Print(int size=-1);
+
+    const std::vector<int>& stride(){
+        return mStride;
+    }
+
+    void stride(int* stride){
+        for(int i=0;i<mStride.size();i++){
+            stride[i] = mStride[i];
+        }
     }
 
 
@@ -135,9 +205,17 @@ class Tensor{
     void* device(){
         return mDevice;
     }
+    template<typename T>
+        inline T* device(){
+            return (T*)mDevice;
+        }
 
     DataType type(){
         return mDataType;
+    }
+
+    Backend::ForwardType device_type(){
+        return mDeviceType;
     }
 
     // template<typename T>
@@ -147,10 +225,17 @@ class Tensor{
     void* mHost;
     void* mDevice;
     std::vector<int> mShape;
+    std::vector<int> mStride;
     int mSize;
     size_t mBufferSize;
     bool mOwnMemory;
+    // data type
     DataType mDataType;
+    // device type
+    Backend::ForwardType mDeviceType;
+
+    private:
+    void Init(const std::vector<int>& tensor_shape, DataType data_type);
 
 };
 

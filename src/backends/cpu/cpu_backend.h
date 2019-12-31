@@ -20,12 +20,9 @@ class CPUBackend final: public Backend{
         virtual ~CPUBackend();
 
         void Alloc(Tensor* )override;
-        void Clear()override;
         void Recycle(Tensor* )override;
 
-        const CPUPool* pool()const{return mPool.get();}
-    private:
-        std::shared_ptr<CPUPool> mPool;
+
 
 };
 

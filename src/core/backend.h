@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include "core/pool.h"
 
 using namespace std;
 
@@ -24,11 +25,21 @@ class Backend{
 
         virtual void Alloc(Tensor* tensor)=0;
         virtual void Recycle(Tensor* tensor)=0;
-        virtual void Clear()=0;
+        virtual void Clear(){
+            mPool->Clear();
+        };
 
         virtual void CopyFromHostToDevice(Tensor* tensor){};
+        virtual void CopyFromDeviceToHost(Tensor* tensor){};
 
-    private:
+        Pool* pool(){return mPool.get();}
+        ForwardType type(){
+            return mType;
+        }
+
+
+    protected:
+        std::shared_ptr<Pool> mPool;
         ForwardType mType;
 
 };

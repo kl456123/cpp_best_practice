@@ -2,8 +2,6 @@
 #include "core/pool.h"
 #include "core/define.h"
 
-Backend* ExtractBackend(Backend::ForwardType type_name);
-
 void* Pool::Alloc(int size){
     auto finalIter = mFreeList.end();
     int minWaste = numeric_limits<int>::max();

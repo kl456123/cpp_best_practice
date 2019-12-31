@@ -3,56 +3,16 @@
 #include <iostream>
 #include <CL/cl.hpp>
 #include <stdlib.h>
+#include <assert.h>
 
 #include "test_suite.h"
 #include "backends/opencl/opencl_backend.h"
 #include "core/tensor.h"
+#include "test_helper.h"
 
 
-// template<typename T>
-// struct Tensor{
-    // cl::Buffer *buffer;
-    // T* host;
-// };
-
-int ComputeSize(const std::vector<int>& tensor_shape){
-    int input_buffer_size = 1;
-    for(int i=0;i<tensor_shape.size();i++){
-        input_buffer_size*=tensor_shape[i];
-    }
-    return input_buffer_size;
-}
-
-
-bool AllocateTensorBuffer(OpenclBackend* backend_ptr, std::vector<int>& tensor_shape, cl::Buffer*& tensor_buffer){
-    const int input_buffer_size = ComputeSize(tensor_shape);
-
-    cl::Memory* buffer;
-    bool is_success = backend_ptr->mAllocateBuffer(input_buffer_size, buffer);
-    // cannot use dynamic cast here
-    tensor_buffer = (cl::Buffer*)buffer;
-    return is_success;
-}
-
-
-// template<typename T>
-// void AllocateTensorHost(Pool<T>* pool_ptr, std::vector<int>& tensor_shape, T*& data_ptr){
-    // const int input_size = ComputeSize(tensor_shape);
-    // data_ptr = pool_ptr->alloc(input_size);
-// }
-
-void ComputeStride(const std::vector<int>& shape, std::vector<int>& stride){
-    stride.resize(shape.size(), 1);
-    for(int i=shape.size()-2;i>=0;i--){
-        stride[i] = stride[i+1]* shape[i+1];
-    }
-}
-
-void ComputeStride(const std::vector<int>& shape, int* stride){
-    stride[shape.size()-1] = 1;
-    for(int i=shape.size()-2;i>=0;i--){
-        stride[i] = stride[i+1]* shape[i+1];
-    }
+cl::Buffer OpenCLBuffer(void* device){
+    return *((cl::Buffer*)device);
 }
 
 
@@ -156,12 +116,24 @@ class ConvTestCase : public TestCase{
             ComputeShape(input_shape,dilation, stride, pad, output_channels,
                     kernel_size, output_shape);
 
-            shared_ptr<Tensor> input, filter, output, bias;
+            shared_ptr<Tensor> input, filter, output, bias, expected_output;
 
             input.reset(Tensor::Random(input_shape));
             filter.reset(Tensor::Random(filter_shape));
             bias.reset(Tensor::Random(bias_shape));
-            output.reset(Tensor::Random(output_shape));
+            output.reset(Tensor::Zeros(output_shape));
+            expected_output.reset(Tensor::Zeros(output_shape));
+
+            auto gpu_device = Backend::ForwardType::OPENCL;
+            auto backend_ptr = ExtractBackend(gpu_device);
+
+            // copy to gpu
+            input->CopyToDevice(gpu_device);
+            filter->CopyToDevice(gpu_device);
+            bias->CopyToDevice(gpu_device);
+            output->CopyToDevice(gpu_device);
+
+            // input->CopyToDevice();
 
             // Tensor<float> input;
             // Tensor<float> filter;
@@ -170,19 +142,19 @@ class ConvTestCase : public TestCase{
             // auto input = shared_ptr<Tensor>();
 
             // if(!AllocateTensorBuffer(backend_ptr.get(), input_shape, input.buffer)){
-                // std::cout<<"fail to allocate opencl buffer"<<std::endl;
-                // return false;
+            // std::cout<<"fail to allocate opencl buffer"<<std::endl;
+            // return false;
             // }
 
 
             // if(!AllocateTensorBuffer(backend_ptr.get(), bias_shape, bias.buffer)){
-                // return false;
+            // return false;
             // }
             // if(!AllocateTensorBuffer(backend_ptr.get(), filter_shape, filter.buffer)){
-                // return false;
+            // return false;
             // }
             // if(!AllocateTensorBuffer(backend_ptr.get(), output_shape, output.buffer)){
-                // return false;
+            // return false;
             // }
             // int input_size = ComputeSize(input_shape);
             // int filter_size = ComputeSize(filter_shape);
@@ -193,73 +165,72 @@ class ConvTestCase : public TestCase{
             // AllocateTensorHost<float>(pool_ptr.get(), output_shape, output.host);
             // float max_value = 10000;
             // for(int i=0; i<input_size; i++){
-                // input.host[i] = 1;
+            // input.host[i] = 1;
             // }
             // for(int i=0;i<filter_size; i++){
-                // filter.host[i] = 1;
+            // filter.host[i] = 1;
             // }
             // for(int i=0;i<bias_size;i++){
-                // bias.host[i] = 1;
+            // bias.host[i] = 1;
             // }
 
             // // copy to device
             // backend_ptr->mMapHostToBuffer<float>(filter.host,filter_size, filter.buffer);
             // backend_ptr->mMapHostToBuffer<float>(input.host,input_size, input.buffer);
+            std::string program_name = "src/backends/opencl/cl/conv_2d.cl";
+            std::string kernel_name = "conv2d_buffer";
 
-            // cl::Kernel kernel = backend_ptr->runtime_ptr()->BuildKernel("./opencl/cl/conv_2d.cl", "conv2d_buffer");
+            cl::Kernel kernel = dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->BuildKernel(program_name, kernel_name);
 
 
-            // int input_stride[4];
+            int input_stride[4];
+            int output_stride[4];
+            input->stride(input_stride);
+            output->stride(output_stride);
+            int output_size = output->size();
+
             // ComputeStride(input_shape, input_stride);
-            // // nchw
-            // int output_stride[4];
+            // nchw
             // ComputeStride(output_shape, output_stride);
             // int output_buffer_size = ComputeSize(output_shape);
             // // h,w
-            // int input_spatial_shape[] = {input_shape[2], input_shape[3]};
-            // kernel.setArg(0, *input.buffer);
-            // kernel.setArg(1, *filter.buffer);
-            // kernel.setArg(2, *bias.buffer);
-            // kernel.setArg(3, *output.buffer);
-            // kernel.setArg(4, kernel_size);
-            // kernel.setArg(5, dilation);
-            // kernel.setArg(6, stride);
-            // kernel.setArg(7, input_stride);
-            // kernel.setArg(8, output_stride);
-            // kernel.setArg(9, input_spatial_shape);
-            // backend_ptr->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                    // kernel,
-                    // cl::NullRange,
-                    // cl::NDRange(output_buffer_size),
-                    // cl::NullRange
-                    // );
-            // for(int i=0;i<output_buffer_size;i++){
-                // Conv2dNaive(input.host, filter.host, bias.host, output.host, kernel_size, dilation, stride,\
-                        // input_stride, output_stride, input_spatial_shape,i, pad);
-            // }
+            int input_spatial_shape[] = {input_shape[2], input_shape[3]};
+            kernel.setArg(0, OpenCLBuffer(input->device()));
+            kernel.setArg(1, OpenCLBuffer(filter->device()));
+            kernel.setArg(2, OpenCLBuffer(bias->device()));
+            kernel.setArg(3, OpenCLBuffer(output->device()));
+            kernel.setArg(4, kernel_size);
+            kernel.setArg(5, dilation);
+            kernel.setArg(6, stride);
+            kernel.setArg(7, pad);
+            kernel.setArg(8, input_stride);
+            kernel.setArg(9, output_stride);
+            kernel.setArg(10, input_spatial_shape);
 
 
-            // // host data
-            // // std::shared_ptr<float> data;
-            // // data.reset(new float[output_buffer_size]);
-            // // backend_ptr->mMapBufferToHost<float>(output.buffer, output_buffer_size, output.host);
-            // for(int i=0;i<batch_size;i++){
-                // for(int j=0;j<output_channels;j++){
-                    // for(int k=0;k<output_shape[2];k++){
-                        // for(int l=0;l<output_shape[3];l++){
-                            // int index = ((i*output_channels+j)*output_shape[2]+k)*output_shape[3]+l;
-                            // std::cout<<output.host[index] <<" ";
-                        // }
-                        // std::cout<<std::endl;
-                    // }
-                    // std::cout<<std::endl;
-                // }
-                // std::cout<<std::endl;
-            // }
-            // // for(int i=0;i<output_buffer_size;i++){
-            // // std::cout<<output.host[i]<<" ";
-            // // }
-            // std::cout<<std::endl;
+            dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                    kernel,
+                    cl::NullRange,
+                    cl::NDRange(output_size),
+                    cl::NullRange
+                    );
+
+            output->CopyToHost();
+
+            for(int i=0;i<output_size;i++){
+                Conv2dNaive(input->host<float>(), filter->host<float>(), bias->host<float>(),
+                        expected_output->host<float>(), kernel_size, dilation, stride,
+                        input_stride, output_stride, input_spatial_shape,i, pad);
+            }
+
+            expected_output->Print<float>();
+            output->Print<float>();
+
+            assert(CompareTensor(expected_output->host<float>(), output->host<float>(), output_size));
+
+
+
+
             return true;
         }
 };

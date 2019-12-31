@@ -32,14 +32,15 @@ class OpenclBackend : public Backend{
 
         bool mMapHostToBuffer(const void* src_host, int size, cl::Buffer* buffer);
 
-        void Clear()override;
         void Alloc(Tensor* )override;
         void Recycle(Tensor* )override;
         virtual void CopyFromHostToDevice(Tensor* tensor)override;
+        virtual void CopyFromDeviceToHost(Tensor* tensor);
 
         Context* runtime_ptr(){
             return mOpenCLRuntime.get();
         }
+
     private:
         std::shared_ptr<Context> mOpenCLRuntime;
         std::map<cl::Memory*, std::shared_ptr<cl::Memory>> mMemoryObjectsMap;
