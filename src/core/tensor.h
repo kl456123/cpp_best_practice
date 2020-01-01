@@ -133,13 +133,15 @@ class Tensor{
         mDeviceType = type_name;
     }
 
+    void CopyFromTensor(Tensor* other);
+
     void CopyToHost(){
         Backend* backend = ExtractBackend(mDeviceType);
         if(mHost==nullptr){
             Backend* cpu_backend = ExtractBackend(Backend::ForwardType::CPU);
             cpu_backend->Alloc(this);
         }
-        backend->CopyFromHostToDevice(this);
+        backend->CopyFromDeviceToHost(this);
     }
     int Offset(int i, int j, int k, int l){
         std::vector<int> offset({i,j,k,l});
@@ -159,7 +161,10 @@ class Tensor{
     }
 
     template<typename T>
-    void Print(int size=-1);
+        void Print(int size=-1);
+
+    template<typename T>
+        void Dump(const std::string& file_name);
 
     const std::vector<int>& stride(){
         return mStride;
@@ -218,8 +223,6 @@ class Tensor{
         return mDeviceType;
     }
 
-    // template<typename T>
-    // inline T* device(){return (T*)mDevice;}
 
     private:
     void* mHost;
@@ -234,7 +237,12 @@ class Tensor{
     // device type
     Backend::ForwardType mDeviceType;
 
-    private:
+    // remove all assignment operator
+    Tensor(const Tensor& tensor)  = delete;
+    Tensor(const Tensor&& tensor) = delete;
+    Tensor& operator=(const Tensor&) = delete;
+    Tensor& operator=(const Tensor&&) = delete;
+
     void Init(const std::vector<int>& tensor_shape, DataType data_type);
 
 };

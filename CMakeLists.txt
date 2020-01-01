@@ -54,7 +54,7 @@ message(STATUS "[*] searching *.cpp")
 
 if(BUILD_SHARED_LIBS)
     add_library(DLCL ${SRC_FILES})
-    target_link_libraries(DLCL ${OpenCV_LIBS} -lOpenCL)
+    target_link_libraries(DLCL ${OpenCV_LIBS} -lOpenCL -pthread)
 endif()
 
 

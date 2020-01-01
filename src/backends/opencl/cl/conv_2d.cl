@@ -8,12 +8,13 @@ __kernel void conv2d_buffer(global const float *input,
                             int dilation,
                             int stride,
                             int pad,
+                            int groups,
                             int4 inputStride,
                             int4 outputStride,
                             int2 inputShape
                             )
 {
-    // filter: C_out*K*K*C_in (c_out, k1, k2, c_in)
+    // filter: C_out, C_in, K, K
     // output: N*C_out*H*W (b, c_out, h, w)
     // input: N*C_in*H*W (b, c_in, h+k1-K/2, w+k2-K/2)
     // bias: N*C_out
@@ -35,15 +36,21 @@ __kernel void conv2d_buffer(global const float *input,
     out_ind_tmp = out_ind_tmp % height_block;
     int out_w_ind = out_ind_tmp / width_block;
 
+
+    int out_groups_size = out_channels/groups;
+    int in_groups_size = in_channels/groups;
+
+    int groups_ind = out_c_ind/out_groups_size;
+
     int bias_index = out_c_ind+ out_b_ind*out_channels;
     float sum =  bias[bias_index];
     for (int k1 = 0; k1 < kernel_size; k1++)
     {
         for (int k2 = 0; k2 < kernel_size; k2++)
         {
-            for (int in_c_ind = 0; in_c_ind < in_channels; in_c_ind++)
+            for (int in_c_ind = 0; in_c_ind < in_channels/groups; in_c_ind++)
             {
-                int filter_index = ((out_c_ind * kernel_size + k1) * kernel_size + k2) * in_channels + in_c_ind;
+                int filter_index = ((out_c_ind*in_groups_size+in_c_ind)*kernel_size+k1)*kernel_size+k2;
                 int in_h_ind = out_h_ind * stride - pad + k1*dilation;
                 int in_w_ind = out_w_ind * stride - pad + k2*dilation;
                 // check insane
@@ -51,7 +58,7 @@ __kernel void conv2d_buffer(global const float *input,
                 {
                     continue;
                 }
-                int input_index = out_b_ind * inputStride.x + in_c_ind * inputStride.y +
+                int input_index = out_b_ind * inputStride.x + (in_c_ind+groups_ind*in_groups_size) * inputStride.y +
                     in_h_ind * inputStride.z + in_w_ind * inputStride.w;
                 sum += filter[filter_index] * input[input_index];
             }

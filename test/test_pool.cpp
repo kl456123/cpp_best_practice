@@ -21,7 +21,7 @@ class PoolTestCase: public TestCase{
                 pool->Recycle(chunk);
             }
             pool->Clear();
-            return false;
+            return true;
         }
 };
 

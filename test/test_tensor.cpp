@@ -15,6 +15,7 @@ class TensorTestCase : public TestCase{
         bool run(){
             auto backend_type = Backend::ForwardType::OPENCL;
             Backend* gpu_backend = ExtractBackend(backend_type);
+            Backend* cpu_backend = ExtractBackend(Backend::ForwardType::CPU);
 
 
             std::shared_ptr<Tensor> tensor;
@@ -34,11 +35,20 @@ class TensorTestCase : public TestCase{
             tensor_gpu.reset(new Tensor(input_shape, Tensor::DataType::FLOAT32, backend_type));
             assert(gpu_backend->pool()->used_size()==2);
 
+
+            // copy from gpu to cpu
+            tensor_gpu->CopyToHost();
+            shared_ptr<Tensor> tensor_gpu_temp;
+            tensor_gpu_temp.reset(new Tensor(input_shape));
+            tensor_gpu_temp->CopyFromTensor(tensor_gpu.get());
+            assert(CompareTensor(tensor_gpu->host<float>(), tensor_gpu_temp->host<float>(), tensor_gpu->size()));
+
             // release buffer
             tensor_gpu.reset();
             assert(gpu_backend->pool()->used_size()==1);
             tensor.reset();
             assert(gpu_backend->pool()->used_size()==0);
+
             return true;
         }
 };

@@ -19,7 +19,7 @@ void TestSuite::run(const std::string name){
     auto suite = TestSuite::get();
     auto test_cases = suite->mTestCases;
     std::vector<std::string> wrongs;
-    std::cout<<test_cases.size()<<std::endl;
+    std::cout<<"Num of Total Test Cases: "<<test_cases.size()<<std::endl;
     bool all = false;
     if(name.empty()){
         all=true;

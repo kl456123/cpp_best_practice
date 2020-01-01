@@ -22,7 +22,7 @@ CPUBackend::CPUBackend(Backend::ForwardType type):Backend(type){
 
 
 void CPUBackend::Alloc(Tensor* tensor){
-    tensor->set_host(mPool->Alloc(tensor->size()));
+    tensor->set_host(mPool->Alloc(tensor->buffer_size()));
 }
 
 CPUBackend::~CPUBackend(){
