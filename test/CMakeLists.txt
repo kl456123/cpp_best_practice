@@ -4,8 +4,6 @@ file(GLOB_RECURSE c_source_file "*.c")
 
 set(Files ${cpp_source_file} ${cc_source_file} ${c_source_file})
 
-message(STATUS "${Files}")
-
 include_directories(.)
 
 add_executable(testsuite ${Files})

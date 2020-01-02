@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 option(BUILD_TEST "build tests or not" ON)
 option(BUILD_SHARED_LIBS "build shared library" ON)
+option(BUILD_THIRD_PARTY "build third_party library" ON)
 
 
 find_package(OpenCV REQUIRED)
@@ -26,7 +27,6 @@ set(SRC_DIR
 set(INCLUDE_DIR ${SRC_DIR} ${SRC_ROOT_PATH})
 
 
-message(STATUS "${INCLUDE_DIR}")
 include_directories(${INCLUDE_DIR})
 
 
@@ -61,5 +61,9 @@ endif()
 
 if(BUILD_TEST)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/test)
+endif()
+
+if(BUILD_THIRD_PARTY)
+    add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/third_party)
 endif()
 
