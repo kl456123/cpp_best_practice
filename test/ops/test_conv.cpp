@@ -11,6 +11,16 @@
 #include "test_helper.h"
 
 
+#define CONV_BENCHMARK
+
+#ifdef CONV_BENCHMARK
+#include <chrono>
+#define LOOP_TIME 1e5
+#else
+#define LOOP_TIME 1
+#endif
+
+
 cl::Buffer OpenCLBuffer(void* device){
     return *((cl::Buffer*)device);
 }
@@ -102,9 +112,6 @@ void ComputeShape(const std::vector<int> input_shape, int dilation, int stride, 
 class ConvTestCase : public TestCase{
     public:
         virtual bool run(){
-            // std::unique_ptr<OpenclBackend> backend_ptr(new OpenclBackend());
-            // std::unique_ptr<Pool<float>> pool_ptr(new Pool<float>());
-
 
             // input image
             int batch_size = 1;
@@ -170,12 +177,34 @@ class ConvTestCase : public TestCase{
             kernel.setArg(11, input_spatial_shape);
 
 
-            dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                    kernel,
-                    cl::NullRange,
-                    cl::NDRange(output_size),
-                    cl::NullRange
-                    );
+#ifdef CONV_BENCHMARK
+            // warmup
+            for(int i=0;i<3;i++){
+                dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                        kernel,
+                        cl::NullRange,
+                        cl::NDRange(output_size),
+                        cl::NullRange
+                        );
+            }
+            std::chrono::time_point<std::chrono::system_clock> t1 = std::chrono::system_clock::now();
+#endif
+
+            for(int i=0;i<LOOP_TIME;i++){
+                dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                        kernel,
+                        cl::NullRange,
+                        cl::NDRange(output_size),
+                        cl::NullRange
+                        );
+            }
+
+#ifdef CONV_BENCHMARK
+            std::chrono::time_point<std::chrono::system_clock> t2 = std::chrono::system_clock::now();
+            float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/LOOP_TIME;
+            std::cout<<dur<<" ms per time"<<std::endl;
+#endif
+
 
             output->CopyToHost();
 
