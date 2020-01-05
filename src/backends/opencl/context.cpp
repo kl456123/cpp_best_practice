@@ -19,14 +19,17 @@ Context::Context(){
         std::cout<<" No devices found. Check OpenCL installation!\n";
         exit(1);
     }
-    cl::Device default_device=all_devices[0];
-    std::cout<< "Using device: "<<default_device.getInfo<CL_DEVICE_NAME>()<<"\n";
-
+    mFirstGPUDevicePtr              = std::make_shared<cl::Device>(all_devices[0]);
+    std::cout<< "Using device: "<<mFirstGPUDevicePtr->getInfo<CL_DEVICE_NAME>()<<"\n";
+    mFirstGPUDevicePtr->getInfo(CL_DEVICE_MAX_COMPUTE_UNITS, &mGPUComputeUnits);
+    std::cout<<"ComputeUnits: "<<mGPUComputeUnits<<std::endl;
+    mMaxWorkGroupSize = mFirstGPUDevicePtr->getInfo<CL_DEVICE_MAX_WORK_GROUP_SIZE>();
+    std::cout<<"Max work group size: "<<mMaxWorkGroupSize<<std::endl;
     // context
-    mContext.reset(new cl::Context({default_device}));
+    mContext.reset(new cl::Context({*mFirstGPUDevicePtr}));
 
     // queue
-    mCommandQueuePtr.reset(new cl::CommandQueue(*mContext, default_device));
+    mCommandQueuePtr.reset(new cl::CommandQueue(*mContext, *mFirstGPUDevicePtr));
 }
 
 

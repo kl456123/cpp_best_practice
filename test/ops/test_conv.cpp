@@ -1,6 +1,7 @@
 #include <vector>
 #include <memory>
 #include <iostream>
+#include <cmath>
 #include <CL/cl.hpp>
 #include <stdlib.h>
 #include <assert.h>
@@ -12,10 +13,11 @@
 
 
 #define CONV_BENCHMARK
+// #define DEBUG
 
 #ifdef CONV_BENCHMARK
 #include <chrono>
-#define LOOP_TIME 1e5
+#define LOOP_TIME 1e3
 #else
 #define LOOP_TIME 1
 #endif
@@ -23,6 +25,10 @@
 
 cl::Buffer OpenCLBuffer(void* device){
     return *((cl::Buffer*)device);
+}
+
+uint32_t up_align(int a, int alignment){
+    return static_cast<uint32_t>(std::ceil(static_cast<float>(a)/alignment)*alignment);
 }
 
 
@@ -122,9 +128,10 @@ class ConvTestCase : public TestCase{
             int stride = 2;
             int pad = 2;
             int groups = 3;
+            int input_size = 224;
             assert(input_channels%groups==0);
             assert(output_channels%groups==0);
-            std::vector<int> input_shape({batch_size,input_channels,5,5});
+            std::vector<int> input_shape({batch_size,input_channels,input_size,input_size});
             // filter and bias
             // C_in, C_out, K, K
             std::vector<int> filter_shape({output_channels,input_channels/groups, kernel_size, kernel_size});
@@ -175,34 +182,47 @@ class ConvTestCase : public TestCase{
             kernel.setArg(9, input_stride);
             kernel.setArg(10, output_stride);
             kernel.setArg(11, input_spatial_shape);
+            kernel.setArg(12, output_size);
 
-
+            dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();
+            auto maxWorkGroupSize = dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->getMaxWorkGroupSize(kernel);
+            std::cout<<"kernel max work group size: "<<maxWorkGroupSize<<std::endl;
 #ifdef CONV_BENCHMARK
-            // warmup
-            for(int i=0;i<3;i++){
-                dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                        kernel,
-                        cl::NullRange,
-                        cl::NDRange(output_size),
-                        cl::NullRange
-                        );
-            }
-            std::chrono::time_point<std::chrono::system_clock> t1 = std::chrono::system_clock::now();
+            for(int i=30;i<31;i++){
+                uint32_t lws=1<<i;
+                uint32_t gws = up_align(output_size, lws);
+                std::cout<<"use lws: "<<lws<<std::endl;
+                std::cout<<"use gws: "<<gws<<std::endl;
+                cl::NDRange global_work_size = {gws};
+                cl::NDRange local_work_size = {lws};
+                // warmup
+                for(int i=0;i<3;i++){
+                    dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                            kernel,
+                            cl::NullRange,
+                            global_work_size,
+                            local_work_size
+                            );
+                }
+                dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();
+                std::chrono::time_point<std::chrono::system_clock> t1 = std::chrono::system_clock::now();
 #endif
 
-            for(int i=0;i<LOOP_TIME;i++){
-                dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                        kernel,
-                        cl::NullRange,
-                        cl::NDRange(output_size),
-                        cl::NullRange
-                        );
-            }
-
+                for(int i=0;i<LOOP_TIME;i++){
+                    dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
+                            kernel,
+                            cl::NullRange,
+                            global_work_size,
+                            local_work_size
+                            );
+                }
+                // sync
+                dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();
 #ifdef CONV_BENCHMARK
-            std::chrono::time_point<std::chrono::system_clock> t2 = std::chrono::system_clock::now();
-            float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/LOOP_TIME;
-            std::cout<<dur<<" ms per time"<<std::endl;
+                std::chrono::time_point<std::chrono::system_clock> t2 = std::chrono::system_clock::now();
+                float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count()/LOOP_TIME;
+                std::cout<<dur<<" ms per time"<<std::endl;
+            }
 #endif
 
 
@@ -217,6 +237,9 @@ class ConvTestCase : public TestCase{
             // expected_output->Print<float>();
             // std::cout<<"input: "<<std::endl;
             // input->Print<float>();
+            //
+            //
+#ifdef DEBUG
             input->Dump<float>("./assets/input.txt");
 
             // std::cout<<"filter: "<<std::endl;
@@ -229,6 +252,7 @@ class ConvTestCase : public TestCase{
 
             // std::cout<<"output: "<<std::endl;
             expected_output->Print<float>();
+#endif
 
             // assert(CompareTensor(expected_output->host<float>(), output->host<float>(), output_size));
 

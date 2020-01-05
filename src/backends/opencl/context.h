@@ -28,12 +28,19 @@ class Context{
         const cl::CommandQueue& command_queue()const {
             return *mCommandQueuePtr;
         }
+        uint64_t getMaxWorkGroupSize(const cl::Kernel &kernel) {
+            uint64_t maxWorkGroupSize = 0;
+            kernel.getWorkGroupInfo(*mFirstGPUDevicePtr, CL_KERNEL_WORK_GROUP_SIZE, &maxWorkGroupSize);
+            return maxWorkGroupSize;
+        }
 
     private:
         std::map<std::string, cl::Program> mBuildProgramMap;
         std::shared_ptr<::cl::Context> mContext;
         std::shared_ptr<::cl::Device> mFirstGPUDevicePtr;
         std::shared_ptr<::cl::CommandQueue> mCommandQueuePtr;
+        uint32_t mGPUComputeUnits;
+        uint32_t mMaxWorkGroupSize;
 };
 
 #endif

@@ -11,14 +11,20 @@ __kernel void conv2d_buffer(global const float *input,
                             int groups,
                             int4 inputStride,
                             int4 outputStride,
-                            int2 inputShape
+                            int2 inputShape,
+                            int output_size
                             )
 {
     // filter: C_out, C_in, K, K
     // output: N*C_out*H*W (b, c_out, h, w)
     // input: N*C_in*H*W (b, c_in, h+k1-K/2, w+k2-K/2)
     // bias: N*C_out
+
     int out_ind = get_global_id(0);
+
+    if(out_ind>=output_size){
+        return;
+    }
 
     int out_channels = outputStride.x/outputStride.y;
     int in_channels = inputStride.x/inputStride.y;

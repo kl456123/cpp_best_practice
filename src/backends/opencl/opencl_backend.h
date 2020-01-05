@@ -41,6 +41,11 @@ class OpenclBackend : public Backend{
             return mOpenCLRuntime.get();
         }
 
+        bool Finish(){
+            int rc = mOpenCLRuntime->command_queue().finish();
+            return rc==0;
+        }
+
     private:
         std::shared_ptr<Context> mOpenCLRuntime;
         std::map<cl::Memory*, std::shared_ptr<cl::Memory>> mMemoryObjectsMap;
