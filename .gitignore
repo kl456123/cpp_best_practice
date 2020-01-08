@@ -4,3 +4,7 @@ build/*
 
 assets/*.txt
 **/core
+
+
+*.pb.cc
+*.pb.h
