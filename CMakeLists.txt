@@ -22,6 +22,7 @@ set(SRC_DIR
     ${SRC_ROOT_PATH}/backends/cpu
     ${SRC_ROOT_PATH}/backends/opencl
     ${SRC_ROOT_PATH}/ops
+    ${SRC_ROOT_PATH}/core/protos # protos
 )
 
 set(INCLUDE_DIR ${SRC_DIR} ${SRC_ROOT_PATH})
