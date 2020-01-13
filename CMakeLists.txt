@@ -12,8 +12,12 @@ option(BUILD_THIRD_PARTY "build third_party library" ON)
 
 find_package(OpenCV REQUIRED)
 find_package(OpenCL REQUIRED)
+find_package(Protobuf REQUIRED)
 
-
+include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+file(GLOB ProtoFiles ${CMAKE_CURRENT_LIST_DIR}/src/core/protos/*.proto)
+protobuf_generate_cpp(ProtoSources ProtoHeaders ${ProtoFiles})
 
 
 set(SRC_ROOT_PATH ${CMAKE_CURRENT_LIST_DIR}/src)
@@ -54,8 +58,8 @@ message(STATUS "[*] searching *.cpp")
 
 
 if(BUILD_SHARED_LIBS)
-    add_library(DLCL ${SRC_FILES})
-    target_link_libraries(DLCL ${OpenCV_LIBS} -lOpenCL -pthread)
+    add_library(DLCL ${SRC_FILES} ${ProtoSources})
+    target_link_libraries(DLCL ${OpenCV_LIBS} -lOpenCL -pthread ${Protobuf_LIBRARIES})
 endif()
 
 

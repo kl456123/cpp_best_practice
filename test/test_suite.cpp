@@ -26,12 +26,15 @@ void TestSuite::run(const std::string name){
     }
     for(uint64_t i=0;i<test_cases.size();i++){
         auto& test_case = test_cases[i];
-        if(!all and test_case->name.find(name)==0){
+        if(!all and test_case->name_.find(name)==0){
             continue;
         }
+        std::cout<<"current test case: "<<test_case->name_;
         auto res = test_case->run();
         if(!res){
-            wrongs.emplace_back(test_case->name);
+            wrongs.emplace_back(test_case->name_);
+        }else{
+            std::cout<<"... Pass!"<<std::endl;
         }
     }
 

@@ -9,9 +9,12 @@ class TestCase{
     friend class TestSuite;
     public:
     virtual bool run()=0;
+    void set_name(std::string name){
+        name_ = std::move(name);
+    }
 
     private:
-    std::string name;
+    std::string name_;
 };
 
 
@@ -37,7 +40,9 @@ template<typename Case>
 class TestRegister{
     public:
         TestRegister(const std::string name){
-            TestSuite::get()->add(std::make_shared<Case>(), name);
+            auto test_case = std::make_shared<Case>();
+            test_case->set_name(name);
+            TestSuite::get()->add(test_case, name);
         }
 };
 
