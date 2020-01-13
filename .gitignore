@@ -1,9 +1,6 @@
-*.out
-*/build/*
 build/*
 
 assets/*.txt
-**/core
 
 
 *.pb.cc

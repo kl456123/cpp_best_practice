@@ -1,0 +1,19 @@
+syntax="proto3";
+
+
+message Config{
+    BackendConfig backend_config=1;
+    TensorConfig tensor_config=2;
+}
+
+message BackendConfig{
+    enum BackendType{
+        OPENCL=0;
+        CPU=1;
+    }
+    BackendType backend_type=1;
+}
+
+
+message TensorConfig{
+}
