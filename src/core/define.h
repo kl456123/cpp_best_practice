@@ -11,4 +11,7 @@
         THROW_ERROR("Assert error!\n"); \
     }
 
+#define PREDICT_FALSE(x)    (__builtin_except(x, 0))
+#define PREDICT_TRUE(x)     (__builtin_except(!!(x), 1))
+
 #endif

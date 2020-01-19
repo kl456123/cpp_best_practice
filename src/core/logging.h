@@ -46,7 +46,12 @@ namespace logging{
 #define _DLCL_LOG_FATAL logging::LogMessageFatal(__FILE__, __LINE__)
 
 
+// logging and checker
 #define LOG(severity) _DLCL_LOG_##severity
+
+#define CHECK(cond)                                     \
+    if(PREDICT_FALSE((!cond)))                          \
+    LOG(FATAL)<<"Check failed: " #cond "  "
 
 
 #endif

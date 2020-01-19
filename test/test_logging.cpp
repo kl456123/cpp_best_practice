@@ -7,6 +7,8 @@ class LoggingTestCase: public TestCase{
         virtual bool run(){
             LOG(INFO)<<"adsga";
             LOG(ERROR)<<"error";
+            int a=10;
+            CHECK(a==10);
             //LOG(FATAL)<<"fatal";
             return true;
         }
