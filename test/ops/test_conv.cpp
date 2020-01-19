@@ -10,6 +10,7 @@
 #include "backends/opencl/opencl_backend.h"
 #include "core/tensor.h"
 #include "test_helper.h"
+#include "core/define.h"
 
 
 #define CONV_BENCHMARK
