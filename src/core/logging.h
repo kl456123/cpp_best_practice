@@ -1,6 +1,7 @@
 #ifndef CORE_LOGGING_H_
 #define CORE_LOGGING_H_
 #include <sstream>
+#include "core/define.h"
 
 namespace logging{
     // log levels
