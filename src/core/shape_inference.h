@@ -2,8 +2,4 @@
 #define CORE_SHAPE_INFERENCE_H_
 
 
-class OpShapeInferenceFn{
-};
-
-
 #endif

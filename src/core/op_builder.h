@@ -1,7 +1,9 @@
 #ifndef CORE_OP_BUILD_H_
 #define CORE_OP_BUILD_H_
 #include <string>
+#include <functional>
 #include <vector>
+
 #include "core/error.hpp"
 #include "op_def.pb.h"
 #include "shape_inference.h"
@@ -29,7 +31,8 @@ struct OpRegistrationData{
 class OpDefBuilder{
     public:
         explicit OpDefBuilder(std::string name);
-        virtual ~OpDefBuilder();
+        //no need to release memory
+        virtual ~OpDefBuilder(){}
 
         OpDefBuilder& Input(std::string spec);
         OpDefBuilder& Output(std::string spec);
@@ -38,12 +41,12 @@ class OpDefBuilder{
         // add attrs
         OpDefBuilder& Attr(std::string spec);
 
-        Status Finalize(const OpRegistrationData* op_reg_data)const;
+        Status Finalize(OpRegistrationData* op_reg_data)const;
 
     private:
         // used for convenience
         // return proto type
-        OpDef* op_def(){return op_reg_data_.op_def;}
+        OpDef* op_def(){return &op_reg_data_.op_def;}
         OpRegistrationData op_reg_data_;
 
         // attrs, inputs and outputs

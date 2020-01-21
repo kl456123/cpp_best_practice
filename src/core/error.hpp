@@ -28,6 +28,14 @@ class Status{
             return code_==ErrorCode::OK;
         }
 
+        bool ok(){
+            return bool(*this);
+        }
+
+        static Status OK(){
+            return Status();
+        }
+
         // get mem
         ErrorCode code() const{
             return code_;

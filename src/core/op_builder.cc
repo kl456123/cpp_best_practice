@@ -28,7 +28,7 @@ OpDefBuilder& OpDefBuilder::Output(std::string spec){
     return *this;
 }
 
-OpDefBuilder::SetShapeFn(OpShapeInferenceFn fn){
+OpDefBuilder& OpDefBuilder::SetShapeFn(OpShapeInferenceFn fn){
     if(op_reg_data_.shape_inference_fn!=nullptr){
         errors_.push_back("SetShapeFn called twice for op");
     }else{
@@ -37,7 +37,7 @@ OpDefBuilder::SetShapeFn(OpShapeInferenceFn fn){
     return *this;
 }
 
-Status OpDefBuilder::Finalize(const OpRegistrationData* op_reg_data){
+Status OpDefBuilder::Finalize(OpRegistrationData* op_reg_data)const{
     // parse all params and store all errors when it happens
     std::vector<std::string> errors = errors_;
     *op_reg_data = op_reg_data_;
@@ -49,7 +49,7 @@ Status OpDefBuilder::Finalize(const OpRegistrationData* op_reg_data){
     for(auto input:inputs_){
     }
 
-    for(auto output: ouputs_){
+    for(auto output: outputs_){
 
     }
     if(errors.empty()){

@@ -1,0 +1,18 @@
+syntax="proto3";
+enum DataType{
+    // used for tensor
+    DT_INVALID=0;
+
+    DT_FLOAT=1;
+    DT_DOUBLE=2;
+    DT_INT32=3;
+    DT_UINT8=4;
+    DT_INT16=5;
+
+// used for parameters
+    DT_FLOAT_REF=101;
+    DT_DOUBLE_REF=102;
+    DT_INT16_REF=103;
+    DT_INT32_REF=104;
+    DT_INT8_REF=105;
+}

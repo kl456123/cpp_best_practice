@@ -1,14 +1,36 @@
 #ifndef CORE_OP_H_
 #define CORE_OP_H_
+#include <functional>
+#include <unordered_map>
 #include "core/op.h"
 #include "core/op_builder.h"
-#include "core/seletive_registration.h"
+#include "core/selective_registration.h"
 
 class OpRegistry{
     public:
+        OpRegistry()=default;
+        virtual ~OpRegistry();
         static OpRegistry* Global();
-        //lazy register(only constructor it when used)
-        Register();
+        // function used to decorate OpRegistrationData
+        typedef std::function<Status(OpRegistrationData* )> OpRegistrationDataFactory;
+        //only registger op_reg_data, but pass factory func to register func
+        //populate op_reg_data in the inner of Register
+        Status Register(const OpRegistrationDataFactory& op_data_factory);
+        // find item by name
+        // change pointer value, so use void**
+        Status LookUp(const std::string& name, const OpRegistrationData** op_reg_data);
+
+        // get total
+        void GetOpRegistrationData(std::vector<OpRegistrationData>* op_reg_datas);
+        void GetOpRegistrationOps(std::vector<OpDef>* op_defs);
+        typedef std::function<Status(const Status&, const OpDef&)> Watcher;
+
+        // register watcher
+        Status SetWatcher(const Watcher& watcher);
+
+    private:
+        mutable std::unordered_map<std::string, const OpRegistrationData*> registry_;
+        mutable Watcher watcher_;
 };
 
 
@@ -84,8 +106,15 @@ class OpDefBuilderReceiver{
 #define REGISTER_OP(name) REGISTER_OP_UNIQ(__COUNTER__, name)
 
 #define REGISTER_OP_UNIQ(ctr, name)                         \
-    OpDefBuilderReceiver register_op##ctr =             \
+    OpDefBuilderReceiver register_op##ctr =                 \
     OpDefBuilderWrapper<SHOULD_REGISTER_OP(name)>(name)
+
+// force register op
+#define REGISTER_OP_FORCE(name) REGISTER_OP_FORCE_UNIQ(__COUNTER__, name)
+
+#define REGISTER_OP_FORCE_UNIQ(ctr, name)               \
+    OpDefBuilderReceiver register_op##ctr =             \
+    OpDefBuilderWrapper<true>(name)
 
 
 
