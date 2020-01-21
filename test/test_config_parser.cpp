@@ -9,7 +9,7 @@ class ConfigParserTestCase: public TestCase{
     public:
         virtual bool run(){
             auto config_parser = ConfigParser<Config>();
-            std::string config_fn = "./default.cfg";
+            std::string config_fn = "./assets/default.pbtxt";
             // set config
 
             auto config_proto = config_parser.config_proto();

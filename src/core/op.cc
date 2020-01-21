@@ -57,7 +57,7 @@ Status OpRegistry::Register(const OpRegistrationDataFactory& op_data_factory){
 
 Status OpRegistry::LookUp(const std::string& name, const OpRegistrationData** op_reg_data){
     auto it = registry_.find(name);
-    if(it==registry_.end()){
+    if(it!=registry_.end()){
         *op_reg_data = it->second;
         return Status::OK();
     }

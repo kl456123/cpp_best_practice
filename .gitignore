@@ -5,3 +5,5 @@ assets/*.txt
 
 *.pb.cc
 *.pb.h
+
+assets/*.pbtxt
