@@ -1,0 +1,32 @@
+syntax="proto3";
+
+
+import "types.proto";
+
+message AttrValue{
+    // list
+    message ListValue{
+        repeated bytes s=2;
+        repeated int64 i=3;
+        repeated float f=4;
+        repeated bool b=5;
+        repeated DataType type=6;
+        repeated NameAttrList func=9;
+    }
+    oneof value{
+        bytes s=2;
+        int64 i=3;
+        float f=4;
+        bool b=5;
+        DataType type=6;
+        ListValue list=1;
+    }
+
+    NameAttrList func=10;
+}
+
+
+message NameAttrList{
+    string name=1;
+    map<string, AttrValue> attr=2;
+}

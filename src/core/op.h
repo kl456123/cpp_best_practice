@@ -2,7 +2,6 @@
 #define CORE_OP_H_
 #include <functional>
 #include <unordered_map>
-#include "core/op.h"
 #include "core/op_builder.h"
 #include "core/selective_registration.h"
 

@@ -1,0 +1,17 @@
+syntax="proto3";
+
+
+message NodeDef{
+    string name=1;
+    string op=2;
+    repeated string input=3;
+
+    string device=4;
+
+    // CONSTRAINT ::= ("job:" JOB_NAME)
+    //              | ("replica:" [1-9][0-9]*)
+    //              | ("task:" [1-9][0-9]*)
+    //              | ("device:" [A-Za-z]* ":" ([1-9][0-9]* | "*") )
+    map<string, AttrValue> attr=5;
+
+}
