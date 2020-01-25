@@ -14,4 +14,9 @@
 #define PREDICT_FALSE(x)    (__builtin_expect(x, 0))
 #define PREDICT_TRUE(x)     (__builtin_expect(!!(x), 1))
 
+#DISALLOW_COPY_AND_ASSIGN(TypeName)        \
+    TypeName(const TypeName&)=delete;      \
+    void operator=(const TypeName&)=delete
+
+
 #endif

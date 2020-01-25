@@ -1,5 +1,5 @@
-#ifndef CORE_ENV_TIME_H_
-#define CORE_ENV_TIME_H_
+#ifndef CORE_PLATFORM_ENV_TIME_H_
+#define CORE_PLATFORM_ENV_TIME_H_
 #include <stdint.h>
 
 

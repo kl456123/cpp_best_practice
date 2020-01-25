@@ -54,5 +54,7 @@ namespace logging{
     if(PREDICT_FALSE((!cond)))                          \
     LOG(FATAL)<<"Check failed: " #cond "  "
 
+#define CHECK_OP(name, op, val1, val2)
+
 
 #endif
