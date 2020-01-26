@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include "core/device.h"
+#include "core/types.h"
 #include "node_def.pb.h"
 
 /*
@@ -169,6 +170,116 @@ T* OpKernelContext::op_device_context(){
 
 // Register OpKernel
 //
+Status CreateOpKernel(DeviceType device_type,DeviceBase* device,Allocator* allocator, const NodeDef& def);
+
+// register kernel utils
+namespace register_kernel{
+    class Name:public KernelDefBuilder{
+        public:
+            explicit Name(const char* op)
+                :KernelDefBuilder(SHOULD_REGISTER_OP(op)?op:"_no_register"){}
+    };
+}
+
+namespace system{
+    class Name:public KernelDefBuilder{
+        public:
+            explicit Name(const char* op)
+                :KernelDefBuilder(op){}
+    };
+}
+
+namespace kernel_factory{
+    class OpKernelFactory{
+        public:
+            virtual OpKernel* Create(OpKernelConstruction* context)=0;
+            virtual ~OpKernelFactory()=default;
+    };
+
+    typedef OpKernel* (CreateFunc)(OpKernelConstruction*);
+
+    class OpKernelRegistrar{
+        public:
+            // call the factory Create() method when it is ok
+            OpKernelRegistrar(const KernelDef* kernel_def,
+                    std::string kernel_class_name,
+                    std::unique_ptr<OpKernelFactory> factory){
+                if(kernel_def !=nullptr){
+                    InitInternal(kernel_def, kernel_class_name, std::move(factory));
+                }
+            }
+
+            OpKernelRegistrar(const KernelDef* kernel_def, std::string kernel_class_name,
+                    OpKernel* (*create_fn)(OpKernelConstruction*)){
+                if(kernel_def!=nullptr){
+                    InitInternal(kernel_def, kernel_class_name, std::make_unique<>());
+                }
+            }
+
+            void CtxFailure(const Status& s);
+            void CtxFailureWithWarning(const Status& s);
+            void CtxFailure(const char* file, int line, const Status& s);
+            void CtxFailureWithWarning(const char* file, int line, const Status& s);
+
+        private:
+            // create func wrapper
+            struct PtrOpKernelFactory: public OpKernelFactory{
+                explicit PtrOpKernelFactory(OpKernel* (*create_fn)(OpKernelConstruction*))
+                    :create_func_(create_fn){}
+
+                OpKernel* Create(OpKernelConstruction* context)override;
+
+                CreateFunc create_func_;
+            };
+            void InitInternal(const KernelDef* kernel_def, std::string kernel_class_name,
+                    std::unique_ptr<OpKernelFactory> factory);
+    };
+}
+
+// register macro
+#define REGISTER_KERNEL_BUILDER(kernel_builder, ...)        \
+    REGISTER_KERNEL_BUILDER_UNIQ_HELPER(__COUNTER__, kernel_builder, __VA_ARGS__)
+
+#define REGISTER_KERNEL_BUILDER_UNIQ_HELPER(ctr, kernel_builder, ...)                      \
+    REGISTER_KERNEL_BUILDER_UNIQ(ctr, kernel_builder, __VA_ARGS__)
+
+#define REGISTER_KERNEL_BUILDER_UNIQ(ctr, kernel_builder, ...)                              \
+    constexpr bool should_register_##ctr##_flag = SHOULD_REGISTER_OP_KERNEL(#__VA_ARGS__);  \
+    static kernel_factory::OpKernelRegistrar registrar__body__##ctr##__object(              \
+            should_register_##ctr##__flag? register_kernel::kernel_builder.Build():nullptr, \
+#__VA_ARGS__, [](OpKernelConstruction* context)                                 \
+            ->OpKernel* {                                                                   \
+            return new __VA_ARGS__(context);                                                \
+            });
+
+            // force register kernel
+            // #define REGISTER_SYSTEM_KERNEL_BUILDER(kernel_builder, ...)
+            //ctx refers to construction or context
+#define OP_REQUIRES(CTX, EXP, STATUS)                                       \
+                do {                                                                \
+                    if(!PREDICT_TRUE(EXP)){                                         \
+                        (CTX)->CtxFailure(__FILE__, __LINE__, (STATUS)); \
+                        return;                                                     \
+                    }
+                }while(0);
+
+#define OP_REQUIRES_OK(CTX, ...)                                            \
+    do {                                                                    \
+        Status _s(__VA_ARGS__);                                             \
+        if(!PREDICT_TRUE(_s.ok())){                                         \
+            (CTX)->CtxFailureWithWarning(__FILE__, __LINE__, _s);           \
+            return ;                                                        \
+        }                                                                   \
+    }while(0)
+
+#define OP_REQUIRES_ASYNC(CTX, EXP, STATUS, CALLBACK)                       \
+    do{                                                                     \
+        if(!PREDICT_TRUE(EXP)){                                             \
+            (CTX)->CtxFailure(__FILE__, __LINE__, (STATUS));                \
+            (CALLBACK)();                                                   \
+            return;                                                         \
+        }                                                                   \
+    }while(0)
 
 
 #endif

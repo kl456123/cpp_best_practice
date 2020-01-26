@@ -1,0 +1,25 @@
+syntax="proto3";
+
+import "attr_value.proto";
+
+
+message KernelDef{
+    string op=1;
+    string device_type=2;
+
+    message AttrConstraint{
+        string name =1;
+        AttrValue allowed_values =2;
+    }
+
+    repeated AttrConstraint constraint=3;
+
+    repeated string host_memory_arg=4;
+
+    // priority for different deivce(gpu is better than cpu by default)
+    int32 priority=6;
+}
+
+message KernelList{
+    repeated KernelDef kernel=1;
+}
