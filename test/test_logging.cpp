@@ -9,6 +9,7 @@ class LoggingTestCase: public TestCase{
             LOG(ERROR)<<"error";
             int a=10;
             CHECK(a==10);
+            CHECK_EQ(a, 10)<<"a !=10";
             //LOG(FATAL)<<"fatal";
             return true;
         }

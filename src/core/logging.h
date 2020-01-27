@@ -84,6 +84,15 @@ namespace logging{
             MakeCheckOpValueString(comb.ForVar2(), v2);
             return comb.NewString();
         }
+
+    template<typename T>
+        T&& CheckNotNull(const char* file, int line, const char* exprtext, T&& t){
+            if(t==nullptr){
+                LogMessageFatal(file, line)<<std::string(exprtext);
+            }
+            // type resevered
+            return std::forward<T>(t);
+        }
 }// namespace logging
 
 
@@ -102,32 +111,32 @@ namespace logging{
     if(PREDICT_FALSE((!cond)))                          \
     LOG(FATAL)<<"Check failed: " #cond "  "
 
-#define DEFINE_CHECK_OP_IMPL(name, op)                                 \
-  template <typename T1, typename T2>                                     \
-  inline std::string* name##Impl(const T1& v1, const T2& v2,                   \
-                            const char* exprtext) {                       \
-    if (PREDICT_TRUE(v1 op v2))                                        \
-      return NULL;                                                        \
-    else                                                                  \
-      return logging::MakeCheckOpString(v1, v2, exprtext); \
-  }                                                                       \
-  inline std::string* name##Impl(int v1, int v2, const char* exprtext) {       \
-    return name##Impl<int, int>(v1, v2, exprtext);                        \
-  }                                                                       \
-  inline std::string* name##Impl(const size_t v1, const int v2,                \
-                            const char* exprtext) {                       \
-    if (PREDICT_FALSE(v2 < 0)) {                                       \
-      return MakeCheckOpString(v1, v2, exprtext); \
-    }                                                                     \
-    return name##Impl<size_t, size_t>(v1, v2, exprtext);                  \
-  }                                                                       \
-  inline std::string* name##Impl(const int v1, const size_t v2,                \
-                            const char* exprtext) {                       \
-    if (PREDICT_FALSE(v2 >= std::numeric_limits<int>::max())) {        \
-      return MakeCheckOpString(v1, v2, exprtext);                       \
-    }                                                                     \
-    const size_t uval = (size_t)((unsigned)v2);                           \
-    return name##Impl<size_t, size_t>(v1, uval, exprtext);                \
+#define DEFINE_CHECK_OP_IMPL(name, op)                                          \
+  template <typename T1, typename T2>                                           \
+  inline std::string* name##Impl(const T1& v1, const T2& v2,                    \
+                            const char* exprtext) {                             \
+    if (PREDICT_TRUE(v1 op v2))                                                 \
+      return NULL;                                                              \
+    else                                                                        \
+      return logging::MakeCheckOpString(v1, v2, exprtext);                      \
+  }                                                                             \
+  inline std::string* name##Impl(int v1, int v2, const char* exprtext) {        \
+    return name##Impl<int, int>(v1, v2, exprtext);                              \
+  }                                                                             \
+  inline std::string* name##Impl(const size_t v1, const int v2,                 \
+                            const char* exprtext) {                             \
+    if (PREDICT_FALSE(v2 < 0)) {                                                \
+      return logging::MakeCheckOpString(v1, v2, exprtext);                      \
+    }                                                                           \
+    return name##Impl<size_t, size_t>(v1, v2, exprtext);                        \
+  }                                                                             \
+  inline std::string* name##Impl(const int v1, const size_t v2,                 \
+                            const char* exprtext) {                             \
+    if (PREDICT_FALSE(v2 >= std::numeric_limits<int>::max())) {                 \
+      return logging::MakeCheckOpString(v1, v2, exprtext);                      \
+    }                                                                           \
+    const size_t uval = (size_t)((unsigned)v2);                                 \
+    return name##Impl<size_t, size_t>(v1, uval, exprtext);                      \
   }
 
 // define some functions using macro
@@ -140,16 +149,20 @@ DEFINE_CHECK_OP_IMPL(Check_LT, <)
 
 // call function using single macro
 #define CHECK_OP(name, op, val1, val2)                      \
-        while(CheckOpString _result = name##Impl(           \
+        while(logging::CheckOpString _result = name##Impl(           \
                     va1, va2, #val1 " " #op " " #val2))     \
         LogMessageFatal(__FILE__, __LINE__)<<*(_result.str_)
 
+// it can print var1 and var2
 #define CHECK_EQ(val1, val2)    CHECK_OP(Check_EQ, ==, val1, val2)
-#define CHECK_EQ(val1, val2)    CHECK_OP(Check_NE, !=, val1, val2)
-#define CHECK_EQ(val1, val2)    CHECK_OP(Check_LE, <=, val1, val2)
-#define CHECK_EQ(val1, val2)    CHECK_OP(Check_GE, >=, val1, val2)
-#define CHECK_EQ(val1, val2)    CHECK_OP(Check_LT, <, val1, val2)
-#define CHECK_EQ(val1, val2)    CHECK_OP(Check_GT, >, val1, val2)
+#define CHECK_NE(val1, val2)    CHECK_OP(Check_NE, !=, val1, val2)
+#define CHECK_LE(val1, val2)    CHECK_OP(Check_LE, <=, val1, val2)
+#define CHECK_GE(val1, val2)    CHECK_OP(Check_GE, >=, val1, val2)
+#define CHECK_LT(val1, val2)    CHECK_OP(Check_LT, <, val1, val2)
+#define CHECK_GT(val1, val2)    CHECK_OP(Check_GT, >, val1, val2)
+// no null
+#define CHECK_NOTNULL(var)                                  \
+        CheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
 
 
 
