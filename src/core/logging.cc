@@ -60,3 +60,24 @@ LogMessageFatal::~LogMessageFatal(){
     abort();
 }
 
+
+CheckOpMessageBuilder::CheckOpMessageBuilder(const char* exprtext)
+    :stream_(new std::ostringstream){
+        // insert the header of failed error message
+    *stream_<<"Check failed: "<<exprtext<<"(";
+}
+
+
+CheckOpMessageBuilder::~CheckOpMessageBuilder(){
+    delete stream_;
+}
+
+std::ostream* CheckOpMessageBuilder::ForVar2(){
+    *stream_<<" vs. ";
+    return stream_;
+}
+
+std::string* CheckOpMessageBuilder::NewString(){
+    *stream_<<")";
+    return new std::string(stream_->str());
+}

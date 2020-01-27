@@ -1,6 +1,7 @@
 #ifndef CORE_LOGGING_H_
 #define CORE_LOGGING_H_
 #include <sstream>
+#include <sstream>
 #include "core/define.h"
 
 namespace logging{
@@ -36,6 +37,53 @@ namespace logging{
             LogMessageFatal(const char* file, int line);
             ~LogMessageFatal() override;
     };
+
+    // container for a string, can be converted to bool type
+    struct CheckOpString{
+        CheckOpString(std::string* str):str_(str){}
+        operator bool()const {return PREDICT_TRUE(str_!=nullptr);}
+        std::string* str_;
+    };
+
+    template<typename T>
+        inline void MakeCheckOpValueString(std::ostream* os, const T& v){
+            (*os)<<v;
+        }
+
+    template <>
+        void MakeCheckOpValueString(std::ostream* os, const char& v);
+
+    template <>
+        void MakeCheckOpValueString(std::ostream* os, const signed char& v);
+
+    template <>
+        void MakeCheckOpValueString(std::ostream* os, const unsigned char& v);
+
+    template<typename T1, typename T2>
+        std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext);
+
+    // error message builder
+    class CheckOpMessageBuilder{
+        public:
+            explicit CheckOpMessageBuilder(const char* exprtext);
+            ~CheckOpMessageBuilder();
+
+            std::ostream* ForVar1(){return stream_;}
+            std::ostream* ForVar2();
+
+            // insert ")"
+            std::string* NewString();
+        private:
+            std::ostringstream* stream_;
+    };
+
+    template<template<typename T1, typename T2>
+        std::string* MakeCheckOpString(const T1& v1, const T2& v2, const char* exprtext){
+            CheckOpMessageBuilder comb(exprtext);
+            MakeCheckOpValueString(comb.ForVar1(), v2);
+            MakeCheckOpValueString(comb.ForVar2(), v2);
+            return comb.NewString();
+        }
 }// namespace logging
 
 
@@ -54,7 +102,55 @@ namespace logging{
     if(PREDICT_FALSE((!cond)))                          \
     LOG(FATAL)<<"Check failed: " #cond "  "
 
-#define CHECK_OP(name, op, val1, val2)
+#define DEFINE_CHECK_OP_IMPL(name, op)                                 \
+  template <typename T1, typename T2>                                     \
+  inline std::string* name##Impl(const T1& v1, const T2& v2,                   \
+                            const char* exprtext) {                       \
+    if (PREDICT_TRUE(v1 op v2))                                        \
+      return NULL;                                                        \
+    else                                                                  \
+      return logging::MakeCheckOpString(v1, v2, exprtext); \
+  }                                                                       \
+  inline std::string* name##Impl(int v1, int v2, const char* exprtext) {       \
+    return name##Impl<int, int>(v1, v2, exprtext);                        \
+  }                                                                       \
+  inline std::string* name##Impl(const size_t v1, const int v2,                \
+                            const char* exprtext) {                       \
+    if (PREDICT_FALSE(v2 < 0)) {                                       \
+      return MakeCheckOpString(v1, v2, exprtext); \
+    }                                                                     \
+    return name##Impl<size_t, size_t>(v1, v2, exprtext);                  \
+  }                                                                       \
+  inline std::string* name##Impl(const int v1, const size_t v2,                \
+                            const char* exprtext) {                       \
+    if (PREDICT_FALSE(v2 >= std::numeric_limits<int>::max())) {        \
+      return MakeCheckOpString(v1, v2, exprtext);                       \
+    }                                                                     \
+    const size_t uval = (size_t)((unsigned)v2);                           \
+    return name##Impl<size_t, size_t>(v1, uval, exprtext);                \
+  }
+
+// define some functions using macro
+DEFINE_CHECK_OP_IMPL(Check_EQ, ==)
+DEFINE_CHECK_OP_IMPL(Check_NE, !=)
+DEFINE_CHECK_OP_IMPL(Check_LE, <=)
+DEFINE_CHECK_OP_IMPL(Check_GE, >=)
+DEFINE_CHECK_OP_IMPL(Check_GT, >)
+DEFINE_CHECK_OP_IMPL(Check_LT, <)
+
+// call function using single macro
+#define CHECK_OP(name, op, val1, val2)                      \
+        while(CheckOpString _result = name##Impl(           \
+                    va1, va2, #val1 " " #op " " #val2))     \
+        LogMessageFatal(__FILE__, __LINE__)<<*(_result.str_)
+
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_EQ, ==, val1, val2)
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_NE, !=, val1, val2)
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_LE, <=, val1, val2)
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_GE, >=, val1, val2)
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_LT, <, val1, val2)
+#define CHECK_EQ(val1, val2)    CHECK_OP(Check_GT, >, val1, val2)
+
 
 
 #endif

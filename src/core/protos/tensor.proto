@@ -1,0 +1,25 @@
+
+syntax="proto3";
+
+
+import "types.proto";
+import "tensor_shape.proto";
+
+
+message TensorProto{
+    DataType dtype=1;
+
+    TensorShapeProto tensor_shape=2;
+
+    repeated int32 half_val= 13 [packed=true];
+    repeated float float_val = 5[packed=true];
+
+    repeated double double_val = 6[packed=true];
+    repeated int32 int_val = 7[packed=true];
+    repeated int64 int64_val = 10[packed=true];
+    repeated bytes string_val = 8;
+    repeated bool bool_val = 11[packed=true];
+
+    repeated uint32 uint32_val = 16[packed=true];
+    repeated uint64 uint64_val = 17[packed=true];
+}

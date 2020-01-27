@@ -1,0 +1,14 @@
+syntax="proto3";
+
+
+message TensorShapeProto{
+    message Dim{
+        int64 size=1;
+        string name=2;
+    }
+
+    // multiple dim axies
+    repeated Dim dim=2;
+
+    bool unknown_rank=3;
+}
