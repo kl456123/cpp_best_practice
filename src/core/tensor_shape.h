@@ -86,6 +86,7 @@ class TensorShapeRep{
 
         void set_num_elements(int64_t n){num_elements_=n;}
     private:
+        void DestructorOutOfLine();
         uint8_t* buf(){return &u_.buf[0];}
         const uint8_t* buf()const{return &u_.buf[0];}
         union {
@@ -123,7 +124,16 @@ class TensorShapeBase: public TensorShapeRep{
             RemoveDimRange(d, d+1);
         }
 
-        void RemoveDimRange();
+        void RemoveDimRange(int begin, int end);
+
+        bool unknown_rank()const{
+            return ndims_byte()==kUnknownRank;
+        }
+
+        int dims()const{
+            uint8_t dims = ndims_byte();
+            return dims;
+        }
 
         void RemoveLastDims(int n);
 
@@ -132,12 +142,13 @@ class TensorShapeBase: public TensorShapeRep{
         int64_t dim_size(int d)const;
         std::vector<int64_t> dim_sizes()const;
 
-        // shape iter
+        // shape iter iterator based loop
         TensorShapeIter<Shape> begin()const;
         TensorShapeIter<Shape> end()const;
     protected:
         explicit TensorShapeBase(DataType dt);
     private:
+        void InitDims(std::vector<int64_t> dim_sizes);
 
 };
 
@@ -202,6 +213,43 @@ inline TensorShapeRep::TensorShapeRep(const TensorShapeRep& b){
 inline TensorShapeRep::TensorShapeRep(TensorShapeRep&& b){
     num_elements_=b.num_elements_;
     memcpy(buf(), b.buf(), sizeof(u_.buf));
+    b.set_tag(REP16);
+}
+
+inline TensorShapeRep::~TensorShapeRep(){
+    if(tag()==REP_OUT_OF_LINE){
+        DestructorOutOfLine();
+    }
+}
+
+inline void TensorShapeRep::operator=(const TensorShapeRep& b){
+    num_elements_=b.num_elements_;
+    if(tag()!=REP_OUT_OF_LINE&&b.tag()!=REP_OUT_OF_LINE){
+        memcpy(buf(), b.buf(), sizeof(u_.buf));
+    }else{
+        SlowCopyFrom(b);
+    }
+}
+
+// move assignment
+inline void TensorShapeRep::operator=(TensorShapeRep&& b){
+    if(tag()==REP_OUT_OF_LINE){
+        DestructorOutOfLine();
+    }
+    num_elements_=b.num_elements_;
+    memcpy(buf(), b.buf(), sizeof(u_.buf));
+    b.set_tag(REP16);
+}
+
+template<typename Shape>
+inline TensorShapeBase<Shape>::TensorShapeBase(DataType dt){
+    set_tag(REP16);
+    set_data_type(dt);
+
+    set_ndims_byte(1);
+    uint16_t* dst = as16()->dims_;
+    *dst = 0;
+    set_num_elements(0);
 }
 
 #endif

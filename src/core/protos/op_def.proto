@@ -1,12 +1,6 @@
 syntax="proto3";
 
 import "types.proto";
-
-
-
-
-
-
 message OpDef{
     string name=1;
 
@@ -15,7 +9,6 @@ message OpDef{
         string description=2;
         DataType type=3;
         string type_attr=4;
-
     }
 
     message AttrDef{
