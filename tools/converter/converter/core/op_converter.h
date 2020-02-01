@@ -1,25 +1,24 @@
 #ifndef CONVERTER_CORE_OP_CONVERTER_H_
 #define CONVERTER_CORE_OP_CONVERTER_H_
+#include "core/registry.h"
 
 
 
-class OpConverter{
-    OpConverter();
-    virtual ~OpConverter();
+class OpConverter: public RegistryItemBase{
+    public:
+        OpConverter();
+        virtual ~OpConverter();
 
-    // derived class implement this func
-    virtual void Run();
+        // derived class implement this func
+        virtual void Run()=0;
 };
 
-class OpConverterRegistry{
-    static OpConverterRegistry* Global();
 
-    void LookUp();
+#define REGISTER_CLASS_OP(CLASS)   \
+    REGISTER_CLASS(OpConverter, CLASS)
 
-    void Register();
-};
+// INSTANIZE_REGISTRY(OpConverter);
 
-#define OP_CONVETER_REGISTER
 
 
 

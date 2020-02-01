@@ -1,0 +1,16 @@
+syntax="proto3";
+
+
+message Layer{
+    };
+
+
+message Net{
+    repeated Layer layer=1;
+};
+
+
+message Model{
+    Net net=1;
+    string version=2;
+};
