@@ -1,16 +1,39 @@
 syntax="proto3";
 
 
-message Layer{
-    };
+message Conv2dAttribute{
+    repeated uint32 kernel_size=1;
+    repeated uint32 stride=2;
+};
+
+message Attribute{
+    Conv2dAttribute conv2d_attr=1;
+};
 
 
-message Net{
-    repeated Layer layer=1;
+message Node{
+    string name =5;
+    string type=6;
+
+    repeated int32 input_index=1;
+    repeated int32 output_index=2;
+    Attribute attr=3;
+
+    string doc_string=4;
+};
+
+
+message Graph{
+    string name=2;
+    repeated string tensor_names=3;
+    repeated string output_names=4;
+    repeated Node node=1;
 };
 
 
 message Model{
-    Net net=1;
+    string producer_name=3;
+    Graph graph=1;
     string version=2;
+    string doc_string=4;
 };

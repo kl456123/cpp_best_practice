@@ -25,6 +25,15 @@ void ONNXConverter::Run(){
 
     std::cout<<"node_counts: "<<node_counts<<std::endl;
 
+    // The goal is to populate model proto
+    Model model =  Model();
+    model.set_producer_name("ONNX");
+    model.set_version("0.1");
+    model.set_doc_string("ignored");
+
+    // populate graph
+    Graph* graph = model.mutable_graph();
+
     for(int i=0;i<node_counts;i++){
         // dispatch each node handlers
         const auto& node_proto = graph_proto.node(i);
@@ -38,7 +47,9 @@ void ONNXConverter::Run(){
             std::cout<<"Cannot find"<<std::endl;
             continue;
         }else{
-            op_converter->Run();
+            Node* node_ptr = graph->add_node();
+            // populate node
+            op_converter->Run(node_ptr, &node_proto);
         }
     }
     std::cout<<"ONNXConverter"<<std::endl;
