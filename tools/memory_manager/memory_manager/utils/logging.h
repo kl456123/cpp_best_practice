@@ -1,8 +1,9 @@
 #ifndef CORE_LOGGING_H_
 #define CORE_LOGGING_H_
 #include <sstream>
-#include <sstream>
-#include "core/define.h"
+#include <string>
+#include <limits>
+#include "memory_manager/utils/define.h"
 
 namespace logging{
     // log levels
@@ -151,7 +152,7 @@ DEFINE_CHECK_OP_IMPL(Check_LT, <)
 #define CHECK_OP(name, op, val1, val2)                      \
         while(logging::CheckOpString _result = name##Impl(           \
                     val1, val2, #val1 " " #op " " #val2))     \
-        LogMessageFatal(__FILE__, __LINE__)<<*(_result.str_)
+        logging::LogMessageFatal(__FILE__, __LINE__)<<*(_result.str_)
 
 // it can print var1 and var2
 #define CHECK_EQ(val1, val2)    CHECK_OP(Check_EQ, ==, val1, val2)
@@ -161,7 +162,7 @@ DEFINE_CHECK_OP_IMPL(Check_LT, <)
 #define CHECK_LT(val1, val2)    CHECK_OP(Check_LT, <, val1, val2)
 #define CHECK_GT(val1, val2)    CHECK_OP(Check_GT, >, val1, val2)
 // no null
-#define CHECK_NOTNULL(var)                                  \
+#define CHECK_NOTNULL(val)                                  \
         CheckNotNull(__FILE__, __LINE__, "'" #val "' Must be non NULL", (val))
 
 
