@@ -181,4 +181,7 @@ Allocator* cpu_allocator_base();
 // call it directly.
 Allocator* cpu_allocator();
 
+class SubAllocator:public Allocator{
+};
+
 #endif

@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+import "types.proto";
+import "tensor_shape.proto";
+import "allocation_description.proto";
+
+message TensorDescription {
+  // Data type of tensor elements
+  DataType dtype = 1;
+
+  // Shape of the tensor.
+  TensorShapeProto shape = 2;
+
+  // Information about the size and allocator used for the data
+  AllocationDescription allocation_description = 4;
+};
+

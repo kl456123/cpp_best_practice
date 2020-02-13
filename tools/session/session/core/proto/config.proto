@@ -1,0 +1,13 @@
+syntax="proto3";
+
+message ThreadPoolOptionProto{
+}
+
+
+
+message ConfigProto{
+    map<string, int32> device_count=1;
+    // Whether device placements should be logged.
+    bool log_device_placement = 8;
+    repeated ThreadPoolOptionProto session_inter_op_thread_pool = 12;
+}
