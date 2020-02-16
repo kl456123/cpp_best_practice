@@ -108,7 +108,7 @@ inline std::string* TfCheckOpHelper(Status v, const char* msg){
 
 #define DO_CHECK_OK(val, level)                         \
     while(auto _result = TfCheckOpHelper(val, #val))    \
-    LOG(level)<<_result;
+    LOG(level)<<(*_result)
 
 #define CHECK_OK(val)   DO_CHECK_OK(val, FATAL)
 

@@ -46,9 +46,9 @@ int main(){
 
     // run session
     std::vector<Tensor> outputs;
-    std::vector<std::string> input_names;
-    std::vector<Tensor> input_tensors;
-    std::vector<std::string> output_names;
+    std::vector<std::string> input_names={"input"};
+    std::vector<Tensor> input_tensors={Tensor()};
+    std::vector<std::string> output_names={"output"};
 
     Status run_status = session->Run({{input_names[0], input_tensors[0]}},
             output_names, {}, &outputs);

@@ -4,11 +4,11 @@
 
 namespace string_utils{
     template<typename T>
-        std::string str_cat(T& arg){
+        std::string str_cat(const T& arg){
             return arg;
         }
     template <typename T, typename ...Args>
-        std::string str_cat(T& arg1, Args&... args){
+        std::string str_cat(const T& arg1, const Args&... args){
             return arg1+str_cat(args...);
         }
 }

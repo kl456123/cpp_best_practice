@@ -7,10 +7,13 @@
 namespace errors{
     typedef error::Code Code;
 
-#define DECLARE_ERROR(FUNC, CONST)                                      \
-template<typename... Args>                                              \
-    Status FUNC(Args... msg){                                           \
-        return Status(error::CONST, string_utils::str_cat(msg...));     \
+#define DECLARE_ERROR(FUNC, CONST)                                          \
+    template<typename... Args>                                              \
+    Status FUNC(Args... msg){                                               \
+        return Status(error::CONST, string_utils::str_cat(msg...));         \
+    }                                                                       \
+    inline bool Is##FUNC(const Status& status) {              \
+        return status.code() == error::CONST;                 \
     }
 
 
@@ -33,11 +36,11 @@ DECLARE_ERROR(Unauthenticated, UNAUTHENTICATED)
 
 #undef DECLARE_ERROR
 
-#define RETURN_IF_ERROR(...)                        \
-do{                                                 \
-    Status _status = (__VA_ARGS__);                 \
-    if(PREDICT_FALSE(!_status.ok()))return _status; \
-}while(0)
+#define RETURN_IF_ERROR(...)                                \
+        do{                                                 \
+            Status _status = (__VA_ARGS__);                 \
+            if(PREDICT_FALSE(!_status.ok()))return _status; \
+        }while(0)
 
 }
 

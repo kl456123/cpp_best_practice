@@ -112,7 +112,7 @@ namespace dfactory {
 
 #define INTERNAL_REGISTER_LOCAL_DEVICE_FACTORY(device_type, device_factory, \
         ctr, ...)                    \
-        static ::tensorflow::dfactory::Registrar<device_factory>                  \
+        static dfactory::Registrar<device_factory>                  \
         INTERNAL_REGISTER_LOCAL_DEVICE_FACTORY_NAME(ctr)(device_type,         \
 ##__VA_ARGS__)
 

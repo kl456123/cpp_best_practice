@@ -1,7 +1,7 @@
 syntax="proto3";
-
-message ThreadPoolOptionProto{
-}
+import "step_stats.proto";
+import "cost_graph.proto";
+import "graph.proto";
 
 
 
@@ -10,4 +10,102 @@ message ConfigProto{
     // Whether device placements should be logged.
     bool log_device_placement = 8;
     repeated ThreadPoolOptionProto session_inter_op_thread_pool = 12;
+}
+
+message RunMetadata{
+    StepStats step_stats=1;
+    CostGraphDef cost_graph =2;
+
+    repeated GraphDef partition_graphs = 3;
+}
+message SessionMetadata{
+    string name=1;
+    int64 version=2;
+}
+
+message RunOptions{
+    enum TraceLevel{
+        NO_TRACE=0;
+        SOFTWARE_TRACE=1;
+        HARDWARE_TRACE=2;
+        FULL_TRACE=3;
+    }
+    TraceLevel trace_level=1;
+
+    int32 inter_op_thread_pool=3;
+    bool output_partition_graphs =5;
+}
+
+
+message ThreadPoolOptionProto{
+    int32 num_threads=1;
+    string global_name =2;
+}
+
+message CallableOptions{
+    repeated string feed=1;
+    repeated string fetch=2;
+    repeated string target=3;
+    RunOptions run_options=4;
+    // The Tensor objects fed in the callable and fetched from the callable
+    // are expected to be backed by host (CPU) memory by default.
+    //
+    // The options below allow changing that - feeding tensors backed by
+    // device memory, or returning tensors that are backed by device memory.
+    //
+    // The maps below map the name of a feed/fetch tensor (which appears in
+    // 'feed' or 'fetch' fields above), to the fully qualified name of the device
+    // owning the memory backing the contents of the tensor.
+    //
+    // For example, creating a callable with the following options:
+    //
+    // CallableOptions {
+    //   feed: "a:0"
+    //   feed: "b:0"
+    //
+    //   fetch: "x:0"
+    //   fetch: "y:0"
+    //
+    //   feed_devices: {
+    //     "a:0": "/job:localhost/replica:0/task:0/device:GPU:0"
+    //   }
+    //
+    //   fetch_devices: {
+    //     "y:0": "/job:localhost/replica:0/task:0/device:GPU:0"
+    //  }
+    // }
+    //
+    // means that the Callable expects:
+    // - The first argument ("a:0") is a Tensor backed by GPU memory.
+    // - The second argument ("b:0") is a Tensor backed by host memory.
+    // and of its return values:
+    // - The first output ("x:0") will be backed by host memory.
+    // - The second output ("y:0") will be backed by GPU memory.
+    //
+    // FEEDS:
+    // It is the responsibility of the caller to ensure that the memory of the fed
+    // tensors will be correctly initialized and synchronized before it is
+    // accessed by operations executed during the call to Session::RunCallable().
+    //
+    // This is typically ensured by using the TensorFlow memory allocators
+    // (Device::GetAllocator()) to create the Tensor to be fed.
+    //
+    // Alternatively, for CUDA-enabled GPU devices, this typically means that the
+    // operation that produced the contents of the tensor has completed, i.e., the
+    // CUDA stream has been synchronized (e.g., via cuCtxSynchronize() or
+    // cuStreamSynchronize()).
+    map<string, string> feed_devices = 6;
+    map<string, string> fetch_devices = 7;
+
+    // By default, RunCallable() will synchronize the GPU stream before returning
+    // fetched tensors on a GPU device, to ensure that the values in those tensors
+    // have been produced. This simplifies interacting with the tensors, but
+    // potentially incurs a performance hit.
+    //
+    // If this options is set to true, the caller is responsible for ensuring
+    // that the values in the fetched tensors have been produced before they are
+    // used. The caller can do this by invoking `Device::Sync()` on the underlying
+    // device(s), or by feeding the tensors back to the same Session using
+    // `feed_devices` with the same corresponding device name.
+    bool fetch_skip_sync = 8;
 }

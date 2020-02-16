@@ -2,11 +2,14 @@
 #define SESSION_CORE_SESSION_H_
 #include "graph.pb.h"
 #include "device_attributes.pb.h"
+#include "config.pb.h"
+
 #include "session/core/tensor.h"
 #include "session/core/session_options.h"
 #include "session/utils/status.h"
 #include "session/utils/errors.h"
 #include "session/core/device_mgr.h"
+#include "session/core/threadpool_options.h"
 /// A Session allows concurrent calls to Run(), though a Session must
 /// be created / extended by a single thread.
 ///
@@ -56,6 +59,29 @@ class Session {
                 const std::vector<string>& output_tensor_names,
                 const std::vector<string>& target_node_names,
                 std::vector<Tensor>* outputs) = 0;
+        /// \brief Like `Run`, but allows users to pass in a `RunOptions` proto and
+        /// to retrieve non-Tensor metadata output via a `RunMetadata` proto for this
+        /// step.  `run_metadata` may be nullptr, in which case any metadata output is
+        /// discarded.
+        /// NOTE: This API is still experimental and may change.
+        virtual Status Run(const RunOptions& run_options,
+                const std::vector<std::pair<string, Tensor> >& inputs,
+                const std::vector<string>& output_tensor_names,
+                const std::vector<string>& target_node_names,
+                std::vector<Tensor>* outputs, RunMetadata* run_metadata);
+
+        /// \brief Like `Run` with `RunOptions` proto, but allows user to provide
+        /// custom threadpool implementation via ThreadPoolOptions.
+        /// NOTE: This API is still experimental and may change.
+        virtual Status Run(const RunOptions& run_options,
+                const std::vector<std::pair<string, Tensor> >& inputs,
+                const std::vector<string>& output_tensor_names,
+                const std::vector<string>& target_node_names,
+                std::vector<Tensor>* outputs, RunMetadata* run_metadata,
+                const thread::ThreadPoolOptions& threadpool_options) {
+            return errors::Unimplemented(
+                    "Run with threadpool is not supported for this session.");
+        }
 
 
         ///

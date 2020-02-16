@@ -14,18 +14,23 @@
 #include "session/core/device_set.h"
 #include "session/core/graph_execution_state.h"
 
-#include "session/core/thread_pool.h"
+#include "session/core/threadpool.h"
 
 #include "session/utils/macros.h"
 #include "session/core/graph.h"
 #include "session/core/build_graph_options.h"
 #include "session/core/costmodel.h"
 #include "session/core/costmodel_manager.h"
+#include "session/core/threadpool_options.h"
+#include "session/core/function.h"
+#include "session/core/executor.h"
 
 class DeviceMgr;
 class DirectSessionFactory;
 class Node;
 class GraphExecutionState;
+
+typedef std::vector<std::pair<std::string, Tensor>> NamedTensorList;
 
 class DirectSession: public Session{
     public:
@@ -43,10 +48,25 @@ class DirectSession: public Session{
             if (closed_) return errors::Cancelled("Session has been closed.");
             return Status::OK();
         }
+
         Status Run(const NamedTensorList& inputs,
                 const std::vector<string>& output_names,
                 const std::vector<string>& target_nodes,
                 std::vector<Tensor>* outputs) override;
+
+        // NOTE: Experimental and subject to change.
+        Status Run(const RunOptions& run_options,
+                const NamedTensorList& inputs,
+                const std::vector<string>& output_names,
+                const std::vector<string>& target_nodes,
+                std::vector<Tensor>* outputs,
+                RunMetadata* run_metadata) override;
+
+        // NOTE: Experimental and subject to change.
+        Status Run(const RunOptions& run_options,
+                const NamedTensorList& inputs, const std::vector<string>& output_names,
+                const std::vector<string>& target_nodes, std::vector<Tensor>* outputs,
+                RunMetadata* run_metadata, const thread::ThreadPoolOptions& threadpool_options) override;
         Status ListDevices(
                 std::vector<DeviceAttributes>* response) override;
         Status Close() override;
@@ -55,6 +75,16 @@ class DirectSession: public Session{
             return Status::OK();
         }
 
+        Status CheckGraphCreated(const char* method) {
+            if (!graph_created_) {
+                return errors::InvalidArgument(
+                        "Session was not created with a graph before ", method, "!");
+            }
+            return Status::OK();
+        }
+
+
+
         void ExportCostModels(CostModelManager::CostModelMap* cost_models) {
             cost_model_manager_.ExportCostModels(cost_models);
         }
@@ -62,6 +92,11 @@ class DirectSession: public Session{
 
         const SessionOptions& options() const { return options_; }
     private:
+        struct PerPartitionExecutorsAndLib{
+            std::unique_ptr<Graph> graph=nullptr;
+            Device* device=nullptr;
+            std::unique_ptr<Executor> executor;
+        };
         const SessionOptions options_;
 
         // device
@@ -91,7 +126,7 @@ class DirectSession: public Session{
             std::atomic_int_fast64_t step_count;
             std::unique_ptr<Graph> graph;
             NameNodeMap name_to_node;
-            // std::vector<PerPartitionExecutorsAndLib> items;
+            std::vector<PerPartitionExecutorsAndLib> items;
             std::unordered_map<std::string, size_t> input_name_to_index;
             std::unordered_map<std::string, std::string> input_name_to_rendezvous_key;
             std::unordered_map<std::string, size_t> output_name_to_index;
@@ -102,6 +137,48 @@ class DirectSession: public Session{
 
             int64_t collective_graph_key = BuildGraphOptions::kNoCollectiveGraphKey;
         };
+
+        struct RunStateArgs{
+            bool is_partical_run = false;
+            std::string handle;
+            std::unique_ptr<Graph> graph;
+            int64_t collective_graph_key = BuildGraphOptions::kNoCollectiveGraphKey;
+        };
+
+        struct RunState{
+            Status status;
+            RunState(int64_t step_id, const std::vector<Device*>* devices);
+        };
+
+        // Retrieves an already existing set of executors to run 'inputs' and
+        // 'outputs', or creates and caches them for future use.
+        Status GetOrCreateExecutors(
+                std::vector<std::string> inputs, std::vector<std::string> outputs,
+                std::vector<std::string> target_nodes,
+                ExecutorsAndKeys** executors_and_keys, RunStateArgs* run_state_args);
+
+        // Creates a set of executors to run the subgraph defined by
+        // `callable_options`.
+        Status CreateExecutors(
+                const CallableOptions& callable_options,
+                std::unique_ptr<ExecutorsAndKeys>* out_executors_and_keys,
+                RunStateArgs* run_state_args);
+
+        // // Creates several graphs given the existing graph_def_ and the
+        // // input feeds and fetches, given 'devices'. The graphs share a common
+        // // function library 'flib_def'.
+        // Status CreateGraphs(
+                // const BuildGraphOptions& options,
+                // std::unordered_map<string, std::unique_ptr<Graph>>* outputs,
+                // std::unique_ptr<FunctionLibraryDefinition>* flib_def,
+                // RunStateArgs* run_state_args, DataTypeVector* input_types,
+                // DataTypeVector* output_types, int64* collective_graph_key);
+
+        Status RunInternal(
+                int64_t step_id, const RunOptions& run_options,
+                CallFrameInterface* call_frame, ExecutorsAndKeys* executors_and_keys,
+                RunMetadata* run_metadata,
+                const thread::ThreadPoolOptions& threadpool_options);
 
         // executors
         std::unordered_map<std::string, std::shared_ptr<ExecutorsAndKeys>> executors_;
@@ -117,6 +194,7 @@ class DirectSession: public Session{
         static std::atomic_int_fast64_t step_id_counter_;
         CostModelManager cost_model_manager_;
 
+        bool run_in_caller_thread_ = false;
         DISALLOW_COPY_AND_ASSIGN(DirectSession);
 };
 

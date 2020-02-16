@@ -15,3 +15,6 @@ struct NodeProperties {
   const std::vector<DataType> input_types;
   const std::vector<DataType> output_types;
 };
+
+Graph::~Graph(){
+}

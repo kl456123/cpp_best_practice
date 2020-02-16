@@ -2,7 +2,12 @@
 #include "session/utils/status.h"
 #include "session/utils/strcat.h"
 #include "session/utils/errors.h"
+#include "session/utils/random.h"
 #include "session/core/device_factory.h"
+#include <memory>
+
+namespace{
+}
 
 class DirectSessionFactory : public SessionFactory{
     public:
@@ -41,6 +46,7 @@ class DirectSessionRegistrar{
 };
 
 static DirectSessionRegistrar registrar;
+std::atomic_int_fast64_t DirectSession::step_id_counter_(1);
 
 DirectSession::DirectSession(const SessionOptions& options,
         const DeviceMgr* device_mgr,
@@ -55,7 +61,7 @@ DirectSession::DirectSession(const SessionOptions& options,
             thread_pools_.emplace_back();
         }
 
-        session_handle_= string_utils::str_cat("direct", "1254536346");
+        session_handle_= string_utils::str_cat("direct", std::to_string(random_utils::New64()));
 
         // device
         if(options.config.log_device_placement()){
@@ -165,12 +171,210 @@ Status DirectSession::ListDevices(
     return Status::OK();
 }
 
+Status DirectSession::Run(const RunOptions& run_options,
+        const NamedTensorList& inputs, const std::vector<string>& output_names,
+        const std::vector<string>& target_nodes, std::vector<Tensor>* outputs,
+        RunMetadata* run_metadata, const thread::ThreadPoolOptions& threadpool_options){
+    RETURN_IF_ERROR(CheckNotClosed());
+    RETURN_IF_ERROR(CheckGraphCreated("Run()"));
+    // Extract the inputs names for this run of the session.
+    std::vector<string> input_tensor_names;
+    input_tensor_names.reserve(inputs.size());
+    size_t input_size = 0;
+    for (const auto& it : inputs) {
+        input_tensor_names.push_back(it.first);
+        input_size += it.second.AllocatedBytes();
+    }
+    ExecutorsAndKeys* executors_and_keys;
+    RunStateArgs run_state_args;
+    RETURN_IF_ERROR(GetOrCreateExecutors(input_tensor_names, output_names,
+                target_nodes, &executors_and_keys, &run_state_args));
+
+    // Configure a call frame for the step, which we use to feed and
+    // fetch values to and from the executors.
+    FunctionCallFrame call_frame(executors_and_keys->input_types,
+            executors_and_keys->output_types);
+    std::vector<Tensor> feed_args(inputs.size());
+    for(const auto& it: inputs){
+        if(false){
+        }
+    }
+    const Status s = call_frame.SetArgs(feed_args);
+    if(errors::IsInternal(s)){
+        return errors::InvalidArgument(s.error_message());
+    }else if(!s.ok()){
+        return s;
+    }
+    const int64 step_id = step_id_counter_.fetch_add(1);
+    RETURN_IF_ERROR(RunInternal(step_id, run_options, &call_frame,
+                executors_and_keys, run_metadata, threadpool_options));
+    if(outputs){
+    }
+    return Status::OK();
+}
+
+
+Status DirectSession::Run(const RunOptions& run_options,
+        const NamedTensorList& inputs,
+        const std::vector<string>& output_names,
+        const std::vector<string>& target_nodes,
+        std::vector<Tensor>* outputs,
+        RunMetadata* run_metadata) {
+    return Run(run_options, inputs, output_names, target_nodes, outputs,
+            run_metadata, thread::ThreadPoolOptions());
+}
+
 Status DirectSession::Run(const NamedTensorList& inputs,
         const std::vector<string>& output_names,
         const std::vector<string>& target_nodes,
         std::vector<Tensor>* outputs) {
-    // RunMetadata run_metadata;
-    // return Run(RunOptions(), inputs, output_names, target_nodes, outputs,
-    // &run_metadata);
+    RunMetadata run_metadata;
+    return Run(RunOptions(), inputs, output_names, target_nodes, outputs,
+            &run_metadata);
+}
+
+Status DirectSession::GetOrCreateExecutors(
+        std::vector<std::string> inputs, std::vector<std::string> outputs,
+        std::vector<std::string> target_nodes,
+        ExecutorsAndKeys** executors_and_keys, RunStateArgs* run_state_args){
+    std::string key = "";
+    for(int i=0;i<inputs.size();i++){
+        if(i>0) key+=",";
+        key+= std::string(inputs[i]);
+    }
+    key+="->";
+
+    for(int i=0;i<outputs.size();i++){
+        if(i>0) key+=",";
+        key+= std::string(outputs[i]);
+    }
+    auto it = executors_.find(key);
+    if (it != executors_.end()) {
+        *executors_and_keys = it->second.get();
+        return Status::OK();
+    }
+
+    // Nothing found, so create the executors and store in the cache.
+    // The executor_lock_ is intentionally released while executors are
+    // being created.
+    CallableOptions callable_options;
+    callable_options.mutable_feed()->Reserve(inputs.size());
+    for (const string& input : inputs) {
+        callable_options.add_feed(input);
+    }
+    callable_options.mutable_fetch()->Reserve(outputs.size());
+    for (const string& output : outputs) {
+        callable_options.add_fetch(output);
+    }
+    callable_options.mutable_target()->Reserve(target_nodes.size());
+    for (const string& target : target_nodes) {
+        callable_options.add_target(target);
+    }
+    // *callable_options.mutable_run_options()->mutable_debug_options() =
+    // run_state_args->debug_options;
+    // callable_options.mutable_run_options()
+    // ->mutable_experimental()
+    // ->set_collective_graph_key(run_state_args->collective_graph_key);
+    std::unique_ptr<ExecutorsAndKeys> ek;
+    // std::unique_ptr<FunctionInfo> func_info;
+    RETURN_IF_ERROR(CreateExecutors(callable_options, &ek, run_state_args));
+
+    executors_.emplace(key, std::shared_ptr<ExecutorsAndKeys>(std::move(ek)));
+    *executors_and_keys = ek.get();
+
     return Status::OK();
 }
+
+Status DirectSession::CreateExecutors(
+        const CallableOptions& callable_options,
+        std::unique_ptr<ExecutorsAndKeys>* out_executors_and_keys,
+        RunStateArgs* run_state_args){
+
+    return Status::OK();
+
+}
+
+Status DirectSession::RunInternal(int64_t step_id, const RunOptions& run_options,
+        CallFrameInterface* call_frame, ExecutorsAndKeys* executors_and_keys,
+        RunMetadata* run_metadata,
+        const thread::ThreadPoolOptions& threadpool_options){
+    const uint64_t start_time_usecs = options_.env->NowMicros();
+    const int64_t executor_step_count = executors_and_keys->step_count.fetch_add(1);
+    RunState run_state(step_id, &devices_);
+    if(executors_and_keys->collective_graph_key!=BuildGraphOptions::kNoCollectiveGraphKey){
+    }
+
+    // thread pool
+    // Use std::unique_ptr to ensure garbage collection
+    std::unique_ptr<thread::ThreadPool> threadpool_wrapper;
+    thread::ThreadPool* pool = nullptr;
+
+    if (run_options.inter_op_thread_pool() < -1 ||
+            run_options.inter_op_thread_pool() >=
+            static_cast<int32>(thread_pools_.size())) {
+        return errors::InvalidArgument("Invalid inter_op_thread_pool: ",
+                std::to_string(run_options.inter_op_thread_pool()));
+    }
+    if (run_in_caller_thread_) {
+        pool = nullptr;
+    } else if (threadpool_options.inter_op_threadpool != nullptr) {
+        threadpool_wrapper = std::make_unique<thread::ThreadPool>(
+                threadpool_options.inter_op_threadpool);
+        pool = threadpool_wrapper.get();
+    } else if (run_options.inter_op_thread_pool() >= 0) {
+        pool = thread_pools_[run_options.inter_op_thread_pool()].first;
+    }
+
+    if (pool == nullptr) {
+        // We allow using the caller thread only when having a single executor
+        // specified.
+        if (executors_and_keys->items.size() > 1) {
+            pool = thread_pools_[0].first;
+        } else {
+            LOG(INFO) << "Executing Session::Run() synchronously!";
+        }
+    }
+    const bool can_execute_synchronously = pool == nullptr;
+
+    Status run_status;
+    auto set_threadpool_args_for_item = [](const PerPartitionExecutorsAndLib& item,
+            Executor::Args* args){
+    };
+
+    Executor::Args args;
+    args.step_id = step_id;
+    args.call_frame = call_frame;
+    // args.collective_executor =
+    // (run_state.collective_executor ? run_state.collective_executor->get()
+    // : nullptr);
+    args.session_state = &session_state_;
+    args.session_handle = session_handle_;
+    // args.tensor_store = &run_state.tensor_store;
+    // args.step_container = &run_state.step_container;
+    args.sync_on_finish = sync_on_finish_;
+    args.user_intra_op_threadpool = threadpool_options.intra_op_threadpool;
+
+    bool update_cost_model = false;
+    if (can_execute_synchronously) {
+        //sync
+        const auto& item = executors_and_keys->items[0];
+        set_threadpool_args_for_item(item, &args);
+        run_status = item.executor->Run(args);
+    }else{
+        //async
+        ExecutorBarrier* barrier = new ExecutorBarrier();
+        for (const auto& item : executors_and_keys->items) {
+            set_threadpool_args_for_item(item, &args);
+            item.executor->RunAsync(args, barrier->Get());
+        }
+        run_status = run_state.status;
+    }
+    RETURN_IF_ERROR(run_status);
+
+    if(update_cost_model){
+    }
+
+    return Status::OK();
+}
+DirectSession::RunState::RunState(int64_t step_id,
+        const std::vector<Device*>* devices){}
