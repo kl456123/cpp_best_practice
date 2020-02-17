@@ -15,7 +15,7 @@
 
 class Executor{
     public:
-        ~Executor(){}
+        virtual ~Executor(){}
 
         struct Args{
             int64_t step_id = 0;

@@ -106,8 +106,8 @@ class DirectSession: public Session{
 
         // session id
         std::string session_handle_;
-        bool graph_created_;
-        bool finalized_;
+        bool graph_created_=false;
+        bool finalized_=false;
 
         std::vector<std::pair<thread::ThreadPool*, bool>> thread_pools_;
         Status init_error_;
@@ -134,6 +134,7 @@ class DirectSession: public Session{
 
             std::vector<DataType> input_types;
             std::vector<DataType> output_types;
+            CallableOptions callable_options;
 
             int64_t collective_graph_key = BuildGraphOptions::kNoCollectiveGraphKey;
         };
@@ -159,20 +160,17 @@ class DirectSession: public Session{
 
         // Creates a set of executors to run the subgraph defined by
         // `callable_options`.
-        Status CreateExecutors(
-                const CallableOptions& callable_options,
+        Status CreateExecutors(const CallableOptions& callable_options,
                 std::unique_ptr<ExecutorsAndKeys>* out_executors_and_keys,
                 RunStateArgs* run_state_args);
 
         // // Creates several graphs given the existing graph_def_ and the
         // // input feeds and fetches, given 'devices'. The graphs share a common
         // // function library 'flib_def'.
-        // Status CreateGraphs(
-                // const BuildGraphOptions& options,
-                // std::unordered_map<string, std::unique_ptr<Graph>>* outputs,
-                // std::unique_ptr<FunctionLibraryDefinition>* flib_def,
-                // RunStateArgs* run_state_args, DataTypeVector* input_types,
-                // DataTypeVector* output_types, int64* collective_graph_key);
+        Status CreateGraphs(const BuildGraphOptions& options,
+                std::unordered_map<std::string, std::unique_ptr<Graph>>* outputs,
+                RunStateArgs* run_state_args, std::vector<DataType>* input_types,
+                std::vector<DataType>* output_types, int64_t* collective_graph_key);
 
         Status RunInternal(
                 int64_t step_id, const RunOptions& run_options,

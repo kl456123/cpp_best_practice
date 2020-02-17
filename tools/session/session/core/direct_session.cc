@@ -4,6 +4,8 @@
 #include "session/utils/errors.h"
 #include "session/utils/random.h"
 #include "session/core/device_factory.h"
+#include "session/core/executor_factory.h"
+#include "session/core/graph_partition.h"
 #include <memory>
 
 namespace{
@@ -185,7 +187,7 @@ Status DirectSession::Run(const RunOptions& run_options,
         input_tensor_names.push_back(it.first);
         input_size += it.second.AllocatedBytes();
     }
-    ExecutorsAndKeys* executors_and_keys;
+    ExecutorsAndKeys* executors_and_keys=nullptr;
     RunStateArgs run_state_args;
     RETURN_IF_ERROR(GetOrCreateExecutors(input_tensor_names, output_names,
                 target_nodes, &executors_and_keys, &run_state_args));
@@ -279,8 +281,8 @@ Status DirectSession::GetOrCreateExecutors(
     // std::unique_ptr<FunctionInfo> func_info;
     RETURN_IF_ERROR(CreateExecutors(callable_options, &ek, run_state_args));
 
-    executors_.emplace(key, std::shared_ptr<ExecutorsAndKeys>(std::move(ek)));
     *executors_and_keys = ek.get();
+    executors_.emplace(key, std::shared_ptr<ExecutorsAndKeys>(std::move(ek)));
 
     return Status::OK();
 }
@@ -289,6 +291,59 @@ Status DirectSession::CreateExecutors(
         const CallableOptions& callable_options,
         std::unique_ptr<ExecutorsAndKeys>* out_executors_and_keys,
         RunStateArgs* run_state_args){
+    BuildGraphOptions options;
+    options.callable_options = callable_options;
+
+    // build graphs
+    std::unique_ptr<ExecutorsAndKeys> ek(new ExecutorsAndKeys);
+    ek->callable_options = callable_options;
+    std::unordered_map<string, std::unique_ptr<Graph>> graphs;
+    RETURN_IF_ERROR(CreateGraphs(
+                options, &graphs, run_state_args, &ek->input_types,
+                &ek->output_types, &ek->collective_graph_key));
+    ek->items.reserve(graphs.size());
+    const SessionMetadata* session_metadata = nullptr;
+    for(auto iter=graphs.begin(); iter!=graphs.end(); ++iter){
+        const string& partition_name = iter->first;
+        std::unique_ptr<Graph>& partition_graph = iter->second;
+        Device* device;
+        RETURN_IF_ERROR(device_mgr_->LookupDevice(partition_name, &device));
+        ek->items.resize(ek->items.size() + 1);
+        auto* item = &(ek->items.back());
+        LocalExecutorParams params;
+        params.device = device;
+        params.session_metadata = session_metadata;
+        // params.function_library = lib;
+        auto opseg = device->op_segment();
+        // params.create_kernel = [this, lib, opseg](const NodeDef& ndef,
+        // OpKernel** kernel) {
+        // // NOTE(mrry): We must not share function kernels (implemented
+        // // using `CallOp`) between subgraphs, because `CallOp::handle_`
+        // // is tied to a particular subgraph. Even if the function itself
+        // // is stateful, the `CallOp` that invokes it is not.
+        // if (!OpSegment::ShouldOwnKernel(lib, ndef.op())) {
+        // return lib->CreateKernel(ndef, kernel);
+        // }
+        // auto create_fn = [lib, &ndef](OpKernel** kernel) {
+        // return lib->CreateKernel(ndef, kernel);
+        // };
+        // // Kernels created for subgraph nodes need to be cached.  On
+        // // cache miss, create_fn() is invoked to create a kernel based
+        // // on the function library here + global op registry.
+        // return opseg->FindOrCreate(session_handle_, ndef.name(), kernel,
+        // create_fn);
+        // };
+        // params.delete_kernel = [lib](OpKernel* kernel) {
+        // if (kernel && !OpSegment::ShouldOwnKernel(lib, kernel->type_string()))
+        // delete kernel;
+        // };
+        item->executor = nullptr;
+        item->device = device;
+        const std::string executor_type = "";
+        RETURN_IF_ERROR(NewExecutor(executor_type, params, *partition_graph, &item->executor));
+        item->graph = std::move(partition_graph);
+    }
+    *out_executors_and_keys = std::move(ek);
 
     return Status::OK();
 
@@ -378,3 +433,15 @@ Status DirectSession::RunInternal(int64_t step_id, const RunOptions& run_options
 }
 DirectSession::RunState::RunState(int64_t step_id,
         const std::vector<Device*>* devices){}
+
+Status DirectSession::CreateGraphs(const BuildGraphOptions& options,
+        std::unordered_map<std::string, std::unique_ptr<Graph>>* outputs,
+        RunStateArgs* run_state_args, std::vector<DataType>* input_types,
+        std::vector<DataType>* output_types, int64_t* collective_graph_key){
+    if(finalized_){
+        return errors::FailedPrecondition("Session has been finalized.");
+    }
+    std::unique_ptr<ClientGraph> client_graph;
+
+    return Status::OK();
+}

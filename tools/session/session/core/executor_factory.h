@@ -5,9 +5,9 @@
 
 #include "session/utils/status.h"
 #include "session/core/graph.h"
-#include "session/core/executor.h"
 
 class Graph;
+// forward declaration
 class Executor;
 struct LocalExecutorParams;
 
