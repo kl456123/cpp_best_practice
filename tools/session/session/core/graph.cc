@@ -18,3 +18,6 @@ struct NodeProperties {
 
 Graph::~Graph(){
 }
+
+Graph::Graph(OpRegistryInterface* ){
+}

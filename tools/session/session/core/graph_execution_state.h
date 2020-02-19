@@ -10,8 +10,13 @@
 #include "session/utils/macros.h"
 #include "session/core/build_graph_options.h"
 #include "session/core/costmodel.h"
+#include "session/core/subgraph.h"
+#include "session/core/function.h"
 
 #include "graph.pb.h"
+namespace subgraph{
+    struct RewriteGraphMetadata;
+}
 
 using std::string;
 
@@ -108,11 +113,11 @@ class GraphExecutionState{
         void RestoreStatefulNodes(Graph* graph);
         // Extract the subset of the graph that needs to be run, adding feed/fetch
         // ops as needed.
-        // Status PruneGraph(const BuildGraphOptions& options, Graph* graph,
-                // subgraph::RewriteGraphMetadata* out_rewrite_metadata);
+        Status PruneGraph(const BuildGraphOptions& options, Graph* graph,
+                subgraph::RewriteGraphMetadata* out_rewrite_metadata);
 
-        Status OptimizeGraph(
-                const BuildGraphOptions& options, std::unique_ptr<Graph>* optimized_graph);
+        Status OptimizeGraph(const BuildGraphOptions& options, std::unique_ptr<Graph>* optimized_graph,
+                std::unique_ptr<FunctionLibraryDefinition>* optimized_flib);
 
         // The GraphExecutionState must store a copy of the original GraphDef if
         // either of the following conditions holds:
@@ -132,10 +137,15 @@ class GraphExecutionState{
 
         // 'flib_def_' is initialized from the initial graph def's library,
         // and may be updated by a graph optimization pass.
-        // std::unique_ptr<FunctionLibraryDefinition> flib_def_;
+        std::unique_ptr<FunctionLibraryDefinition> flib_def_;
 
         // The dataflow graph owned by this object.
         Graph* graph_;
+
+        // `rewrite_metadata_` is only set for GraphExecutionState
+        // objects created by `MakeForPrunedGraph()`.
+        // cache
+        std::unique_ptr<subgraph::RewriteGraphMetadata> rewrite_metadata_;
 
         DISALLOW_COPY_AND_ASSIGN(GraphExecutionState);
 };

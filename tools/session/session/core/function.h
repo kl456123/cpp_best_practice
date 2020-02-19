@@ -7,6 +7,7 @@
 #include "session/utils/status.h"
 #include "session/core/tensor.h"
 #include "session/utils/macros.h"
+#include "session/core/op.h"
 
 #include "types.pb.h"
 
@@ -50,6 +51,14 @@ class FunctionCallFrame:public CallFrameInterface{
         std::vector<Retval> rets_;
 
         DISALLOW_COPY_AND_ASSIGN(FunctionCallFrame);
+};
+
+class FunctionLibraryDefinition : public OpRegistryInterface{
+    public:
+          // Ops created for function arguments bear the name given by `kArgOp`; those
+            // created for return values bear the name given by `kRetOp`.
+        static constexpr const char* const kArgOp = "_Arg";
+        ~FunctionLibraryDefinition() override;
 };
 
 #endif

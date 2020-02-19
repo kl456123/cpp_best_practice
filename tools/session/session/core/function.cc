@@ -90,4 +90,7 @@ Status FunctionCallFrame::SetRetval(int index, const Tensor& val) {
     return Status::OK();
 }
 
+FunctionLibraryDefinition::~FunctionLibraryDefinition(){
+}
+
 

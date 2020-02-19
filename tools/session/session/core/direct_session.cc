@@ -442,6 +442,91 @@ Status DirectSession::CreateGraphs(const BuildGraphOptions& options,
         return errors::FailedPrecondition("Session has been finalized.");
     }
     std::unique_ptr<ClientGraph> client_graph;
+    GraphExecutionState* execution_state = nullptr;
+    execution_state = execution_state_.get();
+    RETURN_IF_ERROR(execution_state->BuildGraph(subgraph_options, &client_graph));
+
+    if (subgraph_options.callable_options.feed_size() !=
+            client_graph->feed_types.size()) {
+        return errors::Internal(
+                "Graph pruning failed: requested number of feed endpoints = ",
+                std::to_string(subgraph_options.callable_options.feed_size()),
+                " versus number of pruned feed endpoints = ",
+                std::to_string(client_graph->feed_types.size()));
+    }
+    if (subgraph_options.callable_options.fetch_size() !=
+            client_graph->fetch_types.size()) {
+        return errors::Internal(
+                "Graph pruning failed: requested number of fetch endpoints = ",
+                subgraph_options.callable_options.fetch_size(),
+                " versus number of pruned fetch endpoints = ",
+                client_graph->fetch_types.size());
+    }
+    // Partition the graph across devices.
+    PartitionOptions popts;
+    std::unordered_map<string, GraphDef> partitions;
+    RETURN_IF_ERROR(Partition(popts, &client_graph->graph, &partitions));
+    std::vector<string> device_names;
+    for (auto device : devices_) {
+        // Extract the LocalName from the device.
+        device_names.push_back(DeviceNameUtils::LocalName(device->name()));
+    }
+
+    // Check for valid partitions.
+    for (const auto& partition : partitions) {
+        const string local_partition_name = partition.first;
+        if (std::count(device_names.begin(), device_names.end(),
+                    local_partition_name) == 0) {
+            return errors::InvalidArgument(
+                    "Creating a partition for ", local_partition_name,
+                    " which doesn't exist in the list of available devices. Available "
+                    "devices: ",
+                    device_names[0]+ ",");
+        }
+    }
+
+    // make subgraph
+    for (auto& partition : partitions) {
+        std::unique_ptr<Graph> device_graph(
+                new Graph(client_graph->flib_def.get()));
+        GraphConstructorOptions device_opts;
+        // There are internal operations (e.g., send/recv) that we now allow.
+        device_opts.allow_internal_ops = true;
+        device_opts.expect_device_spec = true;
+        RETURN_IF_ERROR(ConvertGraphDefToGraph(
+                    device_opts, std::move(partition.second), device_graph.get()));
+        outputs->emplace(partition.first, std::move(device_graph));
+    }
+    // optimization
+
+    GraphOptimizationPassOptions optimization_options;
+    optimization_options.session_options = &options_;
+    // optimization_options.flib_def = client_graph->flib_def.get();
+    optimization_options.partition_graphs = outputs;
+    TF_RETURN_IF_ERROR(OptimizationPassRegistry::Global()->RunGrouping(
+                OptimizationPassRegistry::POST_PARTITIONING, optimization_options));
+
+
+
+    Status s;
+    for (auto& partition : *outputs) {
+        const string& partition_name = partition.first;
+        std::unique_ptr<Graph>* graph = &partition.second;
+
+        VLOG(2) << "Created " << DebugString(graph->get()) << " for "
+            << partition_name;
+
+        // Give the device an opportunity to rewrite its subgraph.
+        Device* d;
+        s = device_mgr_->LookupDevice(partition_name, &d);
+        if (!s.ok()) break;
+        s = d->MaybeRewriteGraph(graph);
+        if (!s.ok()) {
+            break;
+        }
+    }
+    std::swap(*input_types, client_graph->feed_types);
+    std::swap(*output_types, client_graph->fetch_types);
 
     return Status::OK();
 }
