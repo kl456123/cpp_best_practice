@@ -108,7 +108,7 @@ namespace logging{
 #define LOG(severity) _DLCL_LOG_##severity
 
 #define CHECK(cond)                                     \
-    if(PREDICT_FALSE((!cond)))                          \
+    if(PREDICT_FALSE(!(cond)))                          \
     LOG(FATAL)<<"Check failed: " #cond "  "
 
 #define DEFINE_CHECK_OP_IMPL(name, op)                                          \
