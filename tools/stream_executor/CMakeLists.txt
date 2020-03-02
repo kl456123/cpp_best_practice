@@ -21,6 +21,7 @@ set(SRC_DIR
     ${SRC_ROOT_PATH}/core
     ${SRC_ROOT_PATH}/utils
     ${SRC_ROOT_PATH}/test
+    ${SRC_ROOT_PATH}/cuda
     )
 
 set(INCLUDE_DIR ${CMAKE_CURRENT_LIST_DIR})

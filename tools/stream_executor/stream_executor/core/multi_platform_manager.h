@@ -24,15 +24,15 @@ class MultiPlatformManager{
         // If the requested platform is not registered, an error status is returned.
         // Ownership of the platform is NOT transferred to the caller --
         // the MultiPlatformManager owns the platforms in a singleton-like fashion.
-        static Status PlatformWithName(string target, Platform*);
-        static Status PlatformWithId(const Platform::Id& id, Platform*);
+        static Status PlatformWithName(string target, Platform**);
+        static Status PlatformWithId(const Platform::Id& id, Platform**);
 
         static Status InitializePlatformWithName(
-                std::string target, const std::map<string, string>& options, Platform*);
+                std::string target, const std::map<string, string>& options, Platform**);
 
         static Status InitializePlatformWithId(
                 const Platform::Id& id, const std::map<string, string>& options,
-                Platform* platform);
+                Platform** platform);
         // Interface for a listener that gets notfied at certain events.
         class Listener {
             public:

@@ -41,7 +41,10 @@ void test(){
     static constexpr float MYSTERY_VALUE = 123.0f;
 
     Platform* platform =nullptr;
-    MultiPlatformManager::PlatformWithName("cuda", platform);
+    Status status = MultiPlatformManager::PlatformWithName("cuda", &platform);
+    if(!status.ok()){
+        LOG(FATAL)<<status;
+    }
     const int device_ordinal = 0;
     StreamExecutor* executor = nullptr;
     platform->ExecutorForDevice(device_ordinal, executor);
@@ -105,9 +108,9 @@ void test(){
 void test2(){
     Platform* platform=nullptr;
     Status platform_status =
-        MultiPlatformManager::PlatformWithName("OpenCL", platform);
+        MultiPlatformManager::PlatformWithName("OpenCL", &platform);
     if (!platform_status.ok()) {
-        LOG(ERROR)<<platform_status;
+        LOG(FATAL)<<platform_status;
         return;
     }
     LOG(INFO) << platform->VisibleDeviceCount() << " devices visible";

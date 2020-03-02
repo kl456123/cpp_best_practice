@@ -1,0 +1,8 @@
+#ifndef STREAM_EXECUTOR_CUDA_CUDA_PLATFORM_H_
+#define STREAM_EXECUTOR_CUDA_CUDA_PLATFORM_H_
+
+class CudaPlatform{
+};
+
+
+#endif
