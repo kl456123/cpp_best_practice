@@ -11,6 +11,7 @@
 #include "core/tensor.h"
 #include "test_helper.h"
 #include "core/define.h"
+#include "utils/gpu_kernel_helper.h"
 
 
 #define CONV_BENCHMARK
@@ -171,51 +172,42 @@ class ConvTestCase : public TestCase{
             int output_size = output->size();
 
             int input_spatial_shape[] = {input_shape[2], input_shape[3]};
-            kernel.setArg(0, OpenCLBuffer(input->device()));
-            kernel.setArg(1, OpenCLBuffer(filter->device()));
-            kernel.setArg(2, OpenCLBuffer(bias->device()));
-            kernel.setArg(3, OpenCLBuffer(output->device()));
-            kernel.setArg(4, kernel_size);
-            kernel.setArg(5, dilation);
-            kernel.setArg(6, stride);
-            kernel.setArg(7, pad);
-            kernel.setArg(8, groups);
-            kernel.setArg(9, input_stride);
-            kernel.setArg(10, output_stride);
-            kernel.setArg(11, input_spatial_shape);
-            kernel.setArg(12, output_size);
+            GpuSetKernel(kernel,
+                    OpenCLBuffer(input->device()),
+                    OpenCLBuffer(filter->device()),
+                    OpenCLBuffer(bias->device()),
+                    OpenCLBuffer(output->device()),
+                    kernel_size,
+                    dilation,
+                    stride,
+                    pad,
+                    groups,
+                    input_stride,
+                    output_stride,
+                    input_spatial_shape,
+                    output_size);
 
             dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();
             auto maxWorkGroupSize = dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->getMaxWorkGroupSize(kernel);
             std::cout<<"kernel max work group size: "<<maxWorkGroupSize<<std::endl;
+            auto& command_queue = dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue();
 #ifdef CONV_BENCHMARK
             for(int i=30;i<31;i++){
-                uint32_t lws=1<<i;
-                uint32_t gws = up_align(output_size, lws);
+                size_t lws=1<<i;
+                size_t gws = up_align(output_size, lws);
                 std::cout<<"use lws: "<<lws<<std::endl;
                 std::cout<<"use gws: "<<gws<<std::endl;
-                cl::NDRange global_work_size = {gws};
-                cl::NDRange local_work_size = {lws};
+
                 // warmup
                 for(int i=0;i<3;i++){
-                    dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                            kernel,
-                            cl::NullRange,
-                            global_work_size,
-                            local_work_size
-                            );
+                    GpuLaunchKernel(kernel, gws, lws, command_queue);
                 }
                 dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();
                 std::chrono::time_point<std::chrono::system_clock> t1 = std::chrono::system_clock::now();
 #endif
 
                 for(int i=0;i<LOOP_TIME;i++){
-                    dynamic_cast<OpenclBackend*>(backend_ptr)->runtime_ptr()->command_queue().enqueueNDRangeKernel(
-                            kernel,
-                            cl::NullRange,
-                            global_work_size,
-                            local_work_size
-                            );
+                    GpuLaunchKernel(kernel, gws, lws, command_queue);
                 }
                 // sync
                 dynamic_cast<OpenclBackend*>(backend_ptr)->Finish();

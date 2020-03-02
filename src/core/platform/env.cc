@@ -11,7 +11,7 @@ class PosixEnv : public Env{
 
 };
 
-Env::Default(){
+Env* Env::Default(){
     static Env* env_default = new PosixEnv();
     return env_default;
 }
