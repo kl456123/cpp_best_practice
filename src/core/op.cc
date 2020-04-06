@@ -1,4 +1,5 @@
 #include "core/op.h"
+#include "stream_executor/platform/errors.h"
 #include <memory>
 
 
@@ -36,7 +37,7 @@ Status OpRegistry::Register(const OpRegistrationDataFactory& op_data_factory){
         // insert to map
         registry_.insert(std::make_pair(op_reg_data->op_def.name(), op_reg_data.get()));
     }else{
-        s = create_error(ErrorCode::RUNTIME_ERROR, "registered Op with name failed!\n");
+        s = ::tensorflow::errors::Internal("registered Op with name failed!\n");
     }
 
     // callback watcher
@@ -62,12 +63,12 @@ Status OpRegistry::LookUp(const std::string& name, const OpRegistrationData** op
         return Status::OK();
     }
 
-    return create_error(ErrorCode::RUNTIME_ERROR, "cannot find op with name \n");
+    return ::tensorflow::errors::Internal("cannot find op with name \n");
 }
 
 Status OpRegistry::SetWatcher(const Watcher& watcher){
     if(watcher_&&watcher){
-        return create_error(ErrorCode::RUNTIME_ERROR, "cannot overwrite a valid watcher!\n");
+        return ::tensorflow::errors::Internal("cannot overwrite a valid watcher!\n");
     }
 
     watcher_ = watcher;

@@ -1,5 +1,5 @@
 #include "test_suite.h"
-#include "core/define.h"
+#include "core/macros.h"
 
 
 class DefineTestCase: public TestCase{

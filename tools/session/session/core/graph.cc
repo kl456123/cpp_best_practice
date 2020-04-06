@@ -19,5 +19,5 @@ struct NodeProperties {
 Graph::~Graph(){
 }
 
-Graph::Graph(OpRegistryInterface* ){
+Graph::Graph(const OpRegistryInterface* ){
 }

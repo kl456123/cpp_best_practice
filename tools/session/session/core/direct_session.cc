@@ -434,7 +434,7 @@ Status DirectSession::RunInternal(int64_t step_id, const RunOptions& run_options
 DirectSession::RunState::RunState(int64_t step_id,
         const std::vector<Device*>* devices){}
 
-Status DirectSession::CreateGraphs(const BuildGraphOptions& options,
+Status DirectSession::CreateGraphs(const BuildGraphOptions& subgraph_options,
         std::unordered_map<std::string, std::unique_ptr<Graph>>* outputs,
         RunStateArgs* run_state_args, std::vector<DataType>* input_types,
         std::vector<DataType>* output_types, int64_t* collective_graph_key){

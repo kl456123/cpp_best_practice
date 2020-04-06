@@ -1,7 +1,7 @@
 #ifndef TEST_HELPER_H_
 #define TEST_HELPER_H_
 #include <cmath>
-#include "core/define.h"
+#include "core/macros.h"
 
 
 template<typename T>

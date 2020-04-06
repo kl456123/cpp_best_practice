@@ -1,4 +1,5 @@
 #include "core/op_builder.h"
+#include "stream_executor/platform/errors.h"
 
 
 namespace{
@@ -55,7 +56,7 @@ Status OpDefBuilder::Finalize(OpRegistrationData* op_reg_data)const{
     if(errors.empty()){
         return Status::OK();
     }
-    THROW_ERROR("Invalid arguments!\n");
+    return ::tensorflow::errors::InvalidArgument("Invalid arguments!\n");
 }
 
 

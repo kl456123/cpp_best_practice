@@ -1,6 +1,6 @@
 #include <limits>
 #include "core/pool.h"
-#include "core/define.h"
+#include "core/macros.h"
 
 void* Pool::Alloc(int size){
     auto finalIter = mFreeList.end();

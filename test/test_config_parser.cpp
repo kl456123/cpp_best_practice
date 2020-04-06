@@ -1,6 +1,6 @@
 #include <string>
 #include "test_suite.h"
-#include "config_parser.h"
+#include "core/config_parser.h"
 #include "config.pb.h"
 
 

@@ -16,7 +16,7 @@ class RegisterOpTestCase: public TestCase{
 
             // then look up it from registry
             const OpRegistrationData* op_reg_data=nullptr;
-            if(OpRegistry::Global()->LookUp("conv", &op_reg_data)){
+            if(OpRegistry::Global()->LookUp("conv", &op_reg_data).ok()){
                 return true;
             }else{
                 return false;

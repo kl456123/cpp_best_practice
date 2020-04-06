@@ -2,7 +2,7 @@
 #include <assert.h>
 #include "test_helper.h"
 #include "core/tensor.h"
-#include "backend.h"
+#include "core/backend.h"
 #include <memory>
 #include <assert.h>
 #include <cmath>

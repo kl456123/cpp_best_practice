@@ -4,7 +4,7 @@
 #include <functional>
 #include <vector>
 
-#include "core/error.hpp"
+#include "core/status.h"
 #include "op_def.pb.h"
 #include "shape_inference.h"
 

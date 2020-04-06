@@ -2,6 +2,7 @@
 #define DLCL_UTILS_GPU_KERNEL_HELPER_H_
 #include <CL/cl.hpp>
 #include "core/error.hpp"
+#include "core/status.h"
 
 using GpuKernel = cl::Kernel;
 using GpuStream = cl::CommandQueue;

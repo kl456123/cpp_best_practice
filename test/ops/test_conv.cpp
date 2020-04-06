@@ -10,7 +10,7 @@
 #include "backends/opencl/opencl_backend.h"
 #include "core/tensor.h"
 #include "test_helper.h"
-#include "core/define.h"
+#include "core/macros.h"
 #include "utils/gpu_kernel_helper.h"
 
 

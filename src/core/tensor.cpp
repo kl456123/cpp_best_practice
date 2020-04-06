@@ -1,7 +1,7 @@
 #include "core/tensor.h"
 #include "core/backend.h"
 #include "core/port.h"
-#include "core/define.h"
+#include "core/macros.h"
 
 // used for dump
 #include <iostream>

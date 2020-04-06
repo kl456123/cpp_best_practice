@@ -1,4 +1,7 @@
-#include "session/core/subgraph.h"
+#include <vector>
+
+#include "types.pb.h"
+// #include "session/core/subgraph.h"
 
 
 namespace subgraph{

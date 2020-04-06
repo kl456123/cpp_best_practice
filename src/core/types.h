@@ -1,6 +1,7 @@
 #ifndef CORE_TYPES_H_
 #define CORE_TYPES_H_
 #include <string>
+#include "stream_executor/platform/types.h"
 
 enum class MemoryType{
     DEVICE_MEMORY=0,
