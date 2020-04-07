@@ -2,7 +2,9 @@
 #define TENSOR_H_
 #include <vector>
 
-#include "buffer.h"
+#include "buffer_base.h"
+
+typedef std::vector<int> INTLIST;
 
 
 class TensorShape{
@@ -16,6 +18,8 @@ class TensorShape{
             }
             return size;
         }
+
+        const INTLIST& dims()const{return dims_;}
     private:
         std::vector<int> dims_;
 };
@@ -26,15 +30,18 @@ class Tensor{
         Tensor();
         ~Tensor();
 
-        Buffer* device()const{return device_;}
+        BufferBase* device()const{return device_;}
         void* host()const{return host_;}
         bool is_host()const{return host_==nullptr? false: true;}
 
+        GLuint device_id(){return device_==nullptr? 0: device_->id();}
+
         size_t num_elements()const{return shape_.num_elements();}
+        const INTLIST& dims(){return shape_.dims();}
 
 
     private:
-        Buffer* device_;
+        BufferBase* device_;
         void* host_;
 
         TensorShape shape_;

@@ -18,9 +18,10 @@ int main(int argc, char** argv){
 
     // prepare program
     const char source[] = "";
+    const std::string fname = "../examples/glsl/binary.glsl";
 
     Program program;
-    program.Attach(source)
+    program.Attach(fname)
         .Link();
 
     program.Activate();

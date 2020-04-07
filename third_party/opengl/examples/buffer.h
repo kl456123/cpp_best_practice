@@ -6,9 +6,9 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#include "opengl.h"
+#include "buffer_base.h"
 
-class Buffer{
+class Buffer:public BufferBase{
     public:
         Buffer(GLsizeiptr size, GLenum type, GLenum usage);
         ~Buffer();
@@ -16,14 +16,10 @@ class Buffer{
         // map to copy
         void* Map(GLbitfield bufMask);
         void UnMap();
-
-        // accessor
-        GLuint id()const{return id_;}
-        GLenum type()const{return type_;}
     private:
-        GLuint id_;
         GLsizeiptr size_;
-        GLenum type_;
+
+
 };
 
 class ShaderBuffer: public Buffer{

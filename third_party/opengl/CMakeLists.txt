@@ -4,6 +4,8 @@ project(opengl)
 
 file(GLOB SRC ${CMAKE_SOURCE_DIR}/examples/*.cc)
 
+include_directories(${CMAKE_SOURCE_DIR}/examples)
+
 add_executable(main ${SRC})
 
 
