@@ -5,6 +5,7 @@
 #include "glut.h"
 #include "buffer.h"
 #include "context.h"
+#include "kernels/binary.h"
 
 
 int main(int argc, char** argv){
@@ -27,14 +28,47 @@ int main(int argc, char** argv){
     program.Activate();
 
     // prepare runtime
-    Context context(nullptr);
+    auto context = std::unique_ptr<Context>(new Context(nullptr));
 
     //prepare input and output
-    ShaderBuffer input(1<<5);
-    ShaderBuffer output(1<<5);
+    float input1[] = {1.0, 2.0, 3.0};
+    float input2[] = {1.0, 2.0, 3.0};
+    TensorList inputs_cpu;
+    TensorList outputs_gpu;
+    inputs_cpu.emplace_back(new Tensor(input1, Tensor::DT_FLOAT));
+    inputs_cpu.emplace_back(new Tensor(input2, Tensor::DT_FLOAT));
 
-    context.Compute({1,2,3});
-    context.Finish();
+    TensorList inputs_gpu;
+    inputs_gpu.resize(inputs_cpu.size());
+
+    // download to gpu
+    for(unsigned int i=0;i<inputs_cpu.size();++i){
+        context->CopyCPUTensorToDevice(inputs_cpu[i], inputs_gpu[i]);
+    }
+
+    auto binary_kernel = BinaryKernel(context.get());
+    binary_kernel.Compute(inputs_gpu, outputs_gpu);
+
+    TensorList outputs_cpu;
+    outputs_cpu.resize(outputs_gpu.size());
+    // upload to cpu
+    for(unsigned int i=0;i<outputs_gpu.size();++i){
+        context->CopyDeviceTensorToCPU(outputs_cpu[i], outputs_gpu[i]);
+    }
+
+    // clean up
+    for(unsigned int i=0;i<outputs_gpu.size();++i){
+        // clean up outputs
+    }
+    for(unsigned int i=0;i<inputs_gpu.size();++i){
+        // clean up outputs
+    }
+
+    // ShaderBuffer input(1<<5);
+    // ShaderBuffer output(1<<5);
+
+    // context.Compute({1,2,3});
+    // context.Finish();
 
     return 0;
 }

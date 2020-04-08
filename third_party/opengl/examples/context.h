@@ -5,6 +5,7 @@
 
 #include "opengl.h"
 #include "tensor.h"
+#include "buffer.h"
 
 class Allocator;
 class Context{
@@ -13,8 +14,8 @@ class Context{
         Context():Context(nullptr){}
         void Compute(std::initializer_list<size_t> dim_sizes);
 
-        void CopyCPUBufferToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);
-        void CopyDeviceBufferToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
+        void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);
+        void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
         void Finish(){glFlush();}
     private:
         // used to allocator new buffer or texture duration runtime

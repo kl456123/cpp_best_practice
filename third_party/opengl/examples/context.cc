@@ -13,7 +13,7 @@ Context::Context(Allocator* allocator)
     :allocator_(allocator){
     }
 
-void Context::CopyCPUBufferToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
+void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
     // do some necessary check first
 
     // check cpu_tensor is in cpu
@@ -22,7 +22,7 @@ void Context::CopyCPUBufferToDevice(const Tensor* cpu_tensor, Tensor* device_ten
     // check same size
     CHECK(cpu_tensor->num_elements()==device_tensor->num_elements());
 
-    Buffer* device_buffer = device_tensor->device();
+    Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
     ::memcpy(device_buffer->Map(GL_MAP_WRITE_BIT),cpu_tensor->host(),
             cpu_tensor->num_elements());
 
@@ -30,7 +30,7 @@ void Context::CopyCPUBufferToDevice(const Tensor* cpu_tensor, Tensor* device_ten
 }
 
 
-void Context::CopyDeviceBufferToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
+void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
     // do some necessary check first
 
     // check cpu_tensor is in cpu
@@ -39,7 +39,7 @@ void Context::CopyDeviceBufferToCPU(const Tensor* device_tensor, Tensor* cpu_ten
     // check same size
     CHECK(cpu_tensor->num_elements()==device_tensor->num_elements());
 
-    Buffer* device_buffer = device_tensor->device();
+    Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
     ::memcpy(cpu_tensor->host(), device_buffer->Map(GL_MAP_READ_BIT),
             cpu_tensor->num_elements());
 

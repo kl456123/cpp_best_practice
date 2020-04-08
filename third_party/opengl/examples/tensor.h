@@ -2,7 +2,7 @@
 #define TENSOR_H_
 #include <vector>
 
-#include "buffer_base.h"
+#include "texture.h"
 
 typedef std::vector<int> INTLIST;
 
@@ -26,23 +26,37 @@ class TensorShape{
 
 // device and host sperate storage
 class Tensor{
+
     public:
+        enum DataType{
+            DT_INT=0,
+            DT_FLOAT=1,
+            DT_DOUBLE=2,
+            DT_INVALID
+        };
         Tensor();
+        template<typename T>
+            Tensor(T* data, DataType dtype);
         ~Tensor();
 
-        BufferBase* device()const{return device_;}
+        void* device()const{return device_;}
         void* host()const{return host_;}
         bool is_host()const{return host_==nullptr? false: true;}
-
-        GLuint device_id(){return device_==nullptr? 0: device_->id();}
 
         size_t num_elements()const{return shape_.num_elements();}
         const INTLIST& dims(){return shape_.dims();}
 
+        template<typename T>
+        GLuint device_id(){
+            return reinterpret_cast<T*>(device_)->id();
+        }
+
 
     private:
-        BufferBase* device_;
+        void* device_;
         void* host_;
+
+        DataType dtype_;
 
         TensorShape shape_;
 
@@ -52,6 +66,12 @@ class Tensor{
         Tensor& operator=(Tensor& other)=delete;
         Tensor& operator=(Tensor&& other)=delete;
 };
+
+inline Tensor::Tensor(){
+    host_=nullptr;
+    dtype_=DT_INVALID;
+}
+
 
 
 #endif

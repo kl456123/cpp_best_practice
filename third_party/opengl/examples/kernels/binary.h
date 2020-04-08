@@ -7,12 +7,12 @@ class Program;
 class Tensor;
 class Context;
 
-typedef const std::vector<Tensor*> TensorList;
+typedef std::vector<Tensor*> TensorList;
 
 class BinaryKernel{
     public:
         BinaryKernel(Context* context);
-        virtual void Compute(Tensor& inputs, Tensor& outputs);
+        virtual void Compute(TensorList& inputs, TensorList& outputs);
         virtual ~BinaryKernel();
     private:
         Program* program_;

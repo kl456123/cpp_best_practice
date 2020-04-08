@@ -3,13 +3,15 @@
 #include "opengl.h"
 
 class BufferBase{
-    BufferBase();
-// accessor
+    public:
+        BufferBase(GLuint id, GLenum target);
+        virtual ~BufferBase(){};
+        // accessor
         GLuint id()const{return id_;}
-        GLenum type()const{return type_;}
+        GLenum target()const{return target_;}
     protected:
         GLuint id_;
-        GLenum type_;
+        GLenum target_;
 };
 
 

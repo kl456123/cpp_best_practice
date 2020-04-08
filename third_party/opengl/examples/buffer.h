@@ -8,7 +8,7 @@
 
 #include "buffer_base.h"
 
-class Buffer:public BufferBase{
+class Buffer{
     public:
         Buffer(GLsizeiptr size, GLenum type, GLenum usage);
         ~Buffer();
@@ -18,6 +18,9 @@ class Buffer:public BufferBase{
         void UnMap();
     private:
         GLsizeiptr size_;
+
+        GLuint id_;
+        GLenum target_;
 
 
 };

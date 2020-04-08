@@ -1,14 +1,16 @@
 #include "buffer.h"
 
 
-Buffer::Buffer(GLsizeiptr size, GLenum type, GLenum usage){
-    type_ = type;
+Buffer::Buffer(GLsizeiptr size, GLenum target, GLenum usage){
+    target_ = target;
     size_ = size;
 
+    // create new name of buffer object
     glGenBuffers(1, &id_);
-    glBindBuffer(type_, id_);
+    // assign to context
+    glBindBuffer(target, id_);
     // allocate mem in device
-    glBufferData(type_, size_, NULL, usage);
+    glBufferData(target, size_, NULL, usage);
 }
 
 Buffer::~Buffer(){
@@ -17,13 +19,13 @@ Buffer::~Buffer(){
 
 
 void* Buffer::Map(GLbitfield bufMask){
-    glBindBuffer(type_, id_);
-    auto ptr = glMapBufferRange(type_, 0, size_, bufMask);
+    glBindBuffer(target_, id_);
+    auto ptr = glMapBufferRange(target_, 0, size_, bufMask);
     return ptr;
 }
 
 
 void Buffer::UnMap(){
-    glBindBuffer(type_, id_);
-    glUnmapBuffer(type_);
+    glBindBuffer(target_, id_);
+    glUnmapBuffer(target_);
 }
