@@ -12,7 +12,11 @@ int main(int argc, char** argv){
     /////////////////////////////////////
     // init and get statisic ////////////
     /////////////////////////////////////
-    InitGLUT(argc, argv);
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE);
+    glutInitWindowSize(400, 300);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Hello world!");
     int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
     printf("GL_MAX_TEXTURE_SIZE, %d\n",maxtexsize);
