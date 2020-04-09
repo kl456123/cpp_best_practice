@@ -13,13 +13,13 @@ endforeach()
 include_directories(${CMAKE_SOURCE_DIR}/examples)
 # message(${SRC_FILES})
 
-set(OpenGL_LIB -lglut -lGL -lGLEW)
+set(OpenGL_LIB -lglut -lGL -lGLEW -lglfw)
 add_executable(main ${SRC_FILES})
 
 target_link_libraries(main ${OpenGL_LIB})
 
 
 # build demo
-add_executable(demo ${CMAKE_SOURCE_DIR}/demo.cc)
+add_executable(demo ${CMAKE_SOURCE_DIR}/demo/demo.cc)
 
 target_link_libraries(demo ${OpenGL_LIB})

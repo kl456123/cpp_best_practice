@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <memory>
+#include "init.h"
 
 #include "program.h"
 #include "glut.h"
@@ -8,15 +9,12 @@
 #include "kernels/binary.h"
 
 
+
+
 int main(int argc, char** argv){
-    /////////////////////////////////////
-    // init and get statisic ////////////
-    /////////////////////////////////////
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE);
-    glutInitWindowSize(400, 300);
-    glutInitWindowPosition(100, 100);
-    glutCreateWindow("Hello world!");
+    glut_init(argc, argv);
+    glew_init();
+
     int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
     printf("GL_MAX_TEXTURE_SIZE, %d\n",maxtexsize);
