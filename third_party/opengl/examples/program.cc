@@ -1,6 +1,7 @@
 #include "program.h"
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 Program::~Program(){
     glDeleteProgram(program_id_);
@@ -37,7 +38,11 @@ Program& Program::Attach(const std::string& fname, GLenum type){
     std::ifstream fd(fname);
     auto src = std::string(std::istreambuf_iterator<char>(fd),
             (std::istreambuf_iterator<char>()));
-    const char * source = src.c_str();
+    // add head
+    std::ostringstream tc;
+    tc << GetHead();
+    tc<<src;
+    const char * source = tc.str().c_str();
     return Attach(source, type);
 }
 
@@ -56,6 +61,15 @@ Status Program::Link(){
 
 Program::Program(){
     program_id_ = glCreateProgram();
+}
+
+std::string Program::GetHead(std::string imageFormat) {
+    std::ostringstream headOs;
+    headOs << "#version 310 es\n";
+    headOs << "#define PRECISION mediump\n";
+    headOs << "precision PRECISION float;\n";
+    headOs << "#define FORMAT " << imageFormat << "\n";
+    return headOs.str();
 }
 
 Status Program::Activate(){

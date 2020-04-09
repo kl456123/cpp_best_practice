@@ -3,7 +3,7 @@ layout(location=1) uniform mediump sampler3D uInput0;
 layout(location=2) uniform mediump sampler3D uInput1;
 layout(location=3) uniform ivec4 imgSize;
 
-layout (local_size_x = XLOCAL, local_size_y = YLOCAL, local_size_z = ZLOCAL) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 void main()
 {

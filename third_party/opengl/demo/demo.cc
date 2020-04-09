@@ -3,14 +3,43 @@
 #include <fstream>
 #include <string>
 
+// opengl
 #define GLWE_STATIC
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+
+// opencv
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+// glm
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+glm::mat4 get_transform(){
+    glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+    vec = trans * vec;
+    std::cout<< vec.x<<vec.y<<vec.z<<std::endl;
+
+    // rotate
+    trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
+    return trans;
+}
+
+glm::mat4 get_transform_animation(){
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+    trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+    return trans;
+}
 
 GLFWwindow* glfw_init(const int width, const int height){
     // Load GLFW and Create a Window
@@ -207,6 +236,12 @@ void SetFloat(GLuint program, const std::string& name, float value[4]){
     glUniform4f(vertexColorLocation, value[0], value[1], value[2], value[3]);
 }
 
+void SetMatrix(GLuint program, const std::string& name, glm::mat4& trans){
+    glUseProgram(program);
+    int vertexColorLocation = glGetUniformLocation(program, name.c_str());
+    glUniformMatrix4fv(vertexColorLocation, 1, GL_FALSE, glm::value_ptr(trans));
+}
+
 void SetInt(GLuint program, const std::string& name, GLuint texture_id){
     glUseProgram(program);
     glUniform1i(glGetUniformLocation(program, name.c_str()), texture_id);
@@ -278,6 +313,7 @@ int main(int argc, char* argv[]){
     SetInt(shaderProgram, "texture1", 0);
     SetInt(shaderProgram, "texture2", 1);
 
+
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // poll
@@ -295,9 +331,12 @@ int main(int argc, char* argv[]){
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
-        glUseProgram(shaderProgram);
-        glBindVertexArray(VAO);
+        glm::mat4 trans = get_transform_animation();
+        SetMatrix(shaderProgram, "transform", trans);
 
+        glUseProgram(shaderProgram);
+
+        glBindVertexArray(VAO);
         // glDrawArrays(GL_TRIANGLES, 0, 3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 

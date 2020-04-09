@@ -14,6 +14,8 @@ class Program{
         const unsigned int program_id(){return program_id_;}
         Status Link();
         Status Activate();
+
+        std::string GetHead(std::string imageFormat="rgba32f");
     private:
         Status CreateShader(const char* source, GLenum type, int* out);
         unsigned int program_id_=0;
