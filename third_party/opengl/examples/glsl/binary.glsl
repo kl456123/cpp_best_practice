@@ -1,3 +1,6 @@
+#version 310
+#define PRECISION mediump
+#define FORMAT rgba32f
 layout(FORMAT, binding=0) writeonly uniform PRECISION image3D uOutput;
 layout(location=1) uniform mediump sampler3D uInput0;
 layout(location=2) uniform mediump sampler3D uInput1;

@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.2.0)
 
+option(BUILD_DEMO "BUILD OPENGL DEMO" OFF)
+option(BUILD_GPGPU "BUILD OPENGL GPGPU" ON)
+
 project(opengl)
 
 find_package(OpenCV REQUIRED)
@@ -21,7 +24,13 @@ add_executable(main ${SRC_FILES})
 target_link_libraries(main ${OpenGL_LIB} ${OpenCV_LIBS})
 
 
+if(BUILD_DEMO)
 # build demo
-add_executable(demo ${CMAKE_SOURCE_DIR}/demo/demo.cc)
+    add_executable(demo ${CMAKE_SOURCE_DIR}/demo/demo.cc)
+    target_link_libraries(demo ${OpenGL_LIB} ${OpenCV_LIBS})
+endif()
 
-target_link_libraries(demo ${OpenGL_LIB} ${OpenCV_LIBS})
+if(BUILD_GPGPU)
+    add_executable(axpy_demo ${CMAKE_SOURCE_DIR}/gpgpu/axpy_demo.cc)
+    target_link_libraries(axpy_demo ${OpenGL_LIB} ${OpenCV_LIBS})
+endif()
