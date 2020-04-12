@@ -3,14 +3,17 @@
 #include <vector>
 
 #include "texture.h"
+#include "buffer.h"
 
 typedef std::vector<int> INTLIST;
 
 
 class TensorShape{
     public:
-        TensorShape(){
-        }
+        TensorShape(std::vector<int>& dims)
+            :dims_(dims){
+            }
+        TensorShape(){}
         size_t num_elements()const{
             size_t size = 1;
             for(auto dim:dims_){
@@ -34,9 +37,9 @@ class Tensor{
             DT_DOUBLE=2,
             DT_INVALID
         };
-        Tensor();
+        Tensor(DataType dtype, int size);
         template<typename T>
-            Tensor(T* data, DataType dtype);
+            Tensor(T* data, DataType dtype, int size);
         ~Tensor();
 
         void* device()const{return device_;}
@@ -46,15 +49,18 @@ class Tensor{
         size_t num_elements()const{return shape_.num_elements();}
         const INTLIST& dims(){return shape_.dims();}
 
+        const int size()const{return size_;}
+
         template<typename T>
-        GLuint device_id(){
-            return reinterpret_cast<T*>(device_)->id();
-        }
+            GLuint device_id(){
+                return reinterpret_cast<T*>(device_)->id();
+            }
 
 
     private:
         void* device_;
         void* host_;
+        int size_;
 
         DataType dtype_;
 
@@ -67,9 +73,14 @@ class Tensor{
         Tensor& operator=(Tensor&& other)=delete;
 };
 
-inline Tensor::Tensor(){
-    host_=nullptr;
-    dtype_=DT_INVALID;
+inline Tensor::Tensor(DataType dtype, int num){
+    const int size = sizeof(float)*num;
+    host_= new float[num];
+    dtype_=dtype;
+    device_ = new ShaderBuffer(size);
+    auto temp_shape = std::vector<int>({num});
+    shape_ = TensorShape(temp_shape);
+    size_ = size;
 }
 
 

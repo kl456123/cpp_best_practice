@@ -13,7 +13,8 @@ BinaryKernel::BinaryKernel(Context* context)
 
         // set program
         program_ = new Program;
-        program_->Attach("../examples/glsl/binary.glsl");
+        std::string fname = "../examples/glsl/binary.glsl";
+        program_->Attach(fname);
         program_->Link();
     }
 

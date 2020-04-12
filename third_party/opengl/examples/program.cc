@@ -36,13 +36,13 @@ Program& Program::Attach(const char* source, GLenum type){
 Program& Program::Attach(const std::string& fname, GLenum type){
     // Load GLSL Shader Source from File
     std::ifstream fd(fname);
-    auto src = std::string(std::istreambuf_iterator<char>(fd),
+    std::string src = std::string(std::istreambuf_iterator<char>(fd),
             (std::istreambuf_iterator<char>()));
     // add head
-    std::ostringstream tc;
-    tc << GetHead();
-    tc<<src;
-    const char * source = tc.str().c_str();
+    // std::ostringstream tc;
+    // tc << GetHead();
+    // tc<<src;
+    const char * source = src.c_str();
     return Attach(source, type);
 }
 

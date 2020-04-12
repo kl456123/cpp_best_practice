@@ -20,11 +20,12 @@ void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_ten
     CHECK(cpu_tensor->is_host());
 
     // check same size
+    CHECK(cpu_tensor->size()==device_tensor->size());
     CHECK(cpu_tensor->num_elements()==device_tensor->num_elements());
 
     Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
     ::memcpy(device_buffer->Map(GL_MAP_WRITE_BIT),cpu_tensor->host(),
-            cpu_tensor->num_elements());
+            cpu_tensor->size());
 
     device_buffer->UnMap();
 }
@@ -41,7 +42,7 @@ void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_ten
 
     Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
     ::memcpy(cpu_tensor->host(), device_buffer->Map(GL_MAP_READ_BIT),
-            cpu_tensor->num_elements());
+            cpu_tensor->size());
 
     device_buffer->UnMap();
 }

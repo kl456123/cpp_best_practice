@@ -19,7 +19,7 @@ void initGLEW(void){
     int err = glewInit();
 
     if(GLEW_OK !=err){
-        printf((char*)glewGetErrorString(err));
+        // printf((char*)glewGetErrorString(err));
         exit(ERROR_GLEW);
     }
 }
@@ -49,7 +49,7 @@ int main(int argc, char**argv){
     // create texture
     GLuint texID;
     GLenum texture_target = GL_TEXTURE_2D;
-    GLenum internal_format = NV_float_buffer;
+    GLenum internal_format = GL_RGBA32F;
     GLenum texture_format = GL_RGBA;
     glGenTextures(1, &texID);
     glBindTexture(texture_target, texID);

@@ -33,4 +33,7 @@ endif()
 if(BUILD_GPGPU)
     add_executable(axpy_demo ${CMAKE_SOURCE_DIR}/gpgpu/axpy_demo.cc)
     target_link_libraries(axpy_demo ${OpenGL_LIB} ${OpenCV_LIBS})
+
+    add_executable(compute_shader ${CMAKE_SOURCE_DIR}/gpgpu/compute_shader.cc)
+    target_link_libraries(compute_shader ${OpenGL_LIB} ${OpenCV_LIBS})
 endif()
