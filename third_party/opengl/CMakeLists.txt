@@ -1,39 +1,58 @@
 cmake_minimum_required(VERSION 3.2.0)
 
-option(BUILD_DEMO "BUILD OPENGL DEMO" OFF)
-option(BUILD_GPGPU "BUILD OPENGL GPGPU" ON)
+project(opengl VERSION 1.0)
 
-project(opengl)
+option(BUILD_EXAMPLES "BUILD OPENGL EXAMPLES" ON)
+option(BUILD_NN "BUILD NERTUAL NETWORK" OFF)
+option(BUILD_TEST "BUILD OPENGL TEST" OFF)
+
 
 find_package(OpenCV REQUIRED)
+find_package(glog REQUIRED)
 
-set(SRC_DIR ${CMAKE_SOURCE_DIR}/examples/kernels
-    ${CMAKE_SOURCE_DIR}/examples)
+set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 
-foreach(file_path ${SRC_DIR})
-    file(GLOB file_source_c ${file_path}/*.cc)
-    set(SRC_FILES ${SRC_FILES} ${file_source_c})
+set(CORE_SRC_NAMES
+    program.cc
+    context.cc
+    buffer.cc
+    texture.cc
+    init.cc
+    tensor.cc
+    allocator.cc
+    buffer_base.cc)
+
+foreach(fname ${CORE_SRC_NAMES})
+    set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})
 endforeach()
 
-include_directories(${CMAKE_SOURCE_DIR}/examples)
-# message(${SRC_FILES})
+# root directory
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(OpenGL_LIB -lglut -lGL -lGLEW -lglfw)
-add_executable(main ${SRC_FILES})
 
-target_link_libraries(main ${OpenGL_LIB} ${OpenCV_LIBS})
+set(GL_CORE gl_core)
+
+# build core library
+add_library(${GL_CORE} ${CORE_SRC_FILES})
+target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog)
 
 
-if(BUILD_DEMO)
-# build demo
-    add_executable(demo ${CMAKE_SOURCE_DIR}/demo/demo.cc)
-    target_link_libraries(demo ${OpenGL_LIB} ${OpenCV_LIBS})
+# examples demo
+if (BUILD_EXAMPLES)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/examples)
 endif()
 
-if(BUILD_GPGPU)
-    add_executable(axpy_demo ${CMAKE_SOURCE_DIR}/gpgpu/axpy_demo.cc)
-    target_link_libraries(axpy_demo ${OpenGL_LIB} ${OpenCV_LIBS})
 
-    add_executable(compute_shader ${CMAKE_SOURCE_DIR}/gpgpu/compute_shader.cc)
-    target_link_libraries(compute_shader ${OpenGL_LIB} ${OpenCV_LIBS})
+# deeplearning framework using opengl backend
+if (BUILD_NN)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn)
 endif()
+
+if(BUILD_TEST)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/test)
+endif()
+
+
+
+

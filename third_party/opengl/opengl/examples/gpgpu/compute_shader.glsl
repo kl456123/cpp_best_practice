@@ -1,4 +1,3 @@
-#version 430 core
 layout(local_size_x=1, local_size_y=1) in;
 layout(location=0) uniform sampler2D image_input;
 layout(binding=1) writeonly buffer destBuffer{

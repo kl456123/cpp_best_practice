@@ -1,7 +1,7 @@
 #include "buffer.h"
 
 
-Buffer::Buffer(GLsizeiptr size, GLenum target, GLenum usage){
+Buffer::Buffer(GLsizeiptr size, GLenum target, GLenum usage, float* data){
     target_ = target;
     size_ = size;
 
@@ -10,7 +10,7 @@ Buffer::Buffer(GLsizeiptr size, GLenum target, GLenum usage){
     // assign to context
     glBindBuffer(target, id_);
     // allocate mem in device
-    glBufferData(target, size_, NULL, usage);
+    glBufferData(target, size_, data, usage);
 }
 
 Buffer::~Buffer(){
@@ -20,6 +20,7 @@ Buffer::~Buffer(){
 
 void* Buffer::Map(GLbitfield bufMask){
     glBindBuffer(target_, id_);
+    // (TODO figure out 0 meaning)
     auto ptr = glMapBufferRange(target_, 0, size_, bufMask);
     return ptr;
 }
