@@ -39,13 +39,20 @@ class Program{
             glUniform2i(GetLocation(name), x, y);
         }
 
-        void set_buffer(const std::string& name){
+        void set_buffer(GLuint SSBO, GLenum target){
+            glBindBufferBase(target, 1, SSBO);
         }
 
-        void set_sampler2D(){
+        void set_input_sampler2D(GLuint tex_output, GLenum internal_format){
+            glBindImageTexture(0, tex_output, 0, GL_TRUE, 0, GL_READ_ONLY, internal_format);
         }
 
-        void set_image2D(GLuint id,  int tex_id){
+        void set_output_sampler2D(GLuint tex_output, GLenum internal_format){
+            glBindImageTexture(0, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, internal_format);
+        }
+
+        void set_image2D(const std::string& name, GLuint id,  int tex_id){
+            set_int(name, tex_id);
             glActiveTexture(GL_TEXTURE0+tex_id);
             glBindTexture(GL_TEXTURE_2D, id);
         }

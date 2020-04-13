@@ -19,6 +19,7 @@ class Buffer{
 
         GLuint id()const{return id_;}
         GLsizeiptr size()const{return size_;}
+        GLenum target()const{return target_;}
     private:
         GLsizeiptr size_;
 

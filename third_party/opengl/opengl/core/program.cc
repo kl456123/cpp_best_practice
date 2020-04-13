@@ -47,8 +47,6 @@ Program& Program::AttachFile(const std::string fname, GLenum type){
     tc << GetHead("rgba32f");
     tc<<src;
 
-    LOG(INFO)<<tc.str();
-
     return AttachSource(tc.str().c_str(), type);
 }
 

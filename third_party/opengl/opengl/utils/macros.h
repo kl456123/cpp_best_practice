@@ -1,8 +1,8 @@
-#ifndef MACROS_H_
-#define MACROS_H_
+#ifndef OPENGL_UTILS_MACROS_H_
+#define OPENGL_UTILS_MACROS_H_
 #include "opengl/core/opengl.h"
 
-// #ifdef OPEN_GL_CHECK_ERROR
+#ifdef ENABLE_OPENGL_CHECK_ERROR
 #define OPENGL_CHECK_ERROR              \
 {                                   \
     GLenum error = glGetError();    \
@@ -10,8 +10,14 @@
         LOG(FATAL)<<"error here"; \
     }\
 }
-// #else
-// #define OPENGL_CHECK_ERROR
-// #endif
+#else
+#define OPENGL_CHECK_ERROR
+#endif
+
+#define EXPECT_OPENGL_NO_ERROR  \
+    EXPECT_TRUE(glGetError()==GL_NO_ERROR)
+
+#define ASSERT_OPENGL_NO_ERROR  \
+    ASSERT_TRUE(glGetError()==GL_NO_ERROR)
 
 #endif

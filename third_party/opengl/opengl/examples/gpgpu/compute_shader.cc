@@ -15,8 +15,6 @@
 
 
 
-
-
 void BiasAdd(Texture* texture1, Texture* texture2, Texture* texture3){
     auto program = std::unique_ptr<Program>(new Program);
     program->AttachFile("../opengl/examples/gpgpu/bias_add.glsl");
@@ -30,17 +28,13 @@ void BiasAdd(Texture* texture1, Texture* texture2, Texture* texture3){
     OPENGL_CHECK_ERROR;
     // input0
     {
-        program->set_int("input0", 0);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1->id());
+        program->set_image2D("input0", texture1->id(),  0);
         OPENGL_CHECK_ERROR;
     }
 
     // input1
     {
-        program->set_int("input1", 1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2->id());
+        program->set_image2D("input1", texture2->id(),  1);
         OPENGL_CHECK_ERROR;
     }
     glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
@@ -82,7 +76,7 @@ int main(int arc, char* argv[]){
     // cpu data
     DataType* image_data = new DataType[num];
     for(int i=0;i<num;i++){
-        image_data[i] = random()%256;
+        image_data[i] = random()%256/256.0;
     }
     DataType *buffer_cpu = new DataType[num];
     memset(buffer_cpu, 0, size);
@@ -109,6 +103,7 @@ int main(int arc, char* argv[]){
     // calculate by using texture
     BiasAdd(texture1.get(), texture2.get(), texture3.get());
 
+    // flatten
     gl_context->CopyImageToBuffer(texture3.get(), buffer.get());
 
     // download

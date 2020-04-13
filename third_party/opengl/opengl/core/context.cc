@@ -68,8 +68,8 @@ void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){
 
 
     GLuint ray_program = program.program_id();
-    GLuint tex_output = texture->id();
-    GLuint SSBO = buffer->id();
+    // GLuint tex_output = texture->id();
+    // GLuint SSBO = buffer->id();
 
     int tex_w = texture->shape()[0];
     int tex_h = texture->shape()[1];
@@ -78,21 +78,14 @@ void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){
 
     //set param in program and then dispatch the shaders
     {
+        // set input and output
         program.set_vec2i("image_shape", tex_w, tex_h);
-        // program.set_int("image_input", 0);
+        OPENGL_CHECK_ERROR;
+        program.set_input_sampler2D(texture->id(), texture->format());
+        OPENGL_CHECK_ERROR;
+        program.set_buffer(buffer->id(), buffer->target())
         OPENGL_CHECK_ERROR;
 
-        // call sampler2D
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, tex_output);
-        // image2D
-        glBindImageTexture(0, tex_output, 0, GL_TRUE, 0, GL_READ_ONLY, texture->format());
-
-
-        OPENGL_CHECK_ERROR;
-        // output
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
-        OPENGL_CHECK_ERROR;
         glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
         OPENGL_CHECK_ERROR;
     }
@@ -109,8 +102,6 @@ void Context::CopyBufferToImage(Texture* texture, Buffer* buffer){
 
 
     GLuint ray_program = program.program_id();
-    GLuint tex_output = texture->id();
-    GLuint SSBO = buffer->id();
 
     int tex_w = texture->shape()[0];
     int tex_h = texture->shape()[1];
@@ -119,21 +110,14 @@ void Context::CopyBufferToImage(Texture* texture, Buffer* buffer){
 
     //set param in program and then dispatch the shaders
     {
+        // set input and output
         program.set_vec2i("image_shape", tex_w, tex_h);
-        // program.set_int("image_output", 0);
         OPENGL_CHECK_ERROR;
-        glBindImageTexture(0, tex_output, 0, GL_TRUE, 0, GL_WRITE_ONLY, texture->format());
+        program.set_output_sampler2D(texture->id(), texture->format());
+        OPENGL_CHECK_ERROR;
+        program.set_buffer(buffer->id(), buffer->target())
         OPENGL_CHECK_ERROR;
 
-
-        // call
-        // used for sampler2D
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, tex_output);
-
-        // output
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, SSBO);
-        OPENGL_CHECK_ERROR;
         glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
     }
 
