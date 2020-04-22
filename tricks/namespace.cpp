@@ -12,11 +12,30 @@ namespace {
 }
 
 
+namespace testing{
+    namespace{
+        bool flag_ = false;
+    }//namespace
+    class Controler{
+        public:
+            static void set_flag(){
+                flag_ = true;
+            }
+            static bool flag(){
+                return flag_;
+            }
+            static void print_flag(){
+                std::cout<<flag_<<std::endl;
+            }
+
+    };
+}//namespace testing
+
+
 int main(){
-    // enable logging namespace
-    using namespace logging;
-    std::cout<<a<<std::endl;
-    // using anonymous namespace by default
-    std::cout<<b<<std::endl;
+    using testing::Controler;
+    Controler::print_flag();
+    Controler::set_flag();
+    Controler::print_flag();
     return 0;
 }

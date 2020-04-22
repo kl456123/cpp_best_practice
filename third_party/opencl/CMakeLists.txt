@@ -16,4 +16,7 @@ endif()
 if(BUILD_C)
     add_executable(ocl_c_demo opencl_demo.c)
     target_link_libraries(ocl_c_demo -lOpenCL)
+
+    add_executable(vecAdd vecAdd.c)
+    target_link_libraries(vecAdd -lOpenCL -lm)
 endif()
