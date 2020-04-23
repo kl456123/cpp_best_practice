@@ -3,13 +3,13 @@
 #include <vector>
 #include "opengl.h"
 
-class Allocator{
-    public:
-        Allocator();
-        void* AllocateRaw(std::vector<size_t>& shape);
-        void* AllocateRaw(std::initializer_list<size_t> shape, GLenum texture_format);
-        void DeAllocateRaw(void* ptr);
-};
-
-
+namespace opengl{
+    class Allocator{
+        public:
+            Allocator();
+            void* AllocateRaw(std::vector<size_t>& shape);
+            void* AllocateRaw(std::initializer_list<size_t> shape, GLenum texture_format);
+            void DeAllocateRaw(void* ptr);
+    };
+}//namespace opengl
 #endif

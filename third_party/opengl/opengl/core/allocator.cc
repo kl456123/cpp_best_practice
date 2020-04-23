@@ -1,5 +1,7 @@
 #include "allocator.h"
 
 
-Allocator::Allocator(){
-}
+namespace opengl{
+    Allocator::Allocator(){
+    }
+}//namespace opengl

@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.2.0)
 
 project(opengl VERSION 1.0)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=c++14")
 
 option(BUILD_EXAMPLES "BUILD OPENGL EXAMPLES" ON)
 option(BUILD_NN "BUILD NERTUAL NETWORK" OFF)
 option(BUILD_TEST "BUILD OPENGL TEST" ON)
+option(BUILD_ARM "USE GLES" OFF)
 
+if(BUILD_ARM)
+    add_definitions(-DARM_PLATFORM)
+    # disable gtest due to compliation problem
+    set(BUILD_TEST OFF)
+endif()
 
 find_package(OpenCV REQUIRED)
 find_package(glog REQUIRED)
@@ -30,6 +37,9 @@ endforeach()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(OpenGL_LIB -lglut -lGL -lGLEW -lglfw)
+if(BUILD_ARM)
+    set(OpenGL_LIB ${OpenGL_LIB} -lEGL)
+endif()
 
 set(GL_CORE gl_core)
 

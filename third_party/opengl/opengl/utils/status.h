@@ -4,6 +4,8 @@
 
 
 // just for simplication
-typedef GLint Status;
+namespace opengl{
+    typedef GLint OGLStatus;
+}//namespace opengl
 
 #endif

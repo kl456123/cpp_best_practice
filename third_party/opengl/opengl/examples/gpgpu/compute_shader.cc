@@ -13,6 +13,13 @@
 #include "opengl/core/buffer.h"
 #include "opengl/utils/macros.h"
 
+// using namespace opengl;
+using opengl::Texture;
+using opengl::Context;
+using opengl::Buffer;
+using opengl::Program;
+using opengl::ShaderBuffer;
+
 
 
 void BiasAdd(Texture* texture1, Texture* texture2, Texture* texture3){
@@ -43,10 +50,15 @@ void BiasAdd(Texture* texture1, Texture* texture2, Texture* texture3){
 int main(int arc, char* argv[]){
     google::InitGoogleLogging(argv[0]);
     // init window and context
-    auto window = glfw_init(1280, 800);
+#ifdef ARM_PLATFORM
+    ::opengl::egl_init();
+#else
+    ::opengl::glfw_init(1280, 800);
+#endif
+
 
     // init glew
-    glew_init();
+    ::opengl::glew_init();
 
     auto gl_context = std::unique_ptr<Context>(new Context);
 

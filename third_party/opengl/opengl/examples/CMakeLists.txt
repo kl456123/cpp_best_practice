@@ -1,6 +1,7 @@
 
 option(BUILD_RENDER "BUILD OPENGL RENDER" OFF)
 option(BUILD_GPGPU "BUILD OPENGL GPGPU" ON)
+option(BUILD_GLES "BUILD GLES DEMO" ON)
 
 
 if(BUILD_RENDER)
@@ -14,4 +15,9 @@ if(BUILD_GPGPU)
 
     add_executable(compute_shader ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu/compute_shader.cc)
     target_link_libraries(compute_shader ${OpenGL_LIB} ${OpenCV_LIBS} ${GL_CORE})
+endif()
+
+if(BUILD_GLES)
+    add_executable(triangle ${CMAKE_CURRENT_SOURCE_DIR}/gles/demo.cc)
+    target_link_libraries(triangle -lGLESv2 -lglfw)
 endif()

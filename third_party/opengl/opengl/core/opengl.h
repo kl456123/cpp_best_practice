@@ -14,5 +14,10 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef ARM_PLATFORM
+// #include <GLES2/gl2.h>
+// #include <GLES2/gl2ext.h>
+#endif
+
 
 #endif

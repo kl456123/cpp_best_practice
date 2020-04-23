@@ -4,6 +4,8 @@
 #include <vector>
 
 
-void setLocalSize(std::vector<std::string>& prefix, int* localSize, std::vector<int> local_sizes);
+namespace opengl{
+    void setLocalSize(std::vector<std::string>& prefix, int* localSize, std::vector<int> local_sizes);
+}//namespace opengl
 
 #endif
