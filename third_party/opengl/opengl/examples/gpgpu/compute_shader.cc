@@ -50,12 +50,9 @@ void BiasAdd(Texture* texture1, Texture* texture2, Texture* texture3){
 int main(int arc, char* argv[]){
     google::InitGoogleLogging(argv[0]);
     // init window and context
-#ifdef ARM_PLATFORM
-    ::opengl::egl_init();
-#else
     ::opengl::glfw_init(1280, 800);
-#endif
 
+    ::opengl::log_glinfo();
 
     // init glew
     ::opengl::glew_init();

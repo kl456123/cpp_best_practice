@@ -380,9 +380,9 @@ int main(int argc, char* argv[]){
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     // vetex shader
-    GLuint vertexShader = CreateShader("../demo/glsl/vertex.glsl", GL_VERTEX_SHADER);
+    GLuint vertexShader = CreateShader("../opengl/examples/render/glsl/vertex.glsl", GL_VERTEX_SHADER);
 
-    GLuint fragmentShader = CreateShader("../demo/glsl/fragment.glsl", GL_FRAGMENT_SHADER);
+    GLuint fragmentShader = CreateShader("../opengl/examples/render/glsl/fragment.glsl", GL_FRAGMENT_SHADER);
 
     std::vector<GLuint> shaders({vertexShader, fragmentShader});
     GLuint shaderProgram = CreateProgram(shaders);

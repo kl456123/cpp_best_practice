@@ -4,12 +4,6 @@
 
 namespace opengl{
 
-    int glut_init(int argc, char* argv[]){
-        glutInit(&argc, argv);
-
-        int window = glutCreateWindow(argv[0]);
-        return window;
-    }
 
     int glew_init(){
         glewExperimental = GL_TRUE;
@@ -21,68 +15,19 @@ namespace opengl{
         return 0;
     }
 
-
-
-
-#ifdef ARM_PLATFORM
-    void egl_init(){
-        // init for embedding platform
-        // just assign for the following variable
-        EGLContext egl_context;
-        EGLDisplay egl_display;
-        EGLSurface egl_surface;
-
-        if(eglGetCurrentContext()==EGL_NO_CONTEXT){
-            egl_context = EGL_NO_CONTEXT;
-            VLOG(1)<<"No Current Context Found! Need to Create Again";
-        }
-
-        egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (egl_display == EGL_NO_DISPLAY) {
-            LOG(FATAL)<<"eglGetDisplay Failed When Creating Context!";
-        }
-        int majorVersion;
-        int minorVersion;
-        eglInitialize(egl_display, &majorVersion, &minorVersion);
-        EGLint numConfigs;
-        static const EGLint configAttribs[] = {EGL_SURFACE_TYPE,
-            EGL_PBUFFER_BIT,
-            EGL_RENDERABLE_TYPE,
-            EGL_OPENGL_ES2_BIT,
-            EGL_RED_SIZE,
-            8,
-            EGL_GREEN_SIZE,
-            8,
-            EGL_BLUE_SIZE,
-            8,
-            EGL_ALPHA_SIZE,
-            8,
-            EGL_NONE};
-
-        EGLConfig surfaceConfig;
-        if(!eglChooseConfig(egl_display, configAttribs, &surfaceConfig, 1, &numConfigs)){
-            eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            eglTerminate(egl_display);
-            egl_display = EGL_NO_DISPLAY;
-            LOG(FATAL)<<"eglChooseConfig Failed When Creating Context!";
-        }
-
-        static const EGLint contextAttribs[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
-        egl_context                             = eglCreateContext(egl_display, surfaceConfig, NULL, contextAttribs);
-        static const EGLint surfaceAttribs[] = {EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE};
-        egl_surface                             = eglCreatePbufferSurface(egl_display, surfaceConfig, surfaceAttribs);
-        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-        eglBindAPI(EGL_OPENGL_ES_API);
-        int major;
-        glGetIntegerv(GL_MAJOR_VERSION, &major);
-        LOG(INFO)<<"current opengl version: "<<major;
+    void log_glinfo(){
+        LOG(INFO)<<"GL_VERSION  : "<< glGetString(GL_VERSION)<<std::endl;
+        LOG(INFO)<<"GL_RENDERER : "<< glGetString(GL_RENDERER)<<std::endl;
+        LOG(INFO)<<"GLSL ES VERSION  :"<< glGetString(GL_SHADING_LANGUAGE_VERSION);
     }
-#else
+
+
+
     GLFWwindow* glfw_init(const int width, const int height){
         // Load GLFW and Create a Window
         glfwInit();
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MINOR_VERSION);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -98,8 +43,6 @@ namespace opengl{
         glfwMakeContextCurrent(window);
         return window;
     }
-
-#endif
 
 
     // buffer and texture

@@ -70,7 +70,7 @@ namespace opengl{
 
     std::string Program::GetHead(std::string imageFormat) {
         std::ostringstream headOs;
-        headOs << "#version 430\n";
+        headOs << "#version "<<GLSL_VERSION<<"\n";
         headOs << "#define FORMAT " << imageFormat << "\n";
         headOs << "#define PRECISION mediump\n";
         headOs << "precision PRECISION float;\n";

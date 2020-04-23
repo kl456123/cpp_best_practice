@@ -4,59 +4,28 @@
 #include <random>
 #include <assert.h>
 #include <cstring>
-#include "init.h"
+#include "opengl/core/init.h"
 
-#include "program.h"
-#include "glut.h"
-#include "buffer.h"
-#include "context.h"
-#include "kernels/binary.h"
+#include "opengl/core/program.h"
+#include "opengl/core/buffer.h"
+#include "opengl/core/context.h"
+#include "opengl/nn/kernels/binary.h"
 
+// only tensor is visible in nn module
+using opengl::Tensor;
+using opengl::TensorList;
+using opengl::Context;
 
 
 
 int main(int argc, char** argv){
-    glut_init(argc, argv);
-    glew_init();
+    // glut_init(argc, argv);
+    ::opengl::glfw_init();
+    ::opengl::glew_init();
 
     int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
     printf("GL_MAX_TEXTURE_SIZE, %d\n",maxtexsize);
-
-    {
-        // buffer read and write test
-        const int num = 1<<3;
-        const int size = num*sizeof(float);
-        auto buffer_device = ShaderBuffer(size);
-        float buffer_cpu1[num]={0};
-        float buffer_cpu2[num]={0};
-        for(int i=0;i<num;i++){
-            buffer_cpu1[i] = random()%100;
-        }
-
-        //write first from cpu1
-        ::memcpy(buffer_device.Map(GL_MAP_WRITE_BIT), buffer_cpu1, size);
-        buffer_device.UnMap();
-
-        // read then to cpu2
-        ::memcpy(buffer_cpu2, buffer_device.Map(GL_MAP_WRITE_BIT), size);
-        buffer_device.UnMap();
-
-        // check the same between cpu1 and cpu2
-        for(int i=0;i<num;++i){
-            assert(buffer_cpu1[i]==buffer_cpu2[i]);
-        }
-    }
-
-    // prepare program
-    // const char source[] = "";
-    // const std::string fname = "../examples/glsl/binary.glsl";
-
-    // Program program;
-    // program.Attach(fname)
-    // .Link();
-
-    // program.Activate();
 
     // prepare runtime
     auto context = std::unique_ptr<Context>(new Context(nullptr));
@@ -81,7 +50,7 @@ int main(int argc, char** argv){
         context->CopyCPUTensorToDevice(inputs_cpu[i], inputs_gpu[i]);
     }
 
-    auto binary_kernel = BinaryKernel(context.get());
+    auto binary_kernel = ::opengl::BinaryKernel(context.get());
     binary_kernel.Compute(inputs_gpu, outputs_gpu);
 
     context->Finish();
@@ -104,11 +73,6 @@ int main(int argc, char** argv){
     for(unsigned int i=0;i<inputs_gpu.size();++i){
         // clean up outputs
     }
-
-    // ShaderBuffer input(1<<5);
-    // ShaderBuffer output(1<<5);
-
-    // context.Compute({1,2,3});
 
     return 0;
 }

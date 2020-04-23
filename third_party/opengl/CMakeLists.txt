@@ -4,7 +4,7 @@ project(opengl VERSION 1.0)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -std=c++14")
 
 option(BUILD_EXAMPLES "BUILD OPENGL EXAMPLES" ON)
-option(BUILD_NN "BUILD NERTUAL NETWORK" OFF)
+option(BUILD_NN "BUILD NERTUAL NETWORK" ON)
 option(BUILD_TEST "BUILD OPENGL TEST" ON)
 option(BUILD_ARM "USE GLES" OFF)
 
@@ -36,9 +36,9 @@ endforeach()
 # root directory
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(OpenGL_LIB -lglut -lGL -lGLEW -lglfw)
+set(OpenGL_LIB -lGLEW -lglfw -lGL)
 if(BUILD_ARM)
-    set(OpenGL_LIB ${OpenGL_LIB} -lEGL)
+    set(OpenGL_LIB ${OpenGL_LIB} -lGLESv2)
 endif()
 
 set(GL_CORE gl_core)
