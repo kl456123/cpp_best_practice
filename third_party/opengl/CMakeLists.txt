@@ -10,8 +10,6 @@ option(BUILD_ARM "USE GLES" OFF)
 
 if(BUILD_ARM)
     add_definitions(-DARM_PLATFORM)
-    # disable gtest due to compliation problem
-    set(BUILD_TEST OFF)
 endif()
 
 find_package(OpenCV REQUIRED)
