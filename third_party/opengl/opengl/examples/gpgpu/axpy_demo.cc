@@ -59,7 +59,6 @@ int main(int argc, char**argv){
     glTexParameteri(texture_target, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
     // WHY
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     glTexImage2D(texture_target, 0, internal_format, texSize,
             texSize, 0, texture_format, GL_FLOAT, 0);
 

@@ -36,9 +36,11 @@ endforeach()
 # root directory
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(OpenGL_LIB -lGLEW -lglfw -lGL)
+set(OpenGL_LIB -lGLEW -lglfw)
 if(BUILD_ARM)
     set(OpenGL_LIB ${OpenGL_LIB} -lGLESv2)
+else()
+    set(OpenGL_LIB ${OpenGL_LIB} -lGL)
 endif()
 
 set(GL_CORE gl_core)

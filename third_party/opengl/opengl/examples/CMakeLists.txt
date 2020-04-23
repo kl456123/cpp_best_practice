@@ -5,7 +5,7 @@ option(BUILD_GLES "BUILD GLES DEMO" ON)
 option(BUILD_GLUT "BUILD GLUT DEMO" ON)
 
 
-if(BUILD_RENDER)
+if(BUILD_RENDER AND (NOT BUILD_ARM))
     add_executable(render ${CMAKE_CURRENT_SOURCE_DIR}/render/render.cc)
     target_link_libraries(render ${OpenGL_LIB} ${OpenCV_LIBS})
 endif()
