@@ -6,7 +6,7 @@
 #include <string>
 #include <sstream>
 
-#include <GL/glew.h>
+// #include <GL/glew.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -66,8 +66,8 @@ void egl_init(){
     eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
     eglBindAPI(EGL_OPENGL_ES_API);
     int major;
-    glGetIntegerv(GL_MAJOR_VERSION, &major);
-    LOG(INFO)<<"current opengl version: "<<major;
+    // glGetIntegerv(GL_MAJOR_VERSION, &major);
+    // LOG(INFO)<<"current opengl version: "<<major;
 }
 
 const GLchar* vertexShaderSource[] = {

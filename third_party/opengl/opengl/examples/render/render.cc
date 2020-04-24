@@ -3,11 +3,7 @@
 #include <fstream>
 #include <string>
 
-// opengl
-#define GLWE_STATIC
-#include <GL/glew.h>
-#include <GL/gl.h>
-#include <GLFW/glfw3.h>
+#include "opengl/core/opengl.h"
 
 // opencv
 #include <opencv2/core/core.hpp>
@@ -90,8 +86,8 @@ glm::mat4 get_transform_animation(){
 GLFWwindow* glfw_init(const int width, const int height){
     // Load GLFW and Create a Window
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, OPENGL_MAJOR_VERSION);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, OPENGL_MAJOR_VERSION);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
@@ -112,15 +108,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height){
     glViewport(0, 0, width, height);
 }
 
-int glew_init(){
-    glewExperimental = GL_TRUE;
-    GLenum err = glewInit();
-    if(err!=GLEW_OK){
-        std::cout<<"glewInit failed: "<<glewGetErrorString(err)<<std::endl;
-        return -1;
-    }
-    return 0;
-}
 
 std::string load_source(const std::string& fname){
     std::ifstream fd(fname);
@@ -374,7 +361,7 @@ int main(int argc, char* argv[]){
     auto window = glfw_init(1280, 800);
 
     // init glew
-    glew_init();
+    // glew_init();
 
     // register callback
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -404,7 +391,7 @@ int main(int argc, char* argv[]){
     SetInt(shaderProgram, "texture2", 1);
 
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     int num_objects=0;
     glm::vec3* cubePositions = get_location(&num_objects);

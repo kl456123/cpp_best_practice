@@ -24,7 +24,7 @@ namespace opengl{
         int shader_id;
         OGLStatus shader_status = CreateShader(source, type, &shader_id);
         // Display the Build Log on Error
-        if (shader_status == false){
+        if (!shader_status){
             char infoLog[512];
             glGetShaderInfoLog(shader_id, 512, NULL, infoLog);
             LOG(FATAL)<< "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog;

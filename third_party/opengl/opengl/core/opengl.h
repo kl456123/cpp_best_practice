@@ -15,12 +15,14 @@
 // all necessary macros
 /////////////////////////////////
 
-#define GL_GLEXT_PROTOTYPES
-#define GLWE_STATIC
-#include <GL/glew.h>
 
-#ifdef ARM_PLATFORM
-#define GLFW_INCLUDE_ES2
+
+#ifndef ARM_PLATFORM
+#define GL_GLEXT_PROTOTYPES
+#define GLFW_INCLUDE_GLEXT
+#else
+#define GLFW_INCLUDE_ES31
+#define GLFW_INCLUDE_GLEXT
 #endif
 #include <GLFW/glfw3.h>
 

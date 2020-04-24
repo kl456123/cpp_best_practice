@@ -6,12 +6,6 @@ namespace opengl{
 
 
     int glew_init(){
-        glewExperimental = GL_TRUE;
-        GLenum err = glewInit();
-        if(err!=GLEW_OK){
-            std::cout<<"glewInit failed: "<<glewGetErrorString(err)<<std::endl;
-            return -1;
-        }
         return 0;
     }
 
@@ -31,7 +25,7 @@ namespace opengl{
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
         auto window = glfwCreateWindow(width, height, "OpenGL", nullptr, nullptr);
 
         // Check for Valid Context

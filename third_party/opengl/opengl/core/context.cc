@@ -84,8 +84,8 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
             program.set_input_sampler2D(texture->id(), texture->format());
             OPENGL_CHECK_ERROR;
-            program.set_buffer(buffer->id(), buffer->target())
-                OPENGL_CHECK_ERROR;
+            program.set_buffer(buffer->id(), buffer->target());
+            OPENGL_CHECK_ERROR;
 
             glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
             OPENGL_CHECK_ERROR;
@@ -116,8 +116,8 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
             program.set_output_sampler2D(texture->id(), texture->format());
             OPENGL_CHECK_ERROR;
-            program.set_buffer(buffer->id(), buffer->target())
-                OPENGL_CHECK_ERROR;
+            program.set_buffer(buffer->id(), buffer->target());
+            OPENGL_CHECK_ERROR;
 
             glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
         }

@@ -7,9 +7,14 @@ option(BUILD_EXAMPLES "BUILD OPENGL EXAMPLES" ON)
 option(BUILD_NN "BUILD NERTUAL NETWORK" ON)
 option(BUILD_TEST "BUILD OPENGL TEST" ON)
 option(BUILD_ARM "USE GLES" OFF)
+option(BUILD_DEBUG "ENABLE DEBUG MODE" ON)
 
 if(BUILD_ARM)
     add_definitions(-DARM_PLATFORM)
+endif()
+
+if(BUILD_DEBUG)
+    add_definitions(-DENABLE_OPENGL_CHECK_ERROR)
 endif()
 
 find_package(OpenCV REQUIRED)
@@ -34,7 +39,7 @@ endforeach()
 # root directory
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(OpenGL_LIB -lGLEW -lglfw)
+set(OpenGL_LIB -lglfw)
 if(BUILD_ARM)
     set(OpenGL_LIB ${OpenGL_LIB} -lGLESv2)
 else()
