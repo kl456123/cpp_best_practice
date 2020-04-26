@@ -18,7 +18,7 @@ if(BUILD_GPGPU)
     if(BUILD_ARM)
         set(AXPY_DEMO_OpenGL_LIB  -lglut -lGLEW -lGLESv2)
     else()
-        set(AXPY_DEMO_OpenGL_LIB  -lglut -lGLEW -lGL)
+        set(AXPY_DEMO_OpenGL_LIB  -lglut -lGLEW -lGL -lGLU)
     endif()
     # this module use glut and glew, so we don't use OpenGL_LIB
     add_executable(axpy_demo ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu/axpy_demo.cc)
