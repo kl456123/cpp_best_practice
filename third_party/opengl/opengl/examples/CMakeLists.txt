@@ -20,9 +20,13 @@ if(BUILD_GPGPU)
     else()
         set(AXPY_DEMO_OpenGL_LIB  -lglut -lGLEW -lGL -lGLU)
     endif()
+
     # this module use glut and glew, so we don't use OpenGL_LIB
     add_executable(axpy_demo ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu/axpy_demo.cc)
     target_link_libraries(axpy_demo ${OpenCV_LIBS} ${AXPY_DEMO_OpenGL_LIB})
+
+    add_executable(mrt_demo ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu/mrt_demo.cc)
+    target_link_libraries(mrt_demo ${OpenCV_LIBS} ${AXPY_DEMO_OpenGL_LIB})
 
     add_executable(compute_shader ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu/compute_shader.cc)
     target_link_libraries(compute_shader ${OpenGL_LIB} ${OpenCV_LIBS} ${GL_CORE})

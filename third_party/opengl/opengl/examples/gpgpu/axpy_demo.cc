@@ -12,6 +12,15 @@ GLhandleARB programObject;
 GLhandleARB shaderObject;
 GLint yParam, xParam, alphaParam;
 
+// two textures identifiers referencing y_old and y_new
+GLuint yTexID[2];
+// ping pong management vars
+int writeTex = 0;
+int readTex = 1;
+GLenum attachmentpoints[] = { GL_COLOR_ATTACHMENT0_EXT,
+                              GL_COLOR_ATTACHMENT1_EXT
+                            };
+
 
 void initCG(){
 }
@@ -19,9 +28,9 @@ void initCG(){
 void initGLSL(const char* program_source){
     // create program object
     // create program object
-    GLuint programObject = glCreateProgramObjectARB();
+    programObject = glCreateProgramObjectARB();
     // create shader object (fragment shader) and attach to program
-    GLuint shaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
+    shaderObject = glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB);
     glAttachObjectARB (programObject, shaderObject);
     // set source to shader object
     glShaderSourceARB(shaderObject, 1, &program_source, NULL);
@@ -83,23 +92,45 @@ int main(int argc, char **argv) {
     // transfer data to texture
     glTexSubImage2D(GL_TEXTURE_RECTANGLE_ARB,0,0,0,texSize,texSize,
             GL_RGBA,GL_FLOAT,data);
+    /////////////////////////////////////
+    // Program and Shader
+    /////////////////////////////////////
+    const char source[] = "";
+    initGLSL(source);
+
+
     /////////////////////////////////////////
     // Computing = Drawing
     /////////////////////////////////////////
+    glUseProgramObjectARB(programObject);
+
 
     // prepare prarameters
     // enable texture y_old (read-only)
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(textureParameters.texTarget,yTexID[readTex]);
-    glUniform1iARB(yParam,0); // texunit 0
-    // enable texture x (read-only)
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(textureParameters.texTarget,xTexID);
-    glUniform1iARB(xParam, 1); // texunit 1
-    // enable scalar alpha
-    glUniform1fARB(alphaParam,alpha);
+    // glActiveTexture(GL_TEXTURE0);
+    // glBindTexture(textureParameters.texTarget,yTexID[readTex]);
+    // glUniform1iARB(yParam,0); // texunit 0
+    // // enable texture x (read-only)
+    // glActiveTexture(GL_TEXTURE1);
+    // glBindTexture(textureParameters.texTarget,xTexID);
+    // glUniform1iARB(xParam, 1); // texunit 1
+    // // enable scalar alpha
+    // glUniform1fARB(alphaParam, alpha);
 
     // performing the computation
+    // make quad filled to hit every pixel/texel
+    glPolygonMode(GL_FRONT,GL_FILL);
+    // and render quad
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 0.0);
+    glVertex2f(0.0, 0.0);
+    glTexCoord2f(texSize, 0.0);
+    glVertex2f(texSize, 0.0);
+    glTexCoord2f(texSize, texSize);
+    glVertex2f(texSize, texSize);
+    glTexCoord2f(0.0, texSize);
+    glVertex2f(0.0, texSize);
+    glEnd();
 
 
     // and read back
