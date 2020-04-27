@@ -3,6 +3,7 @@ option(BUILD_RENDER "BUILD OPENGL RENDER" ON)
 option(BUILD_GPGPU "BUILD OPENGL GPGPU" ON)
 option(BUILD_GLES "BUILD GLES DEMO" ON)
 option(BUILD_GLUT "BUILD GLUT DEMO" ON)
+option(BUILD_FBO "BUILD FBO GPGPU DEMO" ON)
 
 
 if(BUILD_RENDER)
@@ -45,4 +46,10 @@ endif()
 if(BUILD_GLUT)
     add_executable(glut_demo ${CMAKE_CURRENT_SOURCE_DIR}/glut/glut_demo.cc)
     target_link_libraries(glut_demo -lglut)
+endif()
+
+if(BUILD_FBO)
+    # opengles version of fbo
+    add_executable(fbo_es ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_es.cc)
+    target_link_libraries(fbo_es -lGLESv2 -lglfw)
 endif()
