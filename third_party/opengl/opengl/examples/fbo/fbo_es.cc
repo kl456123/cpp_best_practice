@@ -18,6 +18,18 @@ GLuint vertex_shader_;
 GLuint fragment_shader;
 GLuint program;
 
+// core parameters, maybe some data types cannot supported
+// in some platform
+// four channel version
+const int num_channels = 4;
+GLenum internal_format = GL_RGBA32F;
+GLenum format = GL_RGBA;
+
+// single channel version
+// const int num_channels = 1;
+// GLenum internal_format = GL_RGBA32F;
+// GLenum format = GL_RED;
+
 // Don't need to change this.
 // We want to draw 2 giant triangles that cover the whole screen.
 struct Vertex {
@@ -246,9 +258,9 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     glBindTexture(GL_TEXTURE_2D, texture_);
 
     // Similar to cudaMemcpy.
-    OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, /*level=*/0, GL_R32F,
+    OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, /*level=*/0, internal_format,
                 width_, height_, /*border=*/0,
-                GL_RED, GL_FLOAT, data));
+                format, GL_FLOAT, data));
     // TODO(zhixunt): What are these?
     OPENGL_CALL(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
@@ -272,7 +284,7 @@ void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-    OPENGL_CALL(glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT, data));
+    OPENGL_CALL(glReadPixels(0, 0, width, height, format, GL_FLOAT, data));
 }
 
 void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
@@ -281,9 +293,9 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, texture));
     OPENGL_CALL(glBufferData(GL_PIXEL_PACK_BUFFER, bytes,
-            NULL, GL_STREAM_READ));
-    OPENGL_CALL(glReadPixels(0, 0, width, height, GL_RED, GL_FLOAT,
-            0));
+                NULL, GL_STREAM_READ));
+    OPENGL_CALL(glReadPixels(0, 0, width, height, format, GL_FLOAT,
+                0));
     void* mem = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, bytes, GL_READ_ONLY);
     assert(mem);
     memcpy(data, mem, bytes);
@@ -312,7 +324,7 @@ int main(){
     GLint width = N;
     GLint height = N;
     const int niters = 100;
-    const size_t num_elements = width*height;
+    const size_t num_elements = width * height * num_channels;
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<float> dist(1.0f, 2.0f);
@@ -367,6 +379,12 @@ int main(){
     // set uniform
     SetInt("N", N);
 
+    // swarmming up
+    for (int iter = 0; iter < 10; ++iter) {
+        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+        glFinish();
+    }
     auto opengl_start = std::chrono::system_clock::now();
     for (int iter = 0; iter < niters; ++iter) {
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
@@ -383,7 +401,7 @@ int main(){
     ///////////////////////////////////////
     // Download output Data from Device
     std::vector<GLfloat> retrieved_data(static_cast<size_t>(num_elements));
-    Download_DMA(retrieved_data.data(), width, height, output);
+    Download(retrieved_data.data(), width, height, output);
     // for (GLuint unit = 0; unit != inputs.size(); ++unit) {
     // const std::string &name = inputs[unit].first;
     // Texture *texture = inputs[unit].second;
@@ -400,11 +418,11 @@ int main(){
     for (int iter = 0; iter < niters; ++iter) {
         for (int row = 0; row != N; ++row) {
             for (int col = 0; col != N; ++col) {
-                cpu_result[row * N + col] = 0.0f;
+                cpu_result[(row * N + col)*num_channels] = 0.0f;
                 for (int i = 0; i != N; ++i) {
-                    GLfloat a = texture0_data[row * N + i];
-                    GLfloat b = texture1_data[i * N + col];
-                    cpu_result[row * N + col] += a * b;
+                    GLfloat a = texture0_data[(row * N + i)*num_channels];
+                    GLfloat b = texture1_data[(i * N + col)*num_channels];
+                    cpu_result[(row * N + col)*num_channels] += a * b;
                 }
             }
         }
@@ -412,14 +430,19 @@ int main(){
     auto cpu_end = std::chrono::system_clock::now();
 
     // just test instead of print for big matrix Multiplication
-    for (int i = 0; i < retrieved_data.size(); ++i) {
-        assert(std::abs(retrieved_data[i] - cpu_result[i]) < 0.001f);
+    for (size_t i = 0; i < retrieved_data.size(); ++i) {
+        if(std::abs(retrieved_data[i] - cpu_result[i]) > 0.001f){
+            std::cout<<"Expect value: "<<cpu_result[i]
+                <<" Actural value: "<<retrieved_data[i]
+                <<" in Index: "<<i<<std::endl;
+            abort();
+        }
     }
 
     // print to debug
     // for(size_t i=0;i<retrieved_data.size();++i){
-    // std::cout<<retrieved_data[i]<<" ";
-    // std::cout<<cpu_result[i]<<" "<<std::endl;
+        // std::cout<<retrieved_data[i]<<" ";
+        // std::cout<<cpu_result[i]<<" "<<std::endl;
     // }
 
     std::cout << "cpu:    "
