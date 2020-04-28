@@ -21,14 +21,14 @@ GLuint program;
 // core parameters, maybe some data types cannot supported
 // in some platform
 // four channel version
-const int num_channels = 4;
-GLenum internal_format = GL_RGBA32F;
-GLenum format = GL_RGBA;
+// const int num_channels = 4;
+// GLenum internal_format = GL_RGBA32F;
+// GLenum format = GL_RGBA;
 
 // single channel version
-// const int num_channels = 1;
-// GLenum internal_format = GL_RGBA32F;
-// GLenum format = GL_RED;
+const int num_channels = 1;
+GLenum internal_format = GL_R32F;
+GLenum format = GL_RED;
 
 // Don't need to change this.
 // We want to draw 2 giant triangles that cover the whole screen.
@@ -281,20 +281,26 @@ void SetInput( std::string name, GLuint id,  int tex_id){
 }
 
 void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
+    GLint ext_format, ext_type;
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-    OPENGL_CALL(glReadPixels(0, 0, width, height, format, GL_FLOAT, data));
+    OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
 }
 
 void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
+    GLint ext_format, ext_type;
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
     size_t bytes = width*height*sizeof(float);
 
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, texture));
     OPENGL_CALL(glBufferData(GL_PIXEL_PACK_BUFFER, bytes,
                 NULL, GL_STREAM_READ));
-    OPENGL_CALL(glReadPixels(0, 0, width, height, format, GL_FLOAT,
+    OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type,
                 0));
     void* mem = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, bytes, GL_READ_ONLY);
     assert(mem);
@@ -316,6 +322,24 @@ void ReadShader(const std::string fname){
     }
 }
 
+void LogSupportedFormat(){
+    GLint ext_format, ext_type;
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
+    glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+    // std::cout<<std::hex<<"read format: "<<ext_format<<" "
+    // <<"read type: "<<ext_type<<std::endl;
+    // std::cout<<"read_format: ";
+    // switch(ext_format){
+    // case GL_RGB:
+    // std::cout<<"GL_RGB"<<std::endl;
+    // break;
+    // case GL_RGBA:
+    // std::cout<<"GL_RGB"<<std::endl;
+    // default:
+    // std::cout<<"Unknown"<<std::endl;
+    // }
+}
+
 // void Render(GLuint Program, ){
 // }
 
@@ -330,6 +354,8 @@ int main(){
     std::uniform_real_distribution<float> dist(1.0f, 2.0f);
 
     glfw_init();
+
+    // LogSupportedFormat();
 
     CreateProgram("../opengl/examples/fbo/fragment_es.glsl");
 
@@ -356,6 +382,7 @@ int main(){
     GLuint frame_buffer;
     OPENGL_CALL(glGenFramebuffers(1, &frame_buffer));
     OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
+    //LogSupportedFormat();
     OPENGL_CALL(glViewport(0, 0, width, height));
     // Set "renderedTexture" as our colour attachement #0
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
@@ -441,8 +468,8 @@ int main(){
 
     // print to debug
     // for(size_t i=0;i<retrieved_data.size();++i){
-        // std::cout<<retrieved_data[i]<<" ";
-        // std::cout<<cpu_result[i]<<" "<<std::endl;
+    // std::cout<<retrieved_data[i]<<" ";
+    // std::cout<<cpu_result[i]<<" "<<std::endl;
     // }
 
     std::cout << "cpu:    "
