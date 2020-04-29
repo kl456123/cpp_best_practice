@@ -1,3 +1,9 @@
+/* This file is used to demostrate the fbo usage to do gpgpu
+ * There are two input type supported now. 1 or 4 channels,
+ * their configs list as following.
+ * Note that you should care about some platforms are not supported
+ * for some type.
+ */
 #include <string.h>
 #include <fstream>
 
@@ -14,17 +20,26 @@ GLuint vertex_shader_;
 GLuint fragment_shader;
 GLuint program;
 
-// core parameters, maybe some data types cannot supported
-// in some platform
-// four channel version
-// const int num_channels = 4;
-// GLenum internal_format = GL_RGBA32F;
-// GLenum format = GL_RGBA;
+// set it manually
+#define USE_SINGLE_CHANNEL
 
+#ifdef USE_SINGLE_CHANNEL
 // single channel version
 const int num_channels = 1;
 GLenum internal_format = GL_R32F;
 GLenum format = GL_RED;
+#else
+// core parameters, maybe some data types cannot supported
+// in some platform
+// four channel version
+const int num_channels = 4;
+GLenum internal_format = GL_RGBA32F;
+GLenum format = GL_RGBA;
+#endif
+
+GLenum type = GL_FLOAT;
+
+
 
 // Don't need to change this.
 // We want to draw 2 giant triangles that cover the whole screen.
@@ -188,10 +203,19 @@ void SetInput( std::string name, GLuint id,  int tex_id){
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
+void CheckFormatAndType(GLint ext_format, GLint ext_type){
+    // check if their match with config of input texture or not
+    // use GLenum to suppress warnning
+    CHECK((GLenum)ext_format==format)<<"format type is unmatched when downloading";
+    CHECK((GLenum)ext_type==type)<<"format type is unmatched when downloading";
+}
+
 void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     GLint ext_format, ext_type;
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+    // check ext format and ext type
+    CheckFormatAndType(ext_format, ext_type);
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
