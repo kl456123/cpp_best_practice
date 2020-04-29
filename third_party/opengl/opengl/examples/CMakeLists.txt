@@ -50,6 +50,15 @@ endif()
 
 if(BUILD_FBO)
     # opengles version of fbo
-    add_executable(fbo_es ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_es.cc)
-    target_link_libraries(fbo_es -lGLESv2 -lglfw)
+    # use glfw
+    add_executable(fbo_glfw ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/fbo/glfw_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
+    target_link_libraries(fbo_glfw -lGLESv2 -lglfw -lglog)
+
+    # use egl
+    add_executable(fbo_egl ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/fbo/egl_context.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
+    target_link_libraries(fbo_egl -lGLESv2 -lEGL -lglog)
 endif()
