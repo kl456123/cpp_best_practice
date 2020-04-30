@@ -1,9 +1,3 @@
-/* This file is used to demostrate the fbo usage to do gpgpu
- * There are two input type supported now. 1 or 4 channels,
- * their configs list as following.
- * Note that you should care about some platforms are not supported
- * for some type.
- */
 #include <string.h>
 #include <fstream>
 
@@ -20,26 +14,17 @@ GLuint vertex_shader_;
 GLuint fragment_shader;
 GLuint program;
 
-// set it manually
-#define USE_SINGLE_CHANNEL
+// core parameters, maybe some data types cannot supported
+// in some platform
+// four channel version
+// const int num_channels = 4;
+// GLenum internal_format = GL_RGBA32F;
+// GLenum format = GL_RGBA;
 
-#ifdef USE_SINGLE_CHANNEL
 // single channel version
 const int num_channels = 1;
 GLenum internal_format = GL_R32F;
 GLenum format = GL_RED;
-#else
-// core parameters, maybe some data types cannot supported
-// in some platform
-// four channel version
-const int num_channels = 4;
-GLenum internal_format = GL_RGBA32F;
-GLenum format = GL_RGBA;
-#endif
-
-GLenum type = GL_FLOAT;
-
-
 
 // Don't need to change this.
 // We want to draw 2 giant triangles that cover the whole screen.
@@ -90,8 +75,7 @@ GLuint CreateShader(GLenum shader_kind, const char *shader_src) {
     if (info_log_len > 0) {
         std::unique_ptr<char[]> err_msg(new char[info_log_len + 1]);
         glGetShaderInfoLog(shader, info_log_len, nullptr, err_msg.get());
-        std::cout << err_msg.get() << std::endl;
-        assert(false);
+        LOG(FATAL) << err_msg.get();
     }
 
     OPENGL_CHECK_ERROR;
@@ -151,8 +135,7 @@ void CreateProgram(const std::string fname) {
     if (info_log_len > 0) {
         std::unique_ptr<char[]> err_msg(new char[info_log_len + 1]);
         glGetProgramInfoLog(program, info_log_len, nullptr, err_msg.get());
-        std::cout << err_msg.get() << std::endl;
-        assert(false);
+        LOG(FATAL) << err_msg.get();
     }
 
     OPENGL_CHECK_ERROR;
@@ -174,7 +157,7 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     // Create a texture.
     OPENGL_CALL(glGenTextures(1, &texture_));
 
-    std::clog << "Created texture [" << texture_ << "]" << std::endl;
+    LOG(INFO) << "Created texture [" << texture_ << "]";
 
     // Bind to temporary unit.
     // workspace.BindTextureUnit(workspace.NumTextureUnits() - 1, texture_);
@@ -203,19 +186,10 @@ void SetInput( std::string name, GLuint id,  int tex_id){
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
-void CheckFormatAndType(GLint ext_format, GLint ext_type){
-    // check if their match with config of input texture or not
-    // use GLenum to suppress warnning
-    CHECK((GLenum)ext_format==format)<<"format type is unmatched when downloading";
-    CHECK((GLenum)ext_type==type)<<"format type is unmatched when downloading";
-}
-
 void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     GLint ext_format, ext_type;
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
-    // check ext format and ext type
-    CheckFormatAndType(ext_format, ext_type);
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
@@ -254,7 +228,10 @@ void ReadShader(const std::string fname){
     }
 }
 
-int main(){
+int main(int argc, char* argv[]){
+    // Initialize Google's logging library.
+    google::InitGoogleLogging(argv[0]);
+
     ::opengl::example::InitContext();
 
     CreateVertexShader();
@@ -306,8 +283,7 @@ int main(){
 
     // Always check that our framebuffer is ok
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cout << "Framebuffer not complete." << std::endl;
-        assert(false);
+        LOG(FATAL) << "Framebuffer not complete.";
     }
 
     // Tell the fragment shader what input textures to use.
@@ -332,9 +308,8 @@ int main(){
 
 
     auto opengl_end = std::chrono::system_clock::now();
-    std::cout << "opengl: "
-        << ((opengl_end - opengl_start).count() / niters)
-        << std::endl;
+    LOG(INFO) << "opengl: "
+        << ((opengl_end - opengl_start).count() / niters);
 
     ///////////////////////////////////////
     // Download output Data from Device

@@ -54,11 +54,11 @@ if(BUILD_FBO)
     add_executable(fbo_glfw ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/glfw_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_glfw -lGLESv2 -lglfw -lglog)
+    target_link_libraries(fbo_glfw -lGLESv2 -lglfw glog::glog)
 
     # use egl
     add_executable(fbo_egl ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/egl_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_egl -lGLESv2 -lEGL -lglog)
+    target_link_libraries(fbo_egl -lGLESv2 -lEGL glog::glog)
 endif()
