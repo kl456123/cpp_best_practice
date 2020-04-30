@@ -4,6 +4,8 @@
 #include <CL/cl.h>
 #define MAX_SOURCE_SIZE (0x100000)
 
+#define USE_DMA
+
 #define PRINT_ERROR(ret)                    \
     do{                                     \
         if(ret!=CL_SUCCESS){                    \
@@ -58,12 +60,6 @@ cl_int BuildProgram(cl_context context, const char* fname, cl_program* out){
             (const char **)&source_str, (const size_t *)&source_size, &ret);
     PRINT_ERROR(ret);
 
-    // Build the program
-    /* size_t size; */
-    /* clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size); */
-    /* cl_device_id* devices = (cl_device_id*)alloca(size); */
-
-    /* ret = clBuildProgram(program, 1, devices, NULL, NULL, NULL); */
     *out = program;
 
     return ret;
@@ -74,34 +70,51 @@ cl_int BuildProgram(cl_context context, const char* fname, cl_program* out){
 cl_command_queue CreateStream(cl_context context){
     size_t size;
     cl_int ret;
-    clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size);
-    cl_device_id* devices = (cl_device_id*)alloca(size);
-    cl_command_queue stream = clCreateCommandQueue(context, devices[0], 0, &ret);
+    cl_int err = clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &size);
+    if(err!=CL_SUCCESS){
+        printf("error when get context info");
+        return NULL;
+    }
+
+    // Get Devices From Context
+    cl_device_id* devices_id = (cl_device_id*)alloca(size);
+    clGetContextInfo(context, CL_CONTEXT_DEVICES, size, devices_id, NULL);
+    cl_command_queue stream = clCreateCommandQueue(context, devices_id[0], 0, &ret);
     return stream;
 }
 
-cl_int MemcpyD2H(cl_command_queue stream, cl_mem gpu_src_ptr, void* host_dst, uint64_t bytes){
-    // c api
-    /* cl_command_queue stream = CreateStream(context); */
-    stream;
+cl_int MemcpyD2H(cl_context context, cl_mem gpu_src_ptr, void* host_dst, uint64_t bytes){
+    cl_command_queue stream = CreateStream(context);
     cl_int error;
+#ifdef USE_DMA
     cl_mem buffer_ptr = clEnqueueMapBuffer(stream, gpu_src_ptr, CL_TRUE, CL_MAP_READ,
             0, bytes, 0, 0, 0, &error);
     memcpy(host_dst, buffer_ptr, bytes);
 
     clEnqueueUnmapMemObject(stream, gpu_src_ptr, buffer_ptr, 0, 0, 0);
+#else
+    error =  clEnqueueReadBuffer(stream, gpu_src_ptr, CL_TRUE, 0,
+            bytes, host_dst, 0, NULL, NULL);
+#endif
     return error;
 }
 
 
 
-cl_int MemcpyH2D(cl_command_queue stream, void* host_src, cl_mem gpu_dst_ptr, uint64_t bytes){
+cl_int MemcpyH2D(cl_context context, void* host_src, cl_mem gpu_dst_ptr, uint64_t bytes){
+    cl_command_queue stream = CreateStream(context);
     // c api
     cl_int ret;
+#ifdef USE_DMA
+
     cl_mem buffer_ptr = clEnqueueMapBuffer(stream, gpu_dst_ptr, CL_TRUE, CL_MAP_WRITE,
             0, bytes, 0, 0, 0, &ret);
     memcpy(buffer_ptr, host_src, bytes);
     clEnqueueUnmapMemObject(stream, gpu_dst_ptr, buffer_ptr, 0, 0, 0);
+#else
+    ret = clEnqueueWriteBuffer(stream, gpu_dst_ptr, CL_TRUE, 0,
+            bytes, host_src, 0, NULL, NULL);
+#endif
     return ret;
 }
 
@@ -171,18 +184,12 @@ int main(){
             bytes, NULL, &ret);
 
     // copy cpu to gpu
-    // write/read
-    ret = clEnqueueWriteBuffer(command_queue, input0, CL_TRUE, 0,
-            bytes, A, 0, NULL, NULL);
-    ret = clEnqueueWriteBuffer(command_queue, input1, CL_TRUE, 0,
-            bytes, B, 0, NULL, NULL);
+    MemcpyH2D(context, A, input0, bytes);
+    MemcpyH2D(context, B, input1, bytes);
 
     ret = clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&input0);
     ret = clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&input1);
     ret = clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&output);
-    // map/unmap
-    MemcpyH2D(context, A, input0, bytes);
-    MemcpyH2D(context, B, input1, bytes);
 
 
     // //////////////////////////////
@@ -195,8 +202,7 @@ int main(){
 
     // copy gpu to cpu
     // write/read
-    ret = clEnqueueReadBuffer(command_queue, output, CL_TRUE, 0,
-            bytes, C, 0, NULL, NULL);
+    MemcpyD2H(context, output, C, bytes);
     PRINT_ERROR(ret);
 
 

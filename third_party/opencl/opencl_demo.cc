@@ -5,6 +5,8 @@
 #define __CL_ENABLE_EXCEPTIONS
 #include <CL/cl.hpp>
 
+#define USE_DMA
+
 bool BuildProgram(cl::Context context, const char* fname, cl::Program* out){
     std::ifstream sourceFile(fname);
     if(sourceFile.fail()){
@@ -36,19 +38,30 @@ cl::CommandQueue CreateStream(cl::Context context){
     return cl::CommandQueue(context, device);
 }
 
+
 bool MemcpyD2H(cl::Context context, cl::Buffer gpu_src, void* host_dst, uint64_t bytes){
+#ifdef USE_DMA
     auto stream = CreateStream(context);
     auto buffer_ptr = stream.enqueueMapBuffer(gpu_src, CL_TRUE, CL_MAP_READ, 0, bytes);
     memcpy(host_dst, buffer_ptr, bytes);
     stream.enqueueUnmapMemObject(gpu_src, buffer_ptr);
+#else
+    auto stream = CreateStream(context);
+    stream.enqueueReadBuffer(gpu_src, CL_TRUE, 0, bytes, host_dst);
+#endif
     return true;
 }
 
 bool MemcpyH2D(cl::Context context, void* host_src, cl::Buffer gpu_dst, uint64_t bytes){
+#ifdef USE_DMA
     auto stream = CreateStream(context);
     auto buffer_ptr = stream.enqueueMapBuffer(gpu_dst, CL_TRUE, CL_MAP_WRITE, 0, bytes);
     memcpy(buffer_ptr, host_src, bytes);
     stream.enqueueUnmapMemObject(gpu_dst, buffer_ptr);
+#else
+    auto stream = CreateStream(context);
+    stream.enqueueWriteBuffer(gpu_dst, CL_TRUE, 0, bytes, host_src);
+#endif
     return true;
 }
 
@@ -115,39 +128,25 @@ int main(){
     cl::Buffer output(context, flags, bytes);
 
     // copy cpu to gpu
-    // write/read
-    // command_queue.enqueueWriteBuffer(input0, CL_TRUE, 0, bytes, A);
-    // command_queue.enqueueWriteBuffer(input1, CL_TRUE, 0, bytes, B);
-    // map/unmap
-    MemcpyH2D(context, B, input0, bytes);
-    // MemcpyH2D(context, B, input1, bytes);
+    MemcpyH2D(context, A, input0, bytes);
+    MemcpyH2D(context, B, input1, bytes);
 
 
-    // kernel.setArg(0, input0);
-    // try{
-        // kernel.setArg(0, sizeof(input0), &input0);
-    // }catch(cl::Error error){
-        // std::cout<<error.what()<<"("<<error.err()<<")"<<std::endl;
-        // return -1;
-    // }
-    // kernel.setArg(1, input1);
-    // // kernel.setArg(2, D);
-    // kernel.setArg(2, sizeof(D), &D);
-    // kernel.setArg(3, output);
+    kernel.setArg(0, input0);
+    kernel.setArg(1, input1);
+    kernel.setArg(2, output);
 
     // //////////////////////////////
     // // launch kernel
-    // cl::NDRange gws = {N};
-    // cl::NDRange lws = {1};
-    // command_queue.enqueueNDRangeKernel(kernel, cl::NullRange,
-            // gws, lws);
-    //TODO do we need it, or where should we place it
-    // command_queue.finish();
+    cl::NDRange gws = {N};
+    cl::NDRange lws = {1};
+    command_queue.enqueueNDRangeKernel(kernel, cl::NullRange,
+            gws, lws);
+
+    // TODO do we need it, or where should we place it
+    command_queue.finish();
     // copy gpu to cpu
-    // write/read
-    // command_queue.enqueueReadBuffer(output, CL_TRUE, 0, bytes, C);
-    // map/unmap
-    MemcpyD2H(context, input0, C, bytes);
+    MemcpyD2H(context, output, C, bytes);
 
 
     ///////////////////////////
