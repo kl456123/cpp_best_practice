@@ -22,8 +22,8 @@ namespace opengl{
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);
             void CopyBufferToImage(Texture* texture, Buffer* buffer);
 
-            void CopyCPUBufferToDevice(Buffer* buffer, float* buffer_cpu);
-            void CopyDeviceBufferToCPU(Buffer* buffer, float* buffer_cpu);
+            void CopyCPUBufferToDevice(Buffer* buffer, void* buffer_cpu);
+            void CopyDeviceBufferToCPU(Buffer* buffer, void* buffer_cpu);
             void Finish(){glFlush();}
         private:
             // used to allocator new buffer or texture duration runtime

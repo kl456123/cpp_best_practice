@@ -35,17 +35,17 @@ int main(int argc, char** argv){
     float input2[] = {1.0, 2.0, 3.0};
     TensorList inputs_cpu;
     TensorList outputs_gpu;
-    inputs_cpu.emplace_back(new Tensor(input1, Tensor::DT_FLOAT, 3));
-    inputs_cpu.emplace_back(new Tensor(input2, Tensor::DT_FLOAT, 3));
+    inputs_cpu.emplace_back(new Tensor(input1, Tensor::DT_FLOAT, {3}));
+    inputs_cpu.emplace_back(new Tensor(input2, Tensor::DT_FLOAT, {3}));
 
     TensorList inputs_gpu;
     for(int i=0;i<inputs_cpu.size();i++){
-        inputs_gpu.emplace_back(new Tensor(Tensor::DT_FLOAT, 3));
+        inputs_gpu.emplace_back(new Tensor(Tensor::DT_FLOAT, {3}));
     }
 
-    outputs_gpu.emplace_back(new Tensor(Tensor::DT_FLOAT, 3));
+    outputs_gpu.emplace_back(new Tensor(Tensor::DT_FLOAT, {3}));
 
-    // download to gpu
+    // upload to gpu
     for(unsigned int i=0;i<inputs_cpu.size();++i){
         context->CopyCPUTensorToDevice(inputs_cpu[i], inputs_gpu[i]);
     }
@@ -56,18 +56,22 @@ int main(int argc, char** argv){
     context->Finish();
 
     TensorList outputs_cpu;
-    // upload to cpu
+    // download to cpu
     for(unsigned int i=0;i<outputs_gpu.size();++i){
-        auto output_cpu_tensor = new Tensor(Tensor::DT_FLOAT, 3);
+        auto output_cpu_tensor = new Tensor(Tensor::DT_FLOAT, {3});
         context->CopyDeviceTensorToCPU(output_cpu_tensor, outputs_gpu[i]);
         outputs_cpu.emplace_back(output_cpu_tensor);
     }
 
+    // auto output_cpu_tensor = new Tensor(Tensor::DT_FLOAT, {3});
+    // context->CopyDeviceTensorToCPU(output_cpu_tensor, inputs_gpu[0]);
+    // outputs_cpu.emplace_back(output_cpu_tensor);
+
     // clean up
-    for(unsigned int i=0;i<outputs_gpu.size();++i){
+    for(unsigned int i=0;i<outputs_cpu.size();++i){
         // clean up outputs
-        for(int j=0;j<outputs_gpu[i]->num_elements();j++){
-            std::cout<<((float*)outputs_gpu[i]->host())[j]<<std::endl;
+        for(int j=0;j<outputs_cpu[i]->num_elements();j++){
+            std::cout<<outputs_cpu[i]->host<float>()[j]<<std::endl;
         }
     }
     for(unsigned int i=0;i<inputs_gpu.size();++i){

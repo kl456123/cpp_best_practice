@@ -22,6 +22,10 @@ namespace opengl{
             virtual std::string Name()=0;
             virtual ~Allocator();
             virtual void* AllocateRaw(size_t num_bytes)=0;
+            virtual void* AllocateRaw(size_t num_bytes,
+                    const AllocationAttributes& allocation_attr){
+                return AllocateRaw(num_bytes);
+            }
             virtual void DeAllocateRaw(void* ptr)=0;
 
             // check if it is opaque or not(note that device memory is refers to opaque memory)

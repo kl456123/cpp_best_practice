@@ -37,12 +37,18 @@ namespace opengl{
         // check same size
         CHECK(cpu_tensor->size()==device_tensor->size());
         CHECK(cpu_tensor->num_elements()==device_tensor->num_elements());
-
-        Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
-        ::memcpy(device_buffer->Map(GL_MAP_WRITE_BIT),cpu_tensor->host(),
-                cpu_tensor->size());
-
-        device_buffer->UnMap();
+        size_t size = cpu_tensor->size();
+        // Copy Tensor depends on their memory type
+        if(device_tensor->mem_type()==Tensor::DEVICE_BUFFER){
+            CopyCPUBufferToDevice(device_tensor->device<Buffer>(), cpu_tensor->host());
+        }else if(device_tensor->mem_type()==Tensor::DEVICE_TEXTURE){
+            // cache tmp buffer if possible
+            auto buffer = std::unique_ptr<Buffer>(new ShaderBuffer(size));
+            CopyCPUBufferToDevice(buffer.get(), cpu_tensor->host());
+            CopyBufferToImage(device_tensor->device<Texture>(), buffer.get());
+        }else{
+            LOG(FATAL)<<"unsupported copy method: "<<device_tensor->mem_type()<<" now";
+        }
     }
 
 
@@ -54,12 +60,19 @@ namespace opengl{
 
         // check same size
         CHECK(cpu_tensor->num_elements()==device_tensor->num_elements());
-
-        Buffer* device_buffer = reinterpret_cast<Buffer*>(device_tensor->device());
-        ::memcpy(cpu_tensor->host(), device_buffer->Map(GL_MAP_READ_BIT),
-                cpu_tensor->size());
-
-        device_buffer->UnMap();
+        CHECK(cpu_tensor->size()==device_tensor->size());
+        size_t size = cpu_tensor->size();
+        // Copy Tensor depends on their memory type
+        if(device_tensor->mem_type()==Tensor::DEVICE_BUFFER){
+            CopyDeviceBufferToCPU(device_tensor->device<Buffer>(), cpu_tensor->host());
+        }else if(device_tensor->mem_type()==Tensor::DEVICE_TEXTURE){
+            // cache tmp buffer if possible
+            auto buffer = std::unique_ptr<Buffer>(new ShaderBuffer(size));
+            CopyImageToBuffer(device_tensor->device<Texture>(), buffer.get());
+            CopyDeviceBufferToCPU(buffer.get(), cpu_tensor->host());
+        }else{
+            LOG(FATAL)<<"unsupported copy method: "<<device_tensor->mem_type()<<" now";
+        }
     }
 
     void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){
@@ -126,14 +139,14 @@ namespace opengl{
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     }
 
-    void Context::CopyCPUBufferToDevice(Buffer* buffer, float* buffer_cpu){
+    void Context::CopyCPUBufferToDevice(Buffer* buffer, void* buffer_cpu){
         // upload
         auto ptr = buffer->Map(GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         ::memcpy(ptr, buffer_cpu, buffer->size());
         buffer->UnMap();
     }
 
-    void Context::CopyDeviceBufferToCPU(Buffer* buffer, float* buffer_cpu){
+    void Context::CopyDeviceBufferToCPU(Buffer* buffer, void* buffer_cpu){
         // download
         auto ptr = buffer->Map(GL_MAP_READ_BIT);
         ::memcpy(buffer_cpu, ptr, buffer->size());

@@ -5,11 +5,10 @@ namespace opengl{
     Tensor::~Tensor(){}
 
     template<>
-        Tensor::Tensor(float* data, DataType dtype, int num){
-            size_ = num*sizeof(float);
-            dtype_=dtype;
+        Tensor::Tensor(float* data, DataType dtype, INTLIST shape)
+        :shape_(shape),dtype_(dtype){
+            size_ = shape_.num_elements()*sizeof(float);
             host_ = data;
-            auto temp_shape = std::vector<int>({num});
-            shape_ = TensorShape(temp_shape);
+            mem_type_ = HOST_MEMORY;
         }
 }//namespace opengl
