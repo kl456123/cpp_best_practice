@@ -6,7 +6,7 @@
 #ifndef BUFFER_H_
 #define BUFFER_H_
 
-#include "buffer_base.h"
+#include "opengl/core/buffer_base.h"
 
 namespace opengl{
     class Buffer{

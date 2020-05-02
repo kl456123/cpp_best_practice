@@ -45,7 +45,7 @@ namespace opengl{
                 DEVICE_BUFFER
             };
 
-            Tensor(DataType dtype, INTLIST shape);
+            Tensor(DataType dtype, INTLIST shape, MemoryType mem_type);
             template<typename T>
                 Tensor(T* data, DataType dtype, INTLIST shape);
             ~Tensor();
@@ -63,7 +63,7 @@ namespace opengl{
             bool is_host()const{return host_==nullptr? false: true;}
 
             size_t num_elements()const{return shape_.num_elements();}
-            const INTLIST& dims(){return shape_.dims();}
+            const INTLIST& shape(){return shape_.dims();}
 
             const int size()const{return size_;}
 
@@ -78,8 +78,8 @@ namespace opengl{
 
 
         private:
-            void* device_;
-            void* host_;
+            void* device_=nullptr;
+            void* host_=nullptr;
             int size_;
 
             DataType dtype_;
@@ -94,29 +94,34 @@ namespace opengl{
             Tensor& operator=(Tensor&& other)=delete;
     };
 
-    inline Tensor::Tensor(DataType dtype, INTLIST shapes)
-        :shape_(shapes), dtype_(dtype){
-            CHECK_LE(shapes.size(), 2)<<"Only 1D or 2D input are supported now!";
+    inline Tensor::Tensor(DataType dtype, INTLIST shapes, MemoryType mem_type)
+        :shape_(shapes), dtype_(dtype),mem_type_(mem_type){
+            CHECK_LE(shapes.size(), 3)<<"Only 1D or 2D input are supported now!";
+            CHECK_NE(shapes.size(), 0)<<"Empty tensor is not supported now!";
+
+            if(shapes.size()>=2){
+                CHECK_EQ(mem_type, DEVICE_TEXTURE);
+            }
+
+            if(shapes.size()==3){
+                CHECK_EQ(shapes[2], 4)<<"Only 4 channels mode supported now!";
+            }
 
             size_t num_elements = shape_.num_elements();
             const size_t bytes = sizeof(float)* num_elements;
 
             // shape and type
             size_ = bytes;
-            if(shapes.size()==0){
-                // set in cpu host when tensor is empty
-                mem_type_ = HOST_MEMORY;
-            }else{
-                // TODO alloc memory lazily
+            if(mem_type==HOST_MEMORY){
                 host_= new float[num_elements];
-
-                if(shapes.size()==1){
-                    device_ = new ShaderBuffer(bytes);
-                    mem_type_ = DEVICE_BUFFER;
-                }else{
-                    device_ = new Texture(shapes, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
-                    mem_type_ = DEVICE_TEXTURE;
-                }
+            }else if(mem_type==DEVICE_BUFFER){
+                device_ = new ShaderBuffer(bytes);
+            }else if(mem_type==DEVICE_TEXTURE){
+                int tex_h = shapes[0];
+                int tex_w = shapes[1];
+                device_ = new Texture({tex_h, tex_w}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+            }else{
+                LOG(FATAL)<<"unsupported types!";
             }
         }
 

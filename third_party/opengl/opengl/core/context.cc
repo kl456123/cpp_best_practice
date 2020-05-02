@@ -80,7 +80,6 @@ namespace opengl{
         Program program = Program();
         program.AttachFile(kImage2buffer_name_).Link();
 
-
         GLuint ray_program = program.program_id();
         // GLuint tex_output = texture->id();
         // GLuint SSBO = buffer->id();

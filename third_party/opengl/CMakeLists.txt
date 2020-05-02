@@ -27,6 +27,9 @@ set(CORE_SRC_NAMES
     context.cc
     buffer.cc
     texture.cc
+    session.cc
+    kernel.cc
+    kernel_registry.cc
     init.cc
     tensor.cc
     allocator.cc

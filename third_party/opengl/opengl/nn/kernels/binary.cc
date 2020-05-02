@@ -2,11 +2,14 @@
 
 #include "opengl/core/program.h"
 #include "opengl/core/context.h"
+#include "opengl/utils/macros.h"
+#include "opengl/core/kernel_registry.h"
+
 
 
 namespace opengl{
     BinaryKernel::BinaryKernel(Context* context)
-        :context_(context){
+        :Kernel(context){
             // set work size
             for(int i=0;i<3;i++){
                 work_sizes_[i] = 1;
@@ -14,7 +17,7 @@ namespace opengl{
 
             // set program
             program_ = new Program;
-            std::string fname = "../opengl/nn/glsl/binary.glsl";
+            std::string fname = "../opengl/examples/gpgpu/bias_add.glsl";
             program_->AttachFile(fname);
             program_->Link();
         }
@@ -25,39 +28,44 @@ namespace opengl{
     }
 
     void BinaryKernel::Compute(TensorList& inputs, TensorList& outputs){
-        // use program first
+        auto texture1 = inputs[0]->device<Texture>();
+        auto texture2 = inputs[1]->device<Texture>();
+        auto texture3 = outputs[0]->device<Texture>();
+
         program_->Activate();
+        int tex_w = texture1->shape()[0];
+        int tex_h = texture1->shape()[1];
 
-        // set input and output
-        auto input0 = inputs[0];
-        auto input1 = inputs[1];
-        auto output = outputs[0];
-        auto shape = input0->dims();
-        int ih = shape[1];
-        int iw = shape[2];
-        int ic = shape[3];
-        int ic_4 = ic/4;
-
-        glBindImageTexture(0, output->template device_id<Texture>(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        program_->set_vec2i("image_shape", tex_w, tex_h);
+        glBindImageTexture(0, texture3->id(), 0, GL_TRUE, 0, GL_WRITE_ONLY, texture3->format());
+        OPENGL_CHECK_ERROR;
+        // input0
         {
-            int text_id = 0;
-            glActiveTexture(GL_TEXTURE0 + text_id);
-            glUniform1i(1, text_id);
-            glBindTexture(GL_TEXTURE_3D, input0->template device_id<Texture>());
+            program_->set_image2D("input0", texture1->id(),  0);
+            OPENGL_CHECK_ERROR;
         }
 
+        // input1
         {
-            int text_id = 1;
-            glActiveTexture(GL_TEXTURE0 + text_id);
-            glUniform1i(2, text_id);
-            glBindTexture(GL_TEXTURE_3D, input1->template device_id<Texture>());
+            program_->set_image2D("input1", texture2->id(),  1);
+            OPENGL_CHECK_ERROR;
         }
+        glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
 
-        glUniform4i(3, iw, ih, ic_4, 1);
-
-        // run
-        context_->Compute({iw/work_sizes_[0], ih/work_sizes_[1], ic_4/work_sizes_[2]});
     }
+
+    void BinaryKernel::InferOutputShape(TensorShapeList& input_shapes,
+            TensorShapeList& output_shapes){
+        output_shapes.clear();
+        output_shapes.resize(1);
+        for(auto& input_shape:input_shapes){
+            // check input is the same shape
+        }
+        output_shapes[0] = input_shapes[0];
+    }
+
+    REGISTER_KERNEL_WITH_NAME(BinaryKernel, "Add");
 }//namespace opengl
+
 
 

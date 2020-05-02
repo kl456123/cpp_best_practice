@@ -1,25 +1,21 @@
 #ifndef KERNELS_BINARY_H_
 #define KERNELS_BINARY_H_
 #include <vector>
+#include "opengl/core/types.h"
+#include "opengl/core/kernel.h"
 
 
 namespace opengl{
 
-    class Program;
-    class Tensor;
     class Context;
 
-    typedef std::vector<Tensor*> TensorList;
-
-    class BinaryKernel{
+    class BinaryKernel:public Kernel{
         public:
             BinaryKernel(Context* context);
             virtual void Compute(TensorList& inputs, TensorList& outputs);
+            virtual void InferOutputShape(TensorShapeList& inputs,
+                    TensorShapeList& outputs);
             virtual ~BinaryKernel();
-        private:
-            Program* program_;
-            Context* context_;
-            unsigned long work_sizes_[3];
     };
 }//namespace opengl
 

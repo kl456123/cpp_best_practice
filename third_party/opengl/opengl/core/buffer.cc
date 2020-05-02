@@ -1,5 +1,7 @@
-#include "buffer.h"
+#include <glog/logging.h>
 
+#include "opengl/core/buffer.h"
+#include "opengl/utils/macros.h"
 
 namespace opengl{
     Buffer::Buffer(GLsizeiptr size, GLenum target, GLenum usage, float* data){
@@ -21,14 +23,18 @@ namespace opengl{
 
     void* Buffer::Map(GLbitfield bufMask){
         glBindBuffer(target_, id_);
+        OPENGL_CHECK_ERROR;
         // (TODO figure out 0 meaning)
         auto ptr = glMapBufferRange(target_, 0, size_, bufMask);
+        OPENGL_CHECK_ERROR;
         return ptr;
     }
 
 
     void Buffer::UnMap(){
         glBindBuffer(target_, id_);
+        OPENGL_CHECK_ERROR;
         glUnmapBuffer(target_);
+        OPENGL_CHECK_ERROR;
     }
 }//namespace opengl

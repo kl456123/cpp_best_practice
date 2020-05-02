@@ -1,4 +1,4 @@
-#include "tensor.h"
+#include "opengl/core/tensor.h"
 
 
 namespace opengl{
@@ -6,9 +6,8 @@ namespace opengl{
 
     template<>
         Tensor::Tensor(float* data, DataType dtype, INTLIST shape)
-        :shape_(shape),dtype_(dtype){
+        :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY){
             size_ = shape_.num_elements()*sizeof(float);
             host_ = data;
-            mem_type_ = HOST_MEMORY;
         }
 }//namespace opengl
