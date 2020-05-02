@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include <random>
+#include <glog/logging.h>
 
 #include "opengl/examples/fbo/context.h"
 
@@ -186,10 +187,15 @@ void SetInput( std::string name, GLuint id,  int tex_id){
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
+void CheckFormatAndType(GLint ext_format, GLint ext_type){
+}
+
 void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     GLint ext_format, ext_type;
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+    CHECK_EQ(ext_type, GL_FLOAT)<<"unmatched type";
+    CHECK_EQ(ext_format, format)<<"unmatched format";
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
@@ -347,6 +353,8 @@ int main(int argc, char* argv[]){
     glDeleteFramebuffers(1, &frame_buffer);
 
     ::opengl::example::DestroyContext();
+
+    LOG(INFO)<<"No Error Found!";
     return 0;
 }
 
