@@ -98,12 +98,11 @@ int main(int argc, char** argv){
     std::vector<int> output_shape = {output_height,output_width,4};
     auto input_data =  AllocateHostMemory(image_shape, true);
     auto filter_data =  AllocateHostMemory(image_shape, true);
-    auto output_data = AllocateHostMemory(output_shape, false);
     auto output_data2 = AllocateHostMemory(output_shape, false);
-    inputs_cpu.emplace_back(new Tensor(input_data, Tensor::DT_FLOAT, image_shape));
-    inputs_cpu.emplace_back(new Tensor(filter_data, Tensor::DT_FLOAT, filter_shape));
+    inputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, image_shape, input_data));
+    inputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, filter_shape, filter_data));
 
-    outputs_cpu.emplace_back(new Tensor(output_data, Tensor::DT_FLOAT, output_shape));
+    outputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, output_shape));
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
 

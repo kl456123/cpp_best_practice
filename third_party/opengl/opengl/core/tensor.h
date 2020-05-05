@@ -45,9 +45,9 @@ namespace opengl{
                 DEVICE_BUFFER
             };
 
-            Tensor(DataType dtype, INTLIST shape, MemoryType mem_type);
+            Tensor(DataType dtype, INTLIST shape, MemoryType mem_type=HOST_MEMORY);
             template<typename T>
-                Tensor(T* data, DataType dtype, INTLIST shape);
+                Tensor(DataType dtype, INTLIST shape, T* data);
             ~Tensor();
 
             void* device()const{return device_;}
@@ -98,10 +98,6 @@ namespace opengl{
         :shape_(shapes), dtype_(dtype),mem_type_(mem_type){
             CHECK_LE(shapes.size(), 3)<<"Only 1D or 2D input are supported now!";
             CHECK_NE(shapes.size(), 0)<<"Empty tensor is not supported now!";
-
-            if(shapes.size()>=2){
-                CHECK_EQ(mem_type, DEVICE_TEXTURE);
-            }
 
             if(shapes.size()==3){
                 CHECK_EQ(shapes[2], 4)<<"Only 4 channels mode supported now!";
