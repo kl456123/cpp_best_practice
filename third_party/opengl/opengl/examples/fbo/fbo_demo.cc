@@ -10,6 +10,7 @@
 #include <glog/logging.h>
 
 #include "opengl/examples/fbo/context.h"
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 GLuint vertex_shader_;
 GLuint fragment_shader;
@@ -211,16 +212,18 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     GLint ext_format, ext_type;
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
-    size_t bytes = width*height*sizeof(float);
+    size_t bytes = width*height*num_channels*sizeof(float);
+    GLuint io_buffer;
+    OPENGL_CALL(glGenBuffers(1, &io_buffer));
 
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-    OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, texture));
+    OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, io_buffer));
     OPENGL_CALL(glBufferData(GL_PIXEL_PACK_BUFFER, bytes,
                 NULL, GL_STREAM_READ));
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type,
-                0));
-    void* mem = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, bytes, GL_READ_ONLY);
-    assert(mem);
+                BUFFER_OFFSET(0)));
+    void* mem = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, bytes, GL_MAP_READ_BIT);
+    CHECK_NOTNULL(mem);
     memcpy(data, mem, bytes);
     glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
@@ -325,7 +328,7 @@ int main(int argc, char* argv[]){
     ///////////////////////////////////////
     // Download output Data from Device
     std::vector<GLfloat> retrieved_data(static_cast<size_t>(num_elements));
-    Download(retrieved_data.data(), width, height, output);
+    Download_DMA(retrieved_data.data(), width, height, output);
 
     std::vector<GLfloat> cpu_result(static_cast<size_t>(num_elements));
     auto cpu_start = std::chrono::system_clock::now();
