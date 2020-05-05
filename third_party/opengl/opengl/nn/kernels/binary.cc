@@ -14,12 +14,7 @@ namespace opengl{
             for(int i=0;i<3;i++){
                 work_sizes_[i] = 1;
             }
-
-            // set program
-            program_ = new Program;
-            std::string fname = "../opengl/examples/gpgpu/bias_add.glsl";
-            program_->AttachFile(fname);
-            program_->Link();
+            kernel_fname_ = "../opengl/nn/glsl/binary.glsl";
         }
 
 
@@ -28,16 +23,18 @@ namespace opengl{
     }
 
     void BinaryKernel::Compute(TensorList& inputs, TensorList& outputs){
+        OPENGL_CALL(glUseProgram(program_->program_id()));
         auto texture1 = inputs[0]->device<Texture>();
         auto texture2 = inputs[1]->device<Texture>();
-        auto texture3 = outputs[0]->device<Texture>();
+        SetFrameBuffer(outputs);
+        SetVertexShader();
+
 
         program_->Activate();
         int tex_w = texture1->shape()[0];
         int tex_h = texture1->shape()[1];
 
         program_->set_vec2i("image_shape", tex_w, tex_h);
-        glBindImageTexture(0, texture3->id(), 0, GL_TRUE, 0, GL_WRITE_ONLY, texture3->format());
         OPENGL_CHECK_ERROR;
         // input0
         {
@@ -50,7 +47,11 @@ namespace opengl{
             program_->set_image2D("input1", texture2->id(),  1);
             OPENGL_CHECK_ERROR;
         }
-        glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
+
+        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+        glFinish();
+        // glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
 
     }
 

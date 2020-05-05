@@ -11,6 +11,7 @@ namespace opengl{
             Program();
             virtual ~Program();
             Program& AttachFile(const std::string fname, GLenum type=GL_COMPUTE_SHADER);
+            Program& AttachShader(const GLuint shader_id);
             Program& AttachSource(const std::string source, GLenum type=GL_COMPUTE_SHADER);
             const unsigned int program_id(){return program_id_;}
             OGLStatus Link();

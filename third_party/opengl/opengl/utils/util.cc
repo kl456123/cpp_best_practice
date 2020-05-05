@@ -1,7 +1,7 @@
 #include <sstream>
 
-#include "opengl.h"
-#include "util.h"
+#include "opengl/core/opengl.h"
+#include "opengl/utils/util.h"
 
 
 namespace opengl{

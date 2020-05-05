@@ -36,7 +36,7 @@
 #endif
 
 #ifndef GLSL_VERSION
-#define GLSL_VERSION 430
+#define GLSL_VERSION "300 es"
 #endif
 
 

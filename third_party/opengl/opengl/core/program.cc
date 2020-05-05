@@ -19,6 +19,11 @@ namespace opengl{
         return status;
     }
 
+    Program& Program::AttachShader(const GLuint shader_id){
+        glAttachShader(program_id_, shader_id);
+        return *this;
+    }
+
     Program& Program::AttachSource(const std::string source, GLenum type){
         // Create a Shader Object
         int shader_id;

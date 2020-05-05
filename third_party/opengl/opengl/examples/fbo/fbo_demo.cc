@@ -167,7 +167,7 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     // Similar to cudaMemcpy.
     OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, /*level=*/0, internal_format,
                 width_, height_, /*border=*/0,
-                format, GL_FLOAT, data));
+                format, GL_FLOAT, nullptr));
     // TODO(zhixunt): What are these?
     OPENGL_CALL(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
@@ -177,6 +177,9 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
     OPENGL_CALL(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+    OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_,
+                    format, GL_FLOAT, data));
     return texture_;
 }
 
@@ -198,6 +201,8 @@ void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     CHECK_EQ(ext_format, format)<<"unmatched format";
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
+            texture , 0);
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
 }

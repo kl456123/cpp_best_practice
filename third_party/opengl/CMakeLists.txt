@@ -21,6 +21,7 @@ find_package(OpenCV REQUIRED)
 find_package(glog REQUIRED)
 
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
+set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
 
 set(CORE_SRC_NAMES
     program.cc
@@ -28,6 +29,7 @@ set(CORE_SRC_NAMES
     buffer.cc
     texture.cc
     session.cc
+    fbo_session.cc
     kernel.cc
     kernel_registry.cc
     init.cc
@@ -35,8 +37,14 @@ set(CORE_SRC_NAMES
     allocator.cc
     buffer_base.cc)
 
+set(UTIL_SRC_NAMES macros.cc util.cc)
+
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})
+endforeach()
+
+foreach(fname ${UTIL_SRC_NAMES})
+    set(UTIL_SRC_FILES ${UTIL_SRC_FILES} ${UTIL_SRC_DIR}/${fname})
 endforeach()
 
 # root directory
@@ -52,7 +60,7 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-add_library(${GL_CORE} ${CORE_SRC_FILES})
+add_library(${GL_CORE} ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog)
 
 

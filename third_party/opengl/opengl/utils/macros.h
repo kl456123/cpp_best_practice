@@ -1,6 +1,23 @@
 #ifndef OPENGL_UTILS_MACROS_H_
 #define OPENGL_UTILS_MACROS_H_
+#include <glog/logging.h>
+
 #include "opengl/core/opengl.h"
+
+namespace opengl{
+    void OpenGLCheckErrorWithLocation(const char* fname, int line);
+    const char *GLGetErrorString(GLenum error);
+}//opengl
+
+/*!
+ * \brief Protected OpenGL call.
+ * \param func Expression to call.
+ */
+#define OPENGL_CALL(func)                                                      \
+{                                                                            \
+    (func);                                                                    \
+    ::opengl::OpenGLCheckErrorWithLocation(__FILE__, __LINE__);                  \
+}
 
 #ifdef ENABLE_OPENGL_CHECK_ERROR
 #define OPENGL_CHECK_ERROR              \
