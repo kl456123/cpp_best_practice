@@ -9,10 +9,7 @@
 class Converter: public RegistryItemBase{
     public:
         Converter(){};
-        void Reset(const ConverterConfig config){
-            converter_config_ = config;
-        }
-        Converter(const ConverterConfig config);
+        virtual void Reset(const ConverterConfig config)=0;
         virtual ~Converter(){};
         // TODO(breakpoint) change to return Status
         virtual void Run()=0;

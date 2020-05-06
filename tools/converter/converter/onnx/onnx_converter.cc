@@ -7,11 +7,56 @@
 
 
 
-ONNXConverter::ONNXConverter(const ConverterConfig config)
-    :Converter(config){}
-
-    void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto&, TensorProto*){
+void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
+        TensorProto* dlcl_tensor){
+    // switch data transfer according to its data type
+    auto data_type = static_cast<onnx::TensorProto::DataType>(
+            onnx_tensor.data_type());
+    // handle tensor shape
+    size_t num_elements =1;
+    size_t dim_size = onnx_tensor.dims().size();
+    for (int i = 0; i < dim_size; ++i) {
+        dlcl_tensor->add_dims(onnx_tensor.dims(i));
+        num_elements  *= onnx_tensor.dims(i);
     }
+    // handle data type and data format
+    dlcl_tensor->set_data_format(TensorProto::NCHW);
+
+    // handle tensor value
+    const void* tensor_content = onnx_tensor.raw_data().data();
+    switch(data_type){
+        case onnx::TensorProto::FLOAT:
+            {
+                auto source = (float*)tensor_content;
+                for(int i=0;i<num_elements;++i){
+                    dlcl_tensor->add_float_data(source[i]);
+                }
+                dlcl_tensor->set_data_type(TensorProto::FLOAT32);
+                break;
+            }
+        case onnx::TensorProto::INT32:
+            {
+                auto source = (int32_t*)tensor_content;
+                for(int i=0;i<num_elements;++i){
+                    dlcl_tensor->add_int32_data(source[i]);
+                }
+                dlcl_tensor->set_data_type(TensorProto::INT32);
+                break;
+            }
+        default:
+            LOG(WARNING)<<"unsupported data type when converting tensor "
+                <<data_type;
+    }
+
+}
+
+void ONNXConverter::Reset(const ConverterConfig config){
+    converter_config_ = config;
+    model_ = new Model;
+    model_->set_producer_name("ONNX");
+    model_->set_version("0.1");
+    model_->set_doc_string("ignored");
+}
 
 void ONNXConverter::Run(){
     // load onnx proto
@@ -29,11 +74,14 @@ void ONNXConverter::Run(){
     Graph* graph = model_->mutable_graph();
     // map from tensor name to tensor index
     std::unordered_map<std::string, int> total_tensor_names;
+    // map from onnx nodes to dlcl nodes,
+    // note that dlcl nodes also include constant node
+    std::unordered_map<const onnx::NodeProto*, Node*> onnx_dlcl_map;
 
     // insert input tensor to total_tensor_names first
     const int input_tensor_count = graph_proto.input_size();
     for(int i=0;i<input_tensor_count;++i){
-        total_tensor_names.insert({graph_proto.input(i).name(), i});
+        total_tensor_names.insert({graph_proto.input(i).name(), total_tensor_names.size()});
     }
 
     // constant tensor map
@@ -60,8 +108,8 @@ void ONNXConverter::Run(){
 
         // handle with its input first
         // check if they contain constant tensor or not
-        for(int i=0;i<node_proto.input_size();++i){
-            auto& input_name = node_proto.input(i);
+        for(int j=0;j<node_proto.input_size();++j){
+            auto& input_name = node_proto.input(j);
             // find input in constant map and total_tensor_names first
             if(total_tensor_names.find(input_name)!=total_tensor_names.end()){
                 // already inserted, skip it
@@ -73,13 +121,15 @@ void ONNXConverter::Run(){
                 Node* node_ptr = graph->add_node();
                 node_ptr->set_name(iter->first);
                 node_ptr->set_type("Const");
+                int output_tensor_index = total_tensor_names.size();
+                node_ptr->add_output_index(output_tensor_index);
 
                 // convert data
 
                 TensorProto* tensor = node_ptr->mutable_attr()
                     ->mutable_const_attr()->mutable_value();
                 MakeTensorFromProto(*iter->second, tensor);
-                total_tensor_names.insert({input_name, total_tensor_names.size()});
+                total_tensor_names.insert({input_name, output_tensor_index});
             }
         }
 
@@ -90,10 +140,65 @@ void ONNXConverter::Run(){
             continue;
         }else{
             Node* node_ptr = graph->add_node();
+            // set node name with the name of the first output
+            node_ptr->set_name(node_proto.output(0));
+
+            node_ptr->set_type(node_proto.op_type());
             // populate node
             op_converter->Run(node_ptr, &node_proto);
+
+            // add map between onnx and dlcl
+            onnx_dlcl_map.insert({&node_proto, node_ptr});
+        }
+
+        // insert all output tensors to total_tensor_names
+        for(int j=0;j<node_proto.output_size();++j){
+            total_tensor_names.insert({node_proto.output(j), total_tensor_names.size()});
         }
     }
+
+    // set input index and output index for each node op
+    // due to all tensor has already been inserted to total_tensor_names
+    // so the index is immutable.
+    // Note that no need to handle constant node again here
+    // because they are already done
+    for(int i=0;i<node_counts;++i){
+        const auto& node_proto = graph_proto.node(i);
+        // find its accord node in dlcl
+        Node* dlcl_node = onnx_dlcl_map[&node_proto];
+        // set input index
+        for(int j=0;j<node_proto.input_size();++j){
+            auto& input_name = node_proto.input(j);
+            if(input_name==""){
+                LOG(WARNING)<<"input name is empty, maybe need to check it";
+            }else{
+                auto iter = total_tensor_names.find(input_name);
+                CHECK(iter!=total_tensor_names.end())<<
+                    "Cannot find the input tensor in total_tensor_names";
+                dlcl_node->add_input_index(iter->second);
+            }
+        }
+
+        // set output index
+        for(int j=0;j<node_proto.output_size();++j){
+            auto& output_name = node_proto.output(j);
+            auto iter = total_tensor_names.find(output_name);
+            CHECK(iter!=total_tensor_names.end())<<
+                "Cannot find the output tensor in total_tensor_names";
+            dlcl_node->add_output_index(iter->second);
+        }
+    }
+
+    // set total tensor name and output names in graph
+    // tensor names
+    for(auto& iter:total_tensor_names){
+        graph->add_tensor_names(iter.first);
+    }
+    // output names
+    for(int i=0;i<graph_proto.output_size();++i){
+        graph->add_output_names(graph_proto.output(i).name());
+    }
+
     LOG(INFO)<<"ONNXConverter Done!";
 }
 

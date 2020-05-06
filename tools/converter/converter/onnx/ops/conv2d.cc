@@ -20,9 +20,7 @@ class ConvOpConverter: public OpConverter{
 
 
 void ConvOpConverter::Run(Node* dst_node, const void* src_node){
-    dst_node->set_name("conv");
-    dst_node->set_type("conv");
-    dst_node->mutable_attr();
+    Conv2dAttribute* dst_attr = dst_node->mutable_attr()->mutable_conv2d_attr();
     const auto src_node_onnx = reinterpret_cast<const onnx::NodeProto*>(src_node);
     for(int i=0;i<src_node_onnx->attribute_size();i++){
         const onnx::AttributeProto& attr = src_node_onnx->attribute(i);
@@ -33,11 +31,19 @@ void ConvOpConverter::Run(Node* dst_node, const void* src_node){
         // 3. kernel_shape
         // 4. pads
         // 5. strides
-        std::string pieces;
-        ParseAttrValueToString(attr, &pieces);
-
-        // print name with its value
-        LOG(INFO)<<attr.name()<<": "<< pieces;
+        if(attr.name()=="kernel_shape"){
+            for(int i=0;i<attr.ints_size();++i){
+                dst_attr->add_kernel_shape(attr.ints(i));
+            }
+        }else if(attr.name()=="strides"){
+            for(int i=0;i<attr.ints_size();++i){
+                dst_attr->add_strides(attr.ints(i));
+            }
+        }else if(attr.name()=="pads"){
+            for(int i=0;i<attr.ints_size();++i){
+                dst_attr->add_pads(attr.ints(i));
+            }
+        }
     }
 }
 

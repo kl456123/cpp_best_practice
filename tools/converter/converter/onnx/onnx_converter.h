@@ -8,9 +8,9 @@
 class ONNXConverter: public Converter{
     public:
         ONNXConverter()=default;
-        ONNXConverter(const ConverterConfig config);
         virtual ~ONNXConverter(){}
         virtual void Run()override;
+        virtual void Reset(const ConverterConfig config);
 
         void PrintSelf(){}
         void MakeTensorFromProto(const onnx::TensorProto&, TensorProto*);

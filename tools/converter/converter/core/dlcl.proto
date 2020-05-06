@@ -53,8 +53,9 @@ message TensorProto{
 
 
 message Conv2dAttribute{
-    repeated uint32 kernel_size=1;
-    repeated uint32 stride=2;
+    repeated int64 kernel_shape=1;
+    repeated int64 strides=2;
+    repeated int64 pads=3;
 };
 
 message ConstAttribute{
@@ -75,8 +76,8 @@ message Node{
     string name =5;
     string type=6;
 
-    repeated int32 input_index=1;
-    repeated int32 output_index=2;
+    repeated int64 input_index=1;
+    repeated int64 output_index=2;
     Attribute attr=3;
 
     string doc_string=4;
