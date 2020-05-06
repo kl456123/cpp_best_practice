@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # generate protos
 find_package(Protobuf REQUIRED)
+find_package(glog REQUIRED)
 
 include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
@@ -49,4 +50,4 @@ message(STATUS "[*] searching *.cpp")
 add_executable(Converter ${SRC_FILES} ${ProtoSources})
 
 
-target_link_libraries(Converter ${Protobuf_LIBRARIES})
+target_link_libraries(Converter ${Protobuf_LIBRARIES} glog::glog)

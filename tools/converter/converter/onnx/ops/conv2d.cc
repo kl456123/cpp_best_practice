@@ -1,6 +1,8 @@
 #include <iostream>
-
+#include <string>
+#include <vector>
 #include "core/op_converter.h"
+#include "onnx/onnx_utils.h"
 #include "onnx.pb.h"
 
 
@@ -23,14 +25,24 @@ void ConvOpConverter::Run(Node* dst_node, const void* src_node){
     dst_node->mutable_attr();
     const auto src_node_onnx = reinterpret_cast<const onnx::NodeProto*>(src_node);
     for(int i=0;i<src_node_onnx->attribute_size();i++){
-        auto& attr = src_node_onnx->attribute(i);
-        std::cout<<"f: "<<attr.f()<<std::endl;
+        const onnx::AttributeProto& attr = src_node_onnx->attribute(i);
+        // parse attr according its types and names
+        // five attrs in total, they are
+        // 1. dilation
+        // 2. groups
+        // 3. kernel_shape
+        // 4. pads
+        // 5. strides
+        std::string pieces;
+        ParseAttrValueToString(attr, &pieces);
+
+        // print name with its value
+        LOG(INFO)<<attr.name()<<": "<< pieces;
     }
-    std::cout<<"ConvOpConverter"<<std::endl;
 }
 
 
-REGISTER_CLASS_OP(ConvOpConverter);
+REGISTER_OP_WITH_NAME(ConvOpConverter, "Conv");
 
 
 

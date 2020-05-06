@@ -1,6 +1,7 @@
 #ifndef CONVERTER_ONNX_CONVERTER_H_
 #define CONVERTER_ONNX_CONVERTER_H_
 #include "core/converter.h"
+#include "onnx.pb.h"
 
 
 
@@ -11,8 +12,8 @@ class ONNXConverter: public Converter{
         virtual ~ONNXConverter(){}
         virtual void Run()override;
 
-        void PrintSelf(){
-        }
+        void PrintSelf(){}
+        void MakeTensorFromProto(const onnx::TensorProto&, TensorProto*);
 };
 
 

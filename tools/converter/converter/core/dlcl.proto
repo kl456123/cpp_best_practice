@@ -1,13 +1,73 @@
 syntax="proto3";
 
+message TensorProto{
+    // data format and data type
+    enum DataFormat{
+        NCHW=0;
+        NHWC=1;
+        NHWC4=2;
+    };
+    enum DataType{
+        FLOAT32=0;
+        FLOAT16=1;
+        INT32=2;
+        INT8=3;
+    };
+    DataFormat data_format=1;
+    DataType data_type=2;
+
+    repeated int32 dims=3;
+
+    // Tensor content must be organized in row-major order.
+    //
+    // Depending on the data_type field, exactly one of the fields below with
+    // name ending in _data is used to store the elements of the tensor.
+
+    // For float and complex64 values
+    // Complex64 tensors are encoded as a single array of floats,
+    // with the real components appearing in odd numbered positions,
+    // and the corresponding imaginary component appearing in the
+    // subsequent even numbered position. (e.g., [1.0 + 2.0i, 3.0 + 4.0i]
+    // is encoded as [1.0, 2.0 ,3.0 ,4.0]
+    // When this field is present, the data_type field MUST be FLOAT or COMPLEX64.
+    repeated float float_data = 4 [packed = true];
+
+    // For int32, uint8, int8, uint16, int16, bool, and float16 values
+    // float16 values must be bit-wise converted to an uint16_t prior
+    // to writing to the buffer.
+    // When this field is present, the data_type field MUST be
+    // INT32, INT16, INT8, UINT16, UINT8, BOOL, or FLOAT16
+    repeated int32 int32_data = 5 [packed = true];
+
+    // For strings.
+    // Each element of string_data is a UTF-8 encoded Unicode
+    // string. No trailing null, no leading BOM. The protobuf "string"
+    // scalar type is not used to match ML community conventions.
+    // When this field is present, the data_type field MUST be STRING
+    repeated bytes string_data = 6;
+
+    // For int64.
+    // When this field is present, the data_type field MUST be INT64
+    repeated int64 int64_data = 7 [packed = true];
+};
+
 
 message Conv2dAttribute{
     repeated uint32 kernel_size=1;
     repeated uint32 stride=2;
 };
 
+message ConstAttribute{
+    TensorProto value=1;
+}
+
 message Attribute{
+    // all attributes defined here is optional by default
+    // so dont need to care about memory consumption for
+    // a large amount of attributions
+
     Conv2dAttribute conv2d_attr=1;
+    ConstAttribute const_attr=2;
 };
 
 
