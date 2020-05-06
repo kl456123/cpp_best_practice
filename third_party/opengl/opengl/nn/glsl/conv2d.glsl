@@ -7,7 +7,7 @@ uniform ivec2 image_shape;// height, width
 out float color;
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
-    color = vec4(0.0);
+    color = 0.0;
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = pixel.x*stride_size+i-padding;
