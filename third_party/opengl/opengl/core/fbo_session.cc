@@ -43,11 +43,23 @@ namespace opengl{
             <<"Load Graph "<<file_path <<"Failed";
 
         dlxnet::GraphProto graph = model_->graph();
-        // allocate memory for each tensor
-        // create kernel for each node
+        // create kernel and setup input and output for each node
+        // Note that dont need to allocate memory due to lack of shape information
+        total_tensors_.resize(graph.tensor_names_size());
+
 
         for(auto& tensor_name:graph.tensor_names()){
             total_tensor_names_.emplace_back(tensor_name);
+        }
+
+        // fill output tensors
+        for(auto& output_tensor_name:graph.output_names()){
+            for(int i=0;i<total_tensor_names_.size();++i){
+                if(total_tensor_names_[i]==output_tensor_name){
+                    output_tensors_.emplace_back(total_tensors_[i]);
+                    break;
+                }
+            }
         }
 
         Kernel* kernel=nullptr;
@@ -144,37 +156,55 @@ namespace opengl{
     }
 
     void FBOSession::Setup(TensorList inputs_cpu){
-        CHECK(kernels_.size())<<"Graph is empty, please load it first";
-
-        // allocate memory for each kernel here
-        TensorShapeList input_shapes, output_shapes;
-
-        // prepare input and output tensors first
-        output_tensors_.resize(kernels_.size());
-        input_tensors_.resize(kernels_.size());
-
+        // allocate memory for each tensor
         for(int i=0;i<kernels_.size();++i){
-            auto& texture_inputs_per_kernel = input_tensors_[i];
+            Kernel* kernel = kernels_[i];
+            TensorShapeList input_shapes, output_shapes;
+            // prepare input_shapes
 
-            // calculate output shapes for each kernel
-            for(auto& input_cpu:inputs_cpu){
-                // here we just upload input_cpu to input_gpu, and
-                // set it to the first kernel in the session
-                CHECK(input_cpu->is_host());
-                auto texture_input = new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
+            // infer output shapes from input shapes
+            kernel->InferOutputShape(input_shapes, output_shapes);
+
+            // allocate memory for each output tensors according to their shapes
+            for(int j=0;j<output_shapes.size();++j){
+                kernel->output_tensors_[j] = new Tensor(Tensor::DT_FLOAT, output_shapes[j],
                         Tensor::DEVICE_TEXTURE);
-                Upload(input_cpu, texture_input);
-                input_shapes.emplace_back(input_cpu->shape());
-                texture_inputs_per_kernel.emplace_back(texture_input);
             }
-            kernels_[i]->InferOutputShape(input_shapes,
-                    output_shapes);
-            input_shapes = output_shapes;
-
-            // then allocate them
-            AllocateTensor(output_shapes, output_tensors_[i]);
         }
     }
+
+    // void FBOSession::Setup(TensorList inputs_cpu){
+    // CHECK(kernels_.size())<<"Graph is empty, please load it first";
+
+    // // allocate memory for each kernel here
+    // TensorShapeList input_shapes, output_shapes;
+
+    // // prepare input and output tensors first
+    // output_tensors_.resize(kernels_.size());
+    // input_tensors_.resize(kernels_.size());
+
+    // for(int i=0;i<kernels_.size();++i){
+    // auto& texture_inputs_per_kernel = input_tensors_[i];
+
+    // // calculate output shapes for each kernel
+    // for(auto& input_cpu:inputs_cpu){
+    // // here we just upload input_cpu to input_gpu, and
+    // // set it to the first kernel in the session
+    // CHECK(input_cpu->is_host());
+    // auto texture_input = new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
+    // Tensor::DEVICE_TEXTURE);
+    // Upload(input_cpu, texture_input);
+    // input_shapes.emplace_back(input_cpu->shape());
+    // texture_inputs_per_kernel.emplace_back(texture_input);
+    // }
+    // kernels_[i]->InferOutputShape(input_shapes,
+    // output_shapes);
+    // input_shapes = output_shapes;
+
+    // // then allocate them
+    // AllocateTensor(output_shapes, output_tensors_[i]);
+    // }
+    // }
 
     void FBOSession::LoadGraph(StringList kernel_names){
         // init kernels first
@@ -193,6 +223,9 @@ namespace opengl{
 
             kernels_.emplace_back(kernel);
         }
+    }
+
+    void FBOSession::Download(Tensor* cpu_tensor, Tensor* device_tensor){
     }
 
     void FBOSession::Download(Tensor* tensor){
@@ -218,9 +251,8 @@ namespace opengl{
     }
 
     void FBOSession::GetOutputs(TensorList outputs){
-        // Only One output tensor supported
-        CHECK_EQ(outputs.size(), 1);
-        Tensor* device_tensor = output_tensors_[0][0];
-        Download(outputs[0]);
+        for(int i=0;i<output_tensors_.size();++i){
+            Download(outputs[i], output_tensors_[i]);
+        }
     }
 }//namespace opengl

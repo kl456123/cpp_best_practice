@@ -36,6 +36,8 @@ namespace opengl{
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
             void Download(Tensor* tensor);
+            void Download(Tensor* cpu_tensor, Tensor* device_tensor);
+
             void Upload(Tensor* cpu_tensor, Tensor* device_tensor);
 
             // reorder all nodes in nodes_ topologically
@@ -44,9 +46,6 @@ namespace opengl{
             GLuint vertex_shader_;
             Context* context_;
             KernelList kernels_;
-
-            // store their output here for each op kernel
-            std::vector<TensorList> output_tensors_;
 
             // store their input here for each op kernel
             std::vector<TensorList> input_tensors_;
@@ -67,6 +66,8 @@ namespace opengl{
             // check session is freezed or not
             // note that when graph is freezed, session can be called multiple times
             bool finalized_ = false;
+
+            std::vector<Tensor*> output_tensors_;
     };
 }//namespace opengl
 

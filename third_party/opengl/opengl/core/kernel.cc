@@ -21,6 +21,10 @@ namespace opengl{
     }
 
     void Kernel::SetupProgram(GLuint vertex_shader){
+        if(kernel_fname_.empty()){
+            // no kernel program needed for this op, like const op
+            return;
+        }
         // set program
         program_ = new Program;
         (*program_).AttachFile(kernel_fname_, GL_FRAGMENT_SHADER)

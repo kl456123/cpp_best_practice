@@ -105,8 +105,7 @@ int main(int argc, char** argv){
     outputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, output_shape));
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
-    std::string model_path =
-        "/home/indemind/Documents/Learning/cpp/tools/converter/build/demo.dlx";
+    std::string model_path = "./demo.dlx";
 
     session->LoadGraph(model_path);
 

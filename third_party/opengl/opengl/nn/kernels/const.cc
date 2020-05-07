@@ -6,6 +6,8 @@
 namespace opengl{
     void ConstKernel::SetupAttr(const dlxnet::Attribute& attr){
         // get value and store it in tensor_
+        auto& const_params = attr.const_attr();
+        const_params.value();
     }
 
     ConstKernel::ConstKernel(Context* context)
