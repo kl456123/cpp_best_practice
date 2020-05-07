@@ -13,7 +13,7 @@ class OpConverter{
         virtual ~OpConverter();
 
         // derived class implement this func
-        virtual void Run(Node* dst_node, const void* src_node)=0;
+        virtual void Run(dlxnet::NodeProto* dst_node, const void* src_node)=0;
 };
 
 

@@ -1,5 +1,6 @@
-#ifndef KERNELS_BINARY_H_
-#define KERNELS_BINARY_H_
+#ifndef OPENGL_NN_KERNELS_CONST_H_
+#define OPENGL_NN_KERNELS_CONST_H_
+
 #include <vector>
 #include "opengl/core/types.h"
 #include "opengl/core/kernel.h"
@@ -8,16 +9,17 @@
 namespace opengl{
 
     class Context;
-    class BinaryKernel:public Kernel{
+
+    class ConstKernel: public Kernel{
         public:
-            BinaryKernel(Context* context);
+            ConstKernel(Context* context);
             virtual void Compute(TensorList& inputs, TensorList& outputs);
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs);
             virtual void SetupAttr(const dlxnet::Attribute& attr);
-            virtual ~BinaryKernel();
+            virtual ~ConstKernel();
+        private:
+            Tensor* tensor_;
     };
 }//namespace opengl
-
-
 #endif

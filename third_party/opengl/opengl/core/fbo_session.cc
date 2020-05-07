@@ -2,6 +2,8 @@
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel.h"
 #include "opengl/core/kernel_registry.h"
+#include "opengl/utils/protobuf.h"
+#include "opengl/core/tensor.h"
 
 
 namespace opengl{
@@ -34,6 +36,42 @@ namespace opengl{
     }//namespace
 
     FBOSession::~FBOSession(){}
+
+    void FBOSession::LoadGraph(const std::string file_path){
+        // load graph from disk
+        CHECK(ReadProtoFromBinary(file_path.c_str(), model_))
+            <<"Load Graph "<<file_path <<"Failed";
+
+        dlxnet::GraphProto graph = model_->graph();
+        // allocate memory for each tensor
+        // create kernel for each node
+
+        for(auto& tensor_name:graph.tensor_names()){
+            total_tensor_names_.emplace_back(tensor_name);
+        }
+
+        Kernel* kernel=nullptr;
+        for(auto& node: graph.node()){
+            KernelRegistry::Global()->CreateKernel(node.type(), &kernel, context_);
+            if(kernel==nullptr){
+                LOG(FATAL)<<"unsupported kernel name "<<node.type();
+            }
+            // setup program for each kernel here
+            kernel->SetupProgram(vertex_shader_);
+
+            kernel->SetupAttr(node.attr());
+            // fill inputs and outputs
+            for(int i=0;i<node.input_index_size();++i){
+                Tensor* input_tensor = total_tensors_[node.input_index(i)];
+                kernel->input_tensors_.emplace_back(input_tensor);
+            }
+            for(int i=0;i<node.output_index_size();++i){
+                Tensor* output_tensor = total_tensors_[node.output_index(i)];
+                kernel->output_tensors_.emplace_back(output_tensor);
+            }
+            kernels_.emplace_back(kernel);
+        }
+    }
 
     void FBOSession::CreateVertexShader(){
         // We always render the same vertices and triangles.
@@ -77,15 +115,11 @@ namespace opengl{
     }
 
     void FBOSession::Run(){
-
         for(int i=0;i<kernels_.size();++i){
             // prepare input and output
-            auto& output_tensors_per_kernel = output_tensors_[i];
-            auto& input_tensors_per_kernel = input_tensors_[i];
             // set output here
             // SetFrameBuffer(output_tensors_per_kernel);
-
-            kernels_[i]->Compute(input_tensors_per_kernel, output_tensors_per_kernel);
+            kernels_[i]->Compute();
         }
     }
 
@@ -94,6 +128,8 @@ namespace opengl{
         :context_(context){
             // create vertex shader first
             CreateVertexShader();
+
+            model_ = new dlxnet::ModelProto;
         }
 
     void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){
@@ -108,6 +144,7 @@ namespace opengl{
     }
 
     void FBOSession::Setup(TensorList inputs_cpu){
+        CHECK(kernels_.size())<<"Graph is empty, please load it first";
 
         // allocate memory for each kernel here
         TensorShapeList input_shapes, output_shapes;

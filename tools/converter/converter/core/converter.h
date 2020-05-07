@@ -15,10 +15,13 @@ class Converter: public RegistryItemBase{
         virtual void Run()=0;
 
         void Save(std::string checkpoint_path);
+        void Save(){
+            Save(converter_config_.dst_model_path);
+        }
 
     protected:
         ConverterConfig converter_config_;
-        Model* model_;
+        dlxnet::ModelProto* model_;
 };
 
 

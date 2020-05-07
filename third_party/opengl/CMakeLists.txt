@@ -19,6 +19,7 @@ endif()
 
 find_package(OpenCV REQUIRED)
 find_package(glog REQUIRED)
+find_package(Protobuf REQUIRED)
 
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
@@ -35,9 +36,13 @@ set(CORE_SRC_NAMES
     init.cc
     tensor.cc
     allocator.cc
-    buffer_base.cc)
+    buffer_base.cc
 
-set(UTIL_SRC_NAMES macros.cc util.cc)
+    # some protos
+    dlxnet.pb.cc
+    )
+
+set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})
@@ -61,7 +66,7 @@ set(GL_CORE gl_core)
 
 # build core library
 add_library(${GL_CORE} ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
-target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog)
+target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES})
 
 
 # examples demo

@@ -15,12 +15,12 @@ class ConvOpConverter: public OpConverter{
     public:
         ConvOpConverter(){}
         virtual ~ConvOpConverter(){}
-        virtual void Run(Node* dst_node, const void* src_node)override;
+        virtual void Run(dlxnet::NodeProto* dst_node, const void* src_node)override;
 };
 
 
-void ConvOpConverter::Run(Node* dst_node, const void* src_node){
-    Conv2dAttribute* dst_attr = dst_node->mutable_attr()->mutable_conv2d_attr();
+void ConvOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){
+    dlxnet::Conv2dAttribute* dst_attr = dst_node->mutable_attr()->mutable_conv2d_attr();
     const auto src_node_onnx = reinterpret_cast<const onnx::NodeProto*>(src_node);
     for(int i=0;i<src_node_onnx->attribute_size();i++){
         const onnx::AttributeProto& attr = src_node_onnx->attribute(i);

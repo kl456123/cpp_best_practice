@@ -3,6 +3,7 @@
 #include <string>
 
 #include "opengl/core/types.h"
+#include "opengl/core/dlxnet.pb.h"
 
 namespace opengl{
     class Program;
@@ -19,6 +20,12 @@ namespace opengl{
              * Run Kernel, do computation actually
              */
             virtual void Compute(TensorList& inputs, TensorList& outputs)=0;
+
+            virtual void SetupAttr(const dlxnet::Attribute& attr)=0;
+
+            void Compute(){
+                Compute(input_tensors_, output_tensors_);
+            }
 
             /*!
              * Compute output shapes according to their input tensor shape
@@ -46,6 +53,13 @@ namespace opengl{
 
             // output target in each kernel
             GLuint frame_buffer_;
+
+            // store input and output indexes
+            std::vector<Tensor*> input_tensors_;
+            std::vector<Tensor*> output_tensors_;
+
+            // make it can fill input and output tensors
+            friend class FBOSession;
     };
 }//namespace opengl
 

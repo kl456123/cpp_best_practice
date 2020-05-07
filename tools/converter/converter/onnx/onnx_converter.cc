@@ -8,7 +8,7 @@
 
 
 void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
-        TensorProto* dlcl_tensor){
+        dlxnet::TensorProto* dlcl_tensor){
     // switch data transfer according to its data type
     auto data_type = static_cast<onnx::TensorProto::DataType>(
             onnx_tensor.data_type());
@@ -20,7 +20,7 @@ void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
         num_elements  *= onnx_tensor.dims(i);
     }
     // handle data type and data format
-    dlcl_tensor->set_data_format(TensorProto::NCHW);
+    dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
 
     // handle tensor value
     const void* tensor_content = onnx_tensor.raw_data().data();
@@ -31,7 +31,7 @@ void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
                 for(int i=0;i<num_elements;++i){
                     dlcl_tensor->add_float_data(source[i]);
                 }
-                dlcl_tensor->set_data_type(TensorProto::FLOAT32);
+                dlcl_tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
                 break;
             }
         case onnx::TensorProto::INT32:
@@ -40,7 +40,7 @@ void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
                 for(int i=0;i<num_elements;++i){
                     dlcl_tensor->add_int32_data(source[i]);
                 }
-                dlcl_tensor->set_data_type(TensorProto::INT32);
+                dlcl_tensor->set_data_type(dlxnet::TensorProto::INT32);
                 break;
             }
         default:
@@ -52,7 +52,7 @@ void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
 
 void ONNXConverter::Reset(const ConverterConfig config){
     converter_config_ = config;
-    model_ = new Model;
+    model_ = new dlxnet::ModelProto;
     model_->set_producer_name("ONNX");
     model_->set_version("0.1");
     model_->set_doc_string("ignored");
@@ -71,12 +71,12 @@ void ONNXConverter::Run(){
     // The goal is to populate model proto
 
     // populate graph
-    Graph* graph = model_->mutable_graph();
+    dlxnet::GraphProto* graph = model_->mutable_graph();
     // map from tensor name to tensor index
     std::unordered_map<std::string, int> total_tensor_names;
     // map from onnx nodes to dlcl nodes,
     // note that dlcl nodes also include constant node
-    std::unordered_map<const onnx::NodeProto*, Node*> onnx_dlcl_map;
+    std::unordered_map<const onnx::NodeProto*, dlxnet::NodeProto*> onnx_dlcl_map;
 
     // insert input tensor to total_tensor_names first
     const int input_tensor_count = graph_proto.input_size();
@@ -118,7 +118,7 @@ void ONNXConverter::Run(){
             auto iter = constant_tensor_map.find(input_name);
             if(iter!=constant_tensor_map.end()){
                 // constant tensor
-                Node* node_ptr = graph->add_node();
+                dlxnet::NodeProto* node_ptr = graph->add_node();
                 node_ptr->set_name(iter->first);
                 node_ptr->set_type("Const");
                 int output_tensor_index = total_tensor_names.size();
@@ -126,7 +126,7 @@ void ONNXConverter::Run(){
 
                 // convert data
 
-                TensorProto* tensor = node_ptr->mutable_attr()
+                dlxnet::TensorProto* tensor = node_ptr->mutable_attr()
                     ->mutable_const_attr()->mutable_value();
                 MakeTensorFromProto(*iter->second, tensor);
                 total_tensor_names.insert({input_name, output_tensor_index});
@@ -139,7 +139,7 @@ void ONNXConverter::Run(){
             LOG(WARNING)<<"Cannot find Type: "<<op_type;
             continue;
         }else{
-            Node* node_ptr = graph->add_node();
+            dlxnet::NodeProto* node_ptr = graph->add_node();
             // set node name with the name of the first output
             node_ptr->set_name(node_proto.output(0));
 
@@ -165,7 +165,7 @@ void ONNXConverter::Run(){
     for(int i=0;i<node_counts;++i){
         const auto& node_proto = graph_proto.node(i);
         // find its accord node in dlcl
-        Node* dlcl_node = onnx_dlcl_map[&node_proto];
+        dlxnet::NodeProto* dlcl_node = onnx_dlcl_map[&node_proto];
         // set input index
         for(int j=0;j<node_proto.input_size();++j){
             auto& input_name = node_proto.input(j);

@@ -15,15 +15,16 @@ namespace opengl{
                 work_sizes_[i] = 1;
             }
             kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
-
-            // param for conv2d
-            // (TODO breakpoint) make it can be set by manually when load graph
-            padding_ = 1;
-            stride_ = 1;
-            kernel_size_=3;
-            group_size_=1;
-            dilation_=1;
         }
+
+    void Conv2DKernel::SetupAttr(const dlxnet::Attribute& attr){
+        auto& conv2d_params = attr.conv2d_attr();
+        padding_ = 1;
+        stride_ = 1;
+        kernel_size_=3;
+        group_size_=1;
+        dilation_=1;
+    }
 
 
     Conv2DKernel::~Conv2DKernel(){

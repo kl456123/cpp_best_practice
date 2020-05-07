@@ -65,6 +65,8 @@ namespace opengl{
         output_shapes[0] = input_shapes[0];
     }
 
+    void BinaryKernel::SetupAttr(const dlxnet::Attribute& attr){}
+
     REGISTER_KERNEL_WITH_NAME(BinaryKernel, "Add");
 }//namespace opengl
 

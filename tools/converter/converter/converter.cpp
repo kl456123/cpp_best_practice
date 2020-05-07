@@ -10,7 +10,9 @@ int main(int argc,char** argv){
     // here we just assign it manualy
     ConverterConfig converter_config;
     converter_config.src_model_path = "./demo.onnx";
-    converter_config.dst_model_path = "demo.tmp";
+
+    // here use dlx as suffix, dlx refers to dlx framework
+    converter_config.dst_model_path = "demo.dlx";
     converter_config.src = ConverterConfig::MODEL_SOURCE::ONNX;
 
     auto converter_registry = Registry<Converter>::Global();
@@ -23,7 +25,7 @@ int main(int argc,char** argv){
     // init converter
     converter->Reset(converter_config);
     converter->Run();
-    converter->Save("demo.tmp");
+    converter->Save();
 
     return 0;
 }
