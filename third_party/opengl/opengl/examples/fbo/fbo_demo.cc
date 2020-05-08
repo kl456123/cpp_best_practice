@@ -179,8 +179,11 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     OPENGL_CALL(
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
 
-    OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_,
+    if(data){
+        OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width_, height_,
                     format, GL_FLOAT, data));
+    }
+
     return texture_;
 }
 
