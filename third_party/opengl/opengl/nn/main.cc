@@ -94,13 +94,13 @@ int main(int argc, char** argv){
     const int output_height = 224;
 
     std::vector<int> image_shape = {input_height, input_width, 4};
-    std::vector<int> filter_shape = {3, 3, 4};
+    // std::vector<int> filter_shape = {3, 3, 4};
     std::vector<int> output_shape = {output_height,output_width,4};
     auto input_data =  AllocateHostMemory(image_shape, true);
     auto filter_data =  AllocateHostMemory(image_shape, true);
     auto output_data2 = AllocateHostMemory(output_shape, false);
     inputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, image_shape, input_data));
-    inputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, filter_shape, filter_data));
+    // inputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, filter_shape, filter_data));
 
     outputs_cpu.emplace_back(new Tensor(Tensor::DT_FLOAT, output_shape));
 

@@ -88,6 +88,7 @@ message NodeProto{
 
 message GraphProto{
     string name=2;
+    repeated string input_names=5;
     repeated string tensor_names=3;
     repeated string output_names=4;
     repeated NodeProto node=1;

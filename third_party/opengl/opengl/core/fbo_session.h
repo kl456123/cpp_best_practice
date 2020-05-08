@@ -50,9 +50,6 @@ namespace opengl{
             Context* context_;
             KernelList kernels_;
 
-            // store their input here for each op kernel
-            std::vector<TensorList> input_tensors_;
-
             dlxnet::ModelProto* model_;
 
             // contains all tensors used in the session
@@ -72,8 +69,10 @@ namespace opengl{
 
             // store input and output tensors
             // help to setup input and get output results more easily
-            std::vector<Tensor*> output_tensors_;
-            // std::vector<Tensor*> input_tensors_;
+            // Note that cannot store Tensor pointer due to that it can be
+            // changed when Tensor is initialized
+            std::vector<int> output_tensor_indexes_;
+            std::vector<int> input_tensor_indexes_;
             //
             // output target in each kernel
             GLuint frame_buffer_;

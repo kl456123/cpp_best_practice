@@ -81,7 +81,10 @@ void ONNXConverter::Run(){
     // insert input tensor to total_tensor_names first
     const int input_tensor_count = graph_proto.input_size();
     for(int i=0;i<input_tensor_count;++i){
-        total_tensor_names.insert({graph_proto.input(i).name(), total_tensor_names.size()});
+        // add tensor name to map and graph proto at the sametime
+        auto& tensor_name = graph_proto.input(i).name();
+        total_tensor_names.insert({tensor_name, total_tensor_names.size()});
+        graph->add_tensor_names(tensor_name);
     }
 
     // constant tensor map
@@ -130,6 +133,7 @@ void ONNXConverter::Run(){
                     ->mutable_const_attr()->mutable_value();
                 MakeTensorFromProto(*iter->second, tensor);
                 total_tensor_names.insert({input_name, output_tensor_index});
+                graph->add_tensor_names(input_name);
             }
         }
 
@@ -153,7 +157,9 @@ void ONNXConverter::Run(){
 
         // insert all output tensors to total_tensor_names
         for(int j=0;j<node_proto.output_size();++j){
-            total_tensor_names.insert({node_proto.output(j), total_tensor_names.size()});
+            auto& output_name = node_proto.output(j);
+            total_tensor_names.insert({output_name, total_tensor_names.size()});
+            graph->add_tensor_names(output_name);
         }
     }
 
@@ -190,13 +196,14 @@ void ONNXConverter::Run(){
     }
 
     // set total tensor name and output names in graph
-    // tensor names
-    for(auto& iter:total_tensor_names){
-        graph->add_tensor_names(iter.first);
-    }
     // output names
     for(int i=0;i<graph_proto.output_size();++i){
         graph->add_output_names(graph_proto.output(i).name());
+    }
+
+    // input names
+    for(int i=0;i<graph_proto.output_size();++i){
+        graph->add_input_names(graph_proto.input(i).name());
     }
 
     LOG(INFO)<<"ONNXConverter Done!";

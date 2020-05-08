@@ -63,15 +63,27 @@ namespace opengl{
             total_tensor_names_.emplace_back(tensor_name);
         }
 
+        //TODO(breakpoint) change from vector to map to avoid O(n2) time complexity
         // fill output tensors
         for(auto& output_tensor_name:graph.output_names()){
             for(int i=0;i<total_tensor_names_.size();++i){
                 if(total_tensor_names_[i]==output_tensor_name){
-                    output_tensors_.emplace_back(total_tensors_[i]);
+                    output_tensor_indexes_.emplace_back(i);
                     break;
                 }
             }
         }
+
+        // fill output tensors
+        for(auto& input_tensor_name:graph.input_names()){
+            for(int i=0;i<total_tensor_names_.size();++i){
+                if(total_tensor_names_[i]==input_tensor_name){
+                    input_tensor_indexes_.emplace_back(i);
+                    break;
+                }
+            }
+        }
+
         Kernel* kernel;
         for(auto& node: graph.node()){
             kernel=nullptr;
@@ -138,6 +150,11 @@ namespace opengl{
     void FBOSession::Run(){
         for(int i=0;i<kernels_.size();++i){
             Kernel* kernel = kernels_[i];
+
+            // clear first
+            kernel->input_tensors_.clear();
+            kernel->output_tensors_.clear();
+
             // prepare input and output
             for(auto& index:kernel->input_tensor_indexes_){
                 kernel->input_tensors_.emplace_back(total_tensors_[index]);
@@ -182,9 +199,10 @@ namespace opengl{
         SetupFrameBuffer();
 
         // allocate memory for input tensor(device_tensor) first
+        CHECK_EQ(inputs_cpu.size(), input_tensor_indexes_.size());
         for(int i=0;i<inputs_cpu.size();++i){
-            int input_index = 0;
             // allocate memory
+            const int input_index = input_tensor_indexes_[i];
             total_tensors_[input_index] = new Tensor(Tensor::DT_FLOAT, inputs_cpu[i]->shape(),
                     Tensor::DEVICE_TEXTURE);
 
@@ -239,8 +257,8 @@ namespace opengl{
     }
 
     void FBOSession::GetOutputs(TensorList outputs){
-        for(int i=0;i<output_tensors_.size();++i){
-            Download(outputs[i], output_tensors_[i]);
+        for(int i=0;i<output_tensor_indexes_.size();++i){
+            Download(outputs[i], total_tensors_[output_tensor_indexes_[i]]);
         }
     }
 }//namespace opengl
