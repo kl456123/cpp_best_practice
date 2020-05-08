@@ -1,4 +1,5 @@
 #include "opengl/core/texture.h"
+#include "opengl/utils/macros.h"
 
 namespace opengl{
     Texture::Texture(std::vector<int> dims, GLenum internal_format,
@@ -8,15 +9,15 @@ namespace opengl{
             target_ = target;
 
             // automatically activate the texture at the same time
-            glGenTextures(1, &id_);
-            glBindTexture(target, id_);
+            OPENGL_CALL(glGenTextures(1, &id_));
+            OPENGL_CALL(glBindTexture(target, id_));
             // change internal field for the object
-            glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            OPENGL_CALL(glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+            OPENGL_CALL(glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
             // STR
-            glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            OPENGL_CALL(glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+            OPENGL_CALL(glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+            OPENGL_CALL(glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
 
 
@@ -28,14 +29,14 @@ namespace opengl{
             // GLenum internal_format = GL_RGBA32F;
             GLenum format = GL_RGBA;
 
-            glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dims[0], dims[1],
-                    0, format, GL_FLOAT, image_data);
+            OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dims[0], dims[1],
+                    0, format, GL_FLOAT, image_data));
 
             // store internal format
             format_ = internal_format;
         }
 
     Texture::~Texture(){
-        glDeleteTextures(1, &id_);
+        OPENGL_CALL(glDeleteTextures(1, &id_));
     }
 }//namespace opengl

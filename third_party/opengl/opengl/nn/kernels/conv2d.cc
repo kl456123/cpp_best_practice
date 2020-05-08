@@ -86,22 +86,27 @@ namespace opengl{
 
     void Conv2DKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
+        // its order list as input, weights, bias
+        CHECK_EQ(input_shapes.size(), 3);
         output_shapes.clear();
         output_shapes.resize(1);
         for(auto& input_shape:input_shapes){
             // check input is the same shape
         }
+        // image_shape: (n, h, w, c)
         auto& image_shape = input_shapes[0];
         auto& filter_shape = input_shapes[1];
         // check the conv2d parameters accordind to filter shapes
-        CHECK_EQ(filter_shape[0], kernel_size_);
-        CHECK_EQ(filter_shape[1], kernel_size_);
+        // check filter is valid
+        // filter_shape: (n_out, n_in , h, w)
+        CHECK_EQ(filter_shape[2], kernel_size_);
+        CHECK_EQ(filter_shape[3], kernel_size_);
+        // channel should be the same with input image
+        CHECK_EQ(filter_shape[1], image_shape[3]);
 
         const int output_height = (image_shape[0]-kernel_size_+2*padding_+1)/stride_;
         const int output_width = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;
-        // std::vector<int> output_shape();
         output_shapes[0] = {output_height, output_width};
-        // output_shapes[0] = input_shapes[0];
     }
 
     REGISTER_KERNEL_WITH_NAME(Conv2DKernel, "Conv");

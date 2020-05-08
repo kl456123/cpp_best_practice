@@ -118,8 +118,9 @@ namespace opengl{
     inline Tensor::Tensor(DataType dtype, INTLIST shapes, MemoryType mem_type)
         :shape_(shapes), dtype_(dtype),mem_type_(mem_type){
             // make sure the length of shape equals to 4
-            if(shape_.dims_size()<4){
-                for(int i=0;i<4-shape_.dims_size();++i){
+            int dims_size = shape_.dims_size();
+            if(dims_size<4){
+                for(int i=0;i<4-dims_size;++i){
                     shape_.insert_dim(0, 1);
                 }
             }

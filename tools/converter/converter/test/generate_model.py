@@ -6,7 +6,7 @@ import torch
 class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        self.conv2d = torch.nn.Conv2d(3, 1, 3, stride=1, padding=1)
+        self.conv2d = torch.nn.Conv2d(4, 1, 3, stride=1, padding=1)
 
     def forward(self, x):
         return self.conv2d(x)
@@ -19,7 +19,7 @@ def generate_onnx(saved_path):
         saved_path: string, specify where to store the model
     """
     # build graph first
-    inputs = torch.ones(1, 3, 224, 224)
+    inputs = torch.ones(1, 4, 224, 224)
     model = Model()
 
     input_names = ['input']

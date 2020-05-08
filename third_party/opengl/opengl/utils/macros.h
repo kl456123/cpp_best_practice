@@ -14,10 +14,10 @@ namespace opengl{
  * \param func Expression to call.
  */
 #define OPENGL_CALL(func)                                                      \
-{                                                                            \
+do{                                                                            \
     (func);                                                                    \
     ::opengl::OpenGLCheckErrorWithLocation(__FILE__, __LINE__);                  \
-}
+}while(false)
 
 #ifdef ENABLE_OPENGL_CHECK_ERROR
 #define OPENGL_CHECK_ERROR              \

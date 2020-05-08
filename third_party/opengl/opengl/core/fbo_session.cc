@@ -104,6 +104,7 @@ namespace opengl{
             }
             kernels_.emplace_back(kernel);
         }
+        OPENGL_CHECK_ERROR;
     }
 
     void FBOSession::CreateVertexShader(){
@@ -164,6 +165,7 @@ namespace opengl{
                 kernel->output_tensors_.emplace_back(total_tensors_[index]);
             }
             kernel->Compute();
+            OPENGL_CHECK_ERROR;
         }
     }
 
@@ -229,6 +231,7 @@ namespace opengl{
                             Tensor::DEVICE_TEXTURE);
             }
         }
+        OPENGL_CHECK_ERROR;
     }
 
 
