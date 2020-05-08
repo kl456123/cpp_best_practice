@@ -87,7 +87,7 @@ namespace opengl{
         // output_shapes[0] = input_shapes[0];
     }
 
-    REGISTER_KERNEL_WITH_NAME(Conv2DKernel, "Conv2d");
+    REGISTER_KERNEL_WITH_NAME(Conv2DKernel, "Conv");
 }//namespace opengl
 
 

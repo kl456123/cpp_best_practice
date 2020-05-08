@@ -76,11 +76,16 @@ namespace opengl{
                 return mem_type_;
             }
 
+            const bool Initialized()const{
+                return initialized_;
+            }
+
 
         private:
             void* device_=nullptr;
             void* host_=nullptr;
             int size_;
+            bool initialized_=false;
 
             DataType dtype_;
             MemoryType mem_type_;
@@ -119,6 +124,8 @@ namespace opengl{
             }else{
                 LOG(FATAL)<<"unsupported types!";
             }
+
+            initialized_=true;
         }
 
 }//namespace opengl

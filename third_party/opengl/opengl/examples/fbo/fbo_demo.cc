@@ -152,6 +152,36 @@ void CreateProgram(const std::string fname) {
                 sizeof(Vertex), nullptr));
 }
 
+GLuint CreateTexture(const GLfloat *data, GLsizei width,
+        GLsizei height, GLsizei depth){
+    GLuint texture_;
+    // Create a texture.
+    OPENGL_CALL(glGenTextures(1, &texture_));
+    LOG(INFO) << "Created texture [" << texture_ << "]";
+    glBindTexture(GL_TEXTURE_3D, texture_);
+
+    OPENGL_CALL(glTexImage3D(GL_TEXTURE_3D, /*level=*/0, internal_format,
+                width, height, depth, /*border=*/0,
+                format, GL_FLOAT, nullptr));
+
+    OPENGL_CALL(
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+    OPENGL_CALL(
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+    OPENGL_CALL(
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
+    OPENGL_CALL(
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST));
+    OPENGL_CALL(
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+
+    if(data){
+        OPENGL_CALL(glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0,0, width, height, depth,
+                    format, GL_FLOAT, data));
+    }
+    return texture_;
+}
+
 
 GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     GLuint texture_;
@@ -282,6 +312,8 @@ int main(int argc, char* argv[]){
     auto input1 = CreateTexture(texture1_data.data(), width, height);
 
     auto output = CreateTexture(nullptr, width, height);
+
+    auto output2 = CreateTexture(nullptr, width, height, 10);
 
     ////////////////////////////////////////
     // Compute(Render)

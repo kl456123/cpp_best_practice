@@ -58,6 +58,9 @@ namespace opengl{
             std::vector<Tensor*> input_tensors_;
             std::vector<Tensor*> output_tensors_;
 
+            std::vector<int> input_tensor_indexes_;
+            std::vector<int> output_tensor_indexes_;
+
             // make it can fill input and output tensors
             friend class FBOSession;
     };

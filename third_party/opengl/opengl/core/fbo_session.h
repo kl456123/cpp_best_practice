@@ -35,7 +35,6 @@ namespace opengl{
             GLuint CreateShader(GLenum shader_kind, const char *shader_src);
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
-            void Download(Tensor* tensor);
             void Download(Tensor* cpu_tensor, Tensor* device_tensor);
 
             void Upload(Tensor* cpu_tensor, Tensor* device_tensor);
@@ -67,7 +66,10 @@ namespace opengl{
             // note that when graph is freezed, session can be called multiple times
             bool finalized_ = false;
 
+            // store input and output tensors
+            // help to setup input and get output results more easily
             std::vector<Tensor*> output_tensors_;
+            // std::vector<Tensor*> input_tensors_;
     };
 }//namespace opengl
 
