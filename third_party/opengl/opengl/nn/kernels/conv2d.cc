@@ -80,7 +80,6 @@ namespace opengl{
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
         glFinish();
-        // glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
 
     }
 

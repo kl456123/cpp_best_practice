@@ -17,14 +17,18 @@
 
 
 
-#ifndef ARM_PLATFORM
 #define GL_GLEXT_PROTOTYPES
+#ifndef ARM_PLATFORM
 #define GLFW_INCLUDE_GLEXT
 #else
 #define GLFW_INCLUDE_ES31
 #define GLFW_INCLUDE_GLEXT
 #endif
 #include <GLFW/glfw3.h>
+
+#ifdef ARM_PLATFORM
+#include <GLES3/gl32.h>
+#endif
 
 // define default opengl version
 #ifndef OPENGL_MAJOR_VERSION

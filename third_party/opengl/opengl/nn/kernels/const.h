@@ -19,11 +19,7 @@ namespace opengl{
             virtual void SetupAttr(const dlxnet::Attribute& attr);
             virtual ~ConstKernel();
         private:
-            // TODO(breakpoint) use Tensor instead
-            std::vector<int> tensor_shape_;
-            void* tensor_data_;
-
-            int num_elements_;
+            Tensor* tensor_;
     };
 }//namespace opengl
 #endif

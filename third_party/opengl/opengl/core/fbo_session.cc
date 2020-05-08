@@ -8,9 +8,6 @@
 
 namespace opengl{
     namespace{
-        const GLenum kDataType=GL_FLOAT;
-        GLenum kInternalFormat = GL_RGBA32F;
-        GLenum kFormat = GL_RGBA;
         // Don't need to change this.
         // We want to draw 2 giant triangles that cover the whole screen.
         struct Vertex {
@@ -209,7 +206,7 @@ namespace opengl{
                     Tensor::DEVICE_TEXTURE);
 
             // upload data, initialize input tensor
-            Upload(inputs_cpu[i], total_tensors_[input_index]);
+            context_->CopyCPUTensorToDevice(inputs_cpu[i], total_tensors_[input_index]);
         }
         for(int i=0;i<kernels_.size();++i){
             Kernel* kernel = kernels_[i];
@@ -235,33 +232,10 @@ namespace opengl{
     }
 
 
-    void FBOSession::Download(Tensor* cpu_tensor, Tensor* device_tensor){
-        GLint ext_format, ext_type;
-        const int width = cpu_tensor->shape()[0];
-        const int height = cpu_tensor->shape()[1];
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
-        CHECK_EQ(ext_type, kDataType)<<"unmatched type";
-        CHECK_EQ(ext_format, kFormat)<<"unmatched format";
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                device_tensor->device<Texture>()->id() , 0);
-        // download
-        OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, cpu_tensor->host()));
-    }
-
-    void FBOSession::Upload(Tensor* cpu_tensor, Tensor* device_tensor){
-        const int width = cpu_tensor->shape()[0];
-        const int height = cpu_tensor->shape()[1];
-        OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, device_tensor->device<Texture>()->id()));
-        OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
-                    kFormat, kDataType, cpu_tensor->host()));
-    }
 
     void FBOSession::GetOutputs(TensorList outputs){
         for(int i=0;i<output_tensor_indexes_.size();++i){
-            Download(outputs[i], total_tensors_[output_tensor_indexes_[i]]);
+            context_->CopyDeviceTensorToCPU(total_tensors_[output_tensor_indexes_[i]], outputs[i]);
         }
     }
 }//namespace opengl

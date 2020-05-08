@@ -40,7 +40,6 @@ namespace opengl{
 
         const int width = outputs[0]->shape()[0];
         const int height = outputs[0]->shape()[1];
-        // OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
         OPENGL_CALL(glViewport(0, 0, width, height));
 
 
@@ -49,11 +48,6 @@ namespace opengl{
         // Set "renderedTexture" as our colour attachement #0
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
                 output_texture , 0);
-
-        // Set the list of draw buffers.
-        // GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-        // "1" is the size of DrawBuffers.
-        // OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
 
         // Always check that our framebuffer is ok
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {

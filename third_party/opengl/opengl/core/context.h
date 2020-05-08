@@ -18,6 +18,8 @@ namespace opengl{
             void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);
             void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
 
+            void ConvertTensorNHWCToNHWC4(const Tensor* nhwc_tensor, void** nhwc4_data);
+
             // primitive apis operate buffer and image
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);
             void CopyBufferToImage(Texture* texture, Buffer* buffer);
@@ -37,6 +39,7 @@ namespace opengl{
             const char* kBuffer2image_name_ = "../opengl/examples/gpgpu/buffer2image.glsl";
     };
 
+    Context* GetContext();
 
 }//namespace opengl
 

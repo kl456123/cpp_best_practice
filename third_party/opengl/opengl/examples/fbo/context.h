@@ -2,6 +2,7 @@
 #define OPENGL_EXAMPLES_FBO_CONTEXT_H_
 #include <glog/logging.h>
 
+#define GL_GLEXT_PROTOTYPES
 #include <GLES2/gl2.h>
 #include <GLES3/gl31.h>
 #include <GLES3/gl32.h>

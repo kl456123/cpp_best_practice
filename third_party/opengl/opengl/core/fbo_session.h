@@ -9,7 +9,7 @@ namespace opengl{
     class FBOSession{
         public:
             FBOSession(Context* context);
-            FBOSession():FBOSession(new Context){}
+            FBOSession():FBOSession(GetContext()){}
             virtual ~FBOSession();
 
             /*! use inputs to allocate tensor, prepare all memory
@@ -39,9 +39,6 @@ namespace opengl{
             void SetupFrameBuffer();
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
-            void Download(Tensor* cpu_tensor, Tensor* device_tensor);
-
-            void Upload(Tensor* cpu_tensor, Tensor* device_tensor);
 
             // reorder all nodes in nodes_ topologically
             void TopologicalSort();
