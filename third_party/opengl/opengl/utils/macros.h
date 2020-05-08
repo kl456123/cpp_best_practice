@@ -37,4 +37,7 @@ namespace opengl{
 #define ASSERT_OPENGL_NO_ERROR  \
     ASSERT_TRUE(glGetError()==GL_NO_ERROR)
 
+
+#define UP_DIV(x, y)   (((x) + (y) - (1)) / (y))
+
 #endif

@@ -217,11 +217,18 @@ GLuint CreateTexture(const GLfloat *data, GLsizei width_, GLsizei height_){
     return texture_;
 }
 
-void SetInput( std::string name, GLuint id,  int tex_id){
+void SetInput2D( std::string name, GLuint id,  int tex_id){
     GLint location= glGetUniformLocation(program, name.c_str());
     glUniform1i(location, tex_id);
     glActiveTexture(GL_TEXTURE0+tex_id);
     glBindTexture(GL_TEXTURE_2D, id);
+}
+
+void SetInput3D( std::string name, GLuint id,  int tex_id){
+    GLint location= glGetUniformLocation(program, name.c_str());
+    glUniform1i(location, tex_id);
+    glActiveTexture(GL_TEXTURE0+tex_id);
+    glBindTexture(GL_TEXTURE_3D, id);
 }
 
 void CheckFormatAndType(GLint ext_format, GLint ext_type){
@@ -235,7 +242,7 @@ void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     CHECK_EQ(ext_format, format)<<"unmatched format";
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             texture , 0);
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
@@ -250,7 +257,7 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     OPENGL_CALL(glGenBuffers(1, &io_buffer));
 
     // specify which texture to read
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
             texture , 0);
 
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
@@ -326,8 +333,7 @@ int main(int argc, char* argv[]){
     OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
     OPENGL_CALL(glViewport(0, 0, width, height));
     // Set "renderedTexture" as our colour attachement #0
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
-            output , 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, output , 0);
 
     // Set the list of draw buffers.
     GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
@@ -340,8 +346,8 @@ int main(int argc, char* argv[]){
     }
 
     // Tell the fragment shader what input textures to use.
-    SetInput("A", input0, 0);
-    SetInput("B", input1, 1);
+    SetInput2D("A", input0, 0);
+    SetInput2D("B", input1, 1);
 
     // set uniform
     SetInt("N", N);

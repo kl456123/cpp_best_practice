@@ -10,6 +10,13 @@ namespace opengl{
             size_ = shape_.num_elements()*sizeof(float);
             host_ = data;
 
+            // make sure the length of shape equals to 4
+            if(shape_.dims_size()<4){
+                for(int i=0;i<4-shape_.dims_size();++i){
+                    shape_.insert_dim(0, 1);
+                }
+            }
+
             initialized_=true;
         }
 }//namespace opengl

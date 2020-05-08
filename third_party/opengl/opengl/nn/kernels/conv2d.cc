@@ -19,9 +19,26 @@ namespace opengl{
 
     void Conv2DKernel::SetupAttr(const dlxnet::Attribute& attr){
         auto& conv2d_params = attr.conv2d_attr();
-        padding_ = 1;
-        stride_ = 1;
-        kernel_size_=3;
+
+        // handle pads
+        CHECK_EQ(conv2d_params.pads_size(), 4);
+        for(auto& pad: conv2d_params.pads()){
+            CHECK_EQ(conv2d_params.pads(0),pad);
+        }
+        padding_ = conv2d_params.pads(0);
+
+        // handle stride
+        CHECK_EQ(conv2d_params.strides_size(), 2);
+        CHECK_EQ(conv2d_params.strides(0), conv2d_params.strides(1));
+        stride_ = conv2d_params.strides(0);
+
+
+        // handle kernel
+        CHECK_EQ(conv2d_params.kernel_shape_size(), 2);
+        CHECK_EQ(conv2d_params.kernel_shape(0), conv2d_params.kernel_shape(1));
+        kernel_size_=conv2d_params.kernel_shape(0);
+
+        // set default for dilation and groups now
         group_size_=1;
         dilation_=1;
     }
