@@ -219,6 +219,10 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     GLuint io_buffer;
     OPENGL_CALL(glGenBuffers(1, &io_buffer));
 
+    // specify which texture to read
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
+            texture , 0);
+
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, io_buffer));
     OPENGL_CALL(glBufferData(GL_PIXEL_PACK_BUFFER, bytes,
