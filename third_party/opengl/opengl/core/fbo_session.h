@@ -34,6 +34,10 @@ namespace opengl{
             void CreateVertexShader();
             GLuint CreateShader(GLenum shader_kind, const char *shader_src);
 
+            // attach output tensor to the target(fbo)
+            // used in compute function of subclass
+            void SetupFrameBuffer();
+
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
             void Download(Tensor* cpu_tensor, Tensor* device_tensor);
 
@@ -70,6 +74,9 @@ namespace opengl{
             // help to setup input and get output results more easily
             std::vector<Tensor*> output_tensors_;
             // std::vector<Tensor*> input_tensors_;
+            //
+            // output target in each kernel
+            GLuint frame_buffer_;
     };
 }//namespace opengl
 

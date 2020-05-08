@@ -35,7 +35,18 @@ namespace opengl{
         };
     }//namespace
 
-    FBOSession::~FBOSession(){}
+    FBOSession::~FBOSession(){
+        glDeleteFramebuffers(1, &frame_buffer_);
+    }
+
+    void FBOSession::SetupFrameBuffer(){
+
+        OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
+        // Set the list of draw buffers.
+        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        // "1" is the size of DrawBuffers.
+        OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
+    }
 
     void FBOSession::LoadGraph(const std::string file_path){
         // load graph from disk
@@ -146,6 +157,9 @@ namespace opengl{
             CreateVertexShader();
 
             model_ = new dlxnet::ModelProto;
+
+            // only need to create it once
+            OPENGL_CALL(glGenFramebuffers(1, &frame_buffer_));
         }
 
     void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){
@@ -163,6 +177,9 @@ namespace opengl{
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
         // for each kernel during computation
+        // set up global framebuffer, all nodes are only needed to
+        // attach output texture to the global frame buffer
+        SetupFrameBuffer();
 
         // allocate memory for input tensor(device_tensor) first
         for(int i=0;i<inputs_cpu.size();++i){

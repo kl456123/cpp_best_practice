@@ -51,9 +51,6 @@ namespace opengl{
             // global works size and local work size
             unsigned long work_sizes_[3];
 
-            // output target in each kernel
-            GLuint frame_buffer_;
-
             // store input and output indexes
             std::vector<Tensor*> input_tensors_;
             std::vector<Tensor*> output_tensors_;

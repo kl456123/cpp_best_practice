@@ -10,15 +10,9 @@ namespace opengl{
         };
     }
     Kernel::Kernel(Context* context)
-        :context_(context){
-            // Create frame buffer And Check its Completation
-            OPENGL_CALL(glGenFramebuffers(1, &frame_buffer_));
+        :context_(context){}
 
-        }
-
-    Kernel::~Kernel(){
-        glDeleteFramebuffers(1, &frame_buffer_);
-    }
+    Kernel::~Kernel(){}
 
     void Kernel::SetupProgram(GLuint vertex_shader){
         if(kernel_fname_.empty()){
@@ -46,7 +40,7 @@ namespace opengl{
 
         const int width = outputs[0]->shape()[0];
         const int height = outputs[0]->shape()[1];
-        OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
+        // OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
         OPENGL_CALL(glViewport(0, 0, width, height));
 
 
@@ -57,9 +51,9 @@ namespace opengl{
                 output_texture , 0);
 
         // Set the list of draw buffers.
-        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+        // GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
         // "1" is the size of DrawBuffers.
-        OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
+        // OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
 
         // Always check that our framebuffer is ok
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
