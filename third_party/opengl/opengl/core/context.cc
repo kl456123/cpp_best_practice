@@ -75,13 +75,29 @@ namespace opengl{
         *out = data;
     }
 
+    void Context::ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor){
+        tensor->set_host(out);
+        // for(int i=0;i<num_elements;++i){
+            // if(i%channel<orig_channel){
+                // data[i] = orig_data[i/channel*orig_channel];
+            // }
+        // }
+    }
+
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
         // insanity check first
         // the same data format, nhwc4
-        CHECK_EQ(cpu_tensor->dformat(), device_tensor->dformat());
+        // CHECK_EQ(cpu_tensor->dformat(), device_tensor->dformat());
         // same number of bytes
-        CHECK_EQ(cpu_tensor->size(), device_tensor->size());
+        // CHECK_EQ(cpu_tensor->size(), device_tensor->size());
+        void* nhwc4_data=nullptr;
+        if(cpu_tensor->dformat()==dlxnet::TensorProto::NHWC){
+            // convert to nhwc4
+            ConvertTensorNHWCToNHWC4(cpu_tensor, &nhwc4_data);
+        }else{
+            nhwc4_data = cpu_tensor->host();
+        }
 
         GLint ext_format, ext_type;
         const int width = device_tensor->device<Texture>()->shape()[0];
@@ -96,7 +112,10 @@ namespace opengl{
                 device_tensor->device<Texture>()->id() , 0);
         // download
         OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, cpu_tensor->host()));
+        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, nhwc4_data));
+
+        // copy nhwc4_data to cpu_tensor
+        ConvertTensorNHWC4ToNHWC(nhwc4_data, cpu_tensor);
     }
 
     void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){

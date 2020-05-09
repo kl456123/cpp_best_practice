@@ -7,13 +7,7 @@ namespace opengl{
     template<>
         Tensor::Tensor(DataType dtype, INTLIST shape, float* data)
         :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY){
-            // make sure the length of shape equals to 4
-            int dims_size = shape_.dims_size();
-            if(dims_size<4){
-                for(int i=0;i<4-dims_size;++i){
-                    shape_.insert_dim(0, 1);
-                }
-            }
+            AmendShape();
 
             dformat_=dlxnet::TensorProto::NHWC;
             size_ = shape_.num_elements()*sizeof(float);
@@ -27,6 +21,7 @@ namespace opengl{
         for(auto& dim:tensor_proto.dims()){
             shape_.add_dim(dim);
         }
+        AmendShape();
         // get tensor data
         switch(tensor_proto.data_type()){
             case dlxnet::TensorProto::FLOAT32:

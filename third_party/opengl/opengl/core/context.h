@@ -19,6 +19,7 @@ namespace opengl{
             void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
 
             void ConvertTensorNHWCToNHWC4(const Tensor* nhwc_tensor, void** nhwc4_data);
+            void ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor);
 
             // primitive apis operate buffer and image
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);

@@ -137,6 +137,16 @@ namespace opengl{
                 return shape_[0];
             }
 
+            void AmendShape(){
+                // make sure the length of shape equals to 4
+                int dims_size = shape_.dims_size();
+                if(dims_size<4){
+                    for(int i=0;i<4-dims_size;++i){
+                        shape_.insert_dim(0, 1);
+                    }
+                }
+            }
+
         private:
             // inner data pointer
             void* device_=nullptr;
@@ -163,13 +173,8 @@ namespace opengl{
 
     inline Tensor::Tensor(DataType dtype, INTLIST shapes, MemoryType mem_type)
         :shape_(shapes), dtype_(dtype),mem_type_(mem_type){
-            // make sure the length of shape equals to 4
-            int dims_size = shape_.dims_size();
-            if(dims_size<4){
-                for(int i=0;i<4-dims_size;++i){
-                    shape_.insert_dim(0, 1);
-                }
-            }
+            AmendShape();
+
             size_t num_elements, bytes;
             dformat_=dlxnet::TensorProto::NHWC;
             num_elements = shape_.num_elements();
