@@ -18,6 +18,9 @@ namespace opengl{
             void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);
             void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
 
+            // for now convert it in host memory instead of device memory
+            // TODO(breakpoint) add 1d representation in fragment shader to support nhwc format
+            // buffer in nhwc layout, texture in (nh, w, c4, 4) layout
             void ConvertTensorNHWCToNHWC4(const Tensor* nhwc_tensor, void** nhwc4_data);
             void ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor);
 

@@ -56,30 +56,11 @@ namespace opengl{
         total_tensors_.resize(graph.tensor_names_size());
 
 
-        for(auto& tensor_name:graph.tensor_names()){
-            total_tensor_names_.emplace_back(tensor_name);
+        // build tensor_name -> tensor_index map
+        for(int i=0;i<graph.tensor_names_size();++i){
+            tensor_name_index_[graph.tensor_names(i)] = i;
         }
 
-        //TODO(breakpoint) change from vector to map to avoid O(n2) time complexity
-        // fill output tensors
-        for(auto& output_tensor_name:graph.output_names()){
-            for(int i=0;i<total_tensor_names_.size();++i){
-                if(total_tensor_names_[i]==output_tensor_name){
-                    output_tensor_indexes_.emplace_back(i);
-                    break;
-                }
-            }
-        }
-
-        // fill output tensors
-        for(auto& input_tensor_name:graph.input_names()){
-            for(int i=0;i<total_tensor_names_.size();++i){
-                if(total_tensor_names_[i]==input_tensor_name){
-                    input_tensor_indexes_.emplace_back(i);
-                    break;
-                }
-            }
-        }
 
         Kernel* kernel;
         for(auto& node: graph.node()){
@@ -189,7 +170,7 @@ namespace opengl{
         }
     }
 
-    void FBOSession::Setup(TensorList inputs_cpu){
+    void FBOSession::Setup(const NamedTensorList& inputs_cpu){
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
         // for each kernel during computation
@@ -198,15 +179,23 @@ namespace opengl{
         SetupFrameBuffer();
 
         // allocate memory for input tensor(device_tensor) first
-        CHECK_EQ(inputs_cpu.size(), input_tensor_indexes_.size());
-        for(int i=0;i<inputs_cpu.size();++i){
+        // TODO(breakpoint) add input-typed kernel
+        for(auto input_iter=inputs_cpu.begin();input_iter!=inputs_cpu.end();++input_iter){
+            const Tensor* input_cpu = input_iter->second;
+            const auto& tensor_name = input_iter->first;
+
+            auto iter = tensor_name_index_.find(tensor_name);
+            if(iter==tensor_name_index_.end()){
+                LOG(FATAL)<<"tensor_name: "<<tensor_name<<"Cannot Find";
+            }
+            const int input_index = iter->second;
+
             // allocate memory
-            const int input_index = input_tensor_indexes_[i];
-            total_tensors_[input_index] = new Tensor(Tensor::DT_FLOAT, inputs_cpu[i]->shape(),
+            total_tensors_[input_index] = new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
                     Tensor::DEVICE_TEXTURE);
 
             // upload data, initialize input tensor
-            context_->CopyCPUTensorToDevice(inputs_cpu[i], total_tensors_[input_index]);
+            context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index]);
         }
         for(int i=0;i<kernels_.size();++i){
             Kernel* kernel = kernels_[i];
@@ -233,9 +222,29 @@ namespace opengl{
 
 
 
-    void FBOSession::GetOutputs(TensorList outputs){
-        for(int i=0;i<output_tensor_indexes_.size();++i){
-            context_->CopyDeviceTensorToCPU(total_tensors_[output_tensor_indexes_[i]], outputs[i]);
+    void FBOSession::GetOutputs(const TensorNameList& output_names, TensorList* outputs){
+        outputs->clear();
+        outputs->reserve(output_names.size());
+
+        for(auto& tensor_name: output_names){
+            auto iter = tensor_name_index_.find(tensor_name);
+            if(iter==tensor_name_index_.end()){
+                LOG(FATAL)<<"tensor_name: "<<tensor_name<<"Cannot Find";
+            }
+
+            const int tensor_index = tensor_name_index_[tensor_name];
+            const Tensor* gpu_tensor = total_tensors_[tensor_index];
+            Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape());
+            context_->CopyDeviceTensorToCPU(gpu_tensor, cpu_tensor);
+            outputs->emplace_back(cpu_tensor);
         }
+    }
+
+    std::string FBOSession::DebugString()const{
+        std::string ret_str;
+        ret_str+="ModelProto: ";
+        ret_str+=model_->DebugString();
+        ret_str+="\n";
+        return ret_str;
     }
 }//namespace opengl

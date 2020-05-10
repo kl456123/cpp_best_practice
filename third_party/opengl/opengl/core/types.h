@@ -17,6 +17,10 @@ namespace opengl{
 
     typedef std::function<void(Kernel**, Context*)> KernelFactory;
     typedef std::unordered_map<std::string, KernelFactory> KernelMap;
+
+    typedef std::unordered_map<std::string, int> NamedIndex;
+    typedef std::vector<std::string> TensorNameList;
+    typedef std::vector<std::pair<std::string, Tensor*>> NamedTensorList;
 }//namespace opengl
 
 

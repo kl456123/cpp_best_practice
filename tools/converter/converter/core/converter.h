@@ -19,6 +19,8 @@ class Converter: public RegistryItemBase{
             Save(converter_config_.dst_model_path);
         }
 
+        std::string DebugString()const;
+
     protected:
         ConverterConfig converter_config_;
         dlxnet::ModelProto* model_;

@@ -13,3 +13,17 @@ void Converter::Save(std::string checkpoint_path){
     model_->SerializeToOstream(&output);
     LOG(INFO)<<"Save to "<<checkpoint_path<<" Done!";
 }
+
+
+std::string Converter::DebugString()const{
+    std::string ret_str;
+    ret_str+="ConverterConfig: ";
+    ret_str+=converter_config_.src_model_path;
+    ret_str+="->";
+    ret_str+=converter_config_.dst_model_path;
+    ret_str+="\n";
+
+    ret_str+="ModelInfo: ";
+    ret_str+=model_->DebugString();
+    return ret_str;
+}

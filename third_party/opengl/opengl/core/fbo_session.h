@@ -15,7 +15,7 @@ namespace opengl{
             /*! use inputs to allocate tensor, prepare all memory
              * to run late
              */
-            void Setup(TensorList inputs);
+            void Setup(const NamedTensorList& inputs_cpu);
 
             /*!
              * Draw texture to framebuffer, then
@@ -28,7 +28,9 @@ namespace opengl{
             // load graph from protobuf binary in disk
             void LoadGraph(std::string model_path);
 
-            void GetOutputs(TensorList outputs);
+            void GetOutputs(const TensorNameList& output_names, TensorList* outputs);
+
+            std::string DebugString()const;
 
         private:
             void CreateVertexShader();
@@ -50,11 +52,8 @@ namespace opengl{
             dlxnet::ModelProto* model_;
 
             // contains all tensors used in the session
+            // may be some slots are null due to that pruned and optimization
             std::vector<Tensor*> total_tensors_;
-
-            // contains all tensors names used to specify tensor with name
-            // which one to output for user
-            std::vector<std::string> total_tensor_names_;
 
             // contains all nodes used in the session
             // including constant node
@@ -64,13 +63,9 @@ namespace opengl{
             // note that when graph is freezed, session can be called multiple times
             bool finalized_ = false;
 
-            // store input and output tensors
-            // help to setup input and get output results more easily
-            // Note that cannot store Tensor pointer due to that it can be
-            // changed when Tensor is initialized
-            std::vector<int> output_tensor_indexes_;
-            std::vector<int> input_tensor_indexes_;
-            //
+            // map from tensor name to index in total_tensors_
+            NamedIndex tensor_name_index_;
+
             // output target in each kernel
             GLuint frame_buffer_;
     };

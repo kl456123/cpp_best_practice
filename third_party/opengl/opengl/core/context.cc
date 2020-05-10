@@ -66,22 +66,29 @@ namespace opengl{
         float* data = new float[num_elements];
         memset(data, 0, sizeof(float)*num_elements);
         float* orig_data = tensor->host<float>();
-        const int channel = UP_DIV(tensor->channel(), 4);
+        const int up_channel = UP_DIV(tensor->channel(), 4)*4;
         for(int i=0;i<num_elements;++i){
-            if(i%channel<orig_channel){
-                data[i] = orig_data[i/channel*orig_channel];
+            if(i%up_channel<orig_channel){
+                data[i] = orig_data[i/up_channel*orig_channel+i%up_channel];
             }
         }
         *out = data;
     }
 
     void Context::ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor){
-        tensor->set_host(out);
-        // for(int i=0;i<num_elements;++i){
-            // if(i%channel<orig_channel){
-                // data[i] = orig_data[i/channel*orig_channel];
-            // }
-        // }
+        // tensor->set_host(out);
+        float* nhwc_data = tensor->host<float>();
+        float* nhwc4_data = (float*)out;
+        const int num_elements = tensor->num_elements();
+        const int up_channel = UP_DIV(tensor->channel(), 4)*4;
+        const int channel = tensor->channel();
+
+        // there is different in their base number in the last dim(one is channel,
+        // the other is up_channel)
+        for(int i=0;i<num_elements;++i){
+            const int offset = i/channel*up_channel+i%channel;
+            nhwc_data[i] = nhwc4_data[offset];
+        }
     }
 
 

@@ -27,5 +27,7 @@ int main(int argc,char** argv){
     converter->Run();
     converter->Save();
 
+    LOG(INFO)<<converter->DebugString();
+
     return 0;
 }
