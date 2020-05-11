@@ -4,10 +4,12 @@ uniform int kernel_size;
 uniform int stride_size;
 uniform int padding;
 uniform ivec2 image_shape;// height, width
-out float color;
+out vec4 color;
+
+// filter shape: (h*w, out_4*in_4*in4, out4)
 void main() {
     ivec2 pixel = ivec2(gl_FragCoord.xy);
-    color = 0.0;
+    color = vec4(0.0);
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = pixel.x*stride_size+i-padding;
@@ -21,7 +23,7 @@ void main() {
             }
             vec4 a = texelFetch(input_image, ivec2(input_index_x, input_index_y), 0);
             vec4 b = texelFetch(input_filter, ivec2(i, j), 0);
-            color += dot(a , b);
+            /* color += dot(a , b); */
         }
     }
 

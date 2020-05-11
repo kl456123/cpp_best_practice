@@ -4,14 +4,16 @@
 #include <unordered_map>
 #include <functional>
 
-#include "opengl/core/tensor.h"
+#include "opengl/core/dlxnet.pb.h"
 
 namespace opengl{
     class Kernel;
     class Context;
+    class Tensor;
 
+    typedef std::vector<int> IntList;
     typedef std::vector<Tensor*> TensorList;
-    typedef std::vector<std::vector<int>> TensorShapeList;
+    typedef std::vector<IntList> TensorShapeList;
     typedef std::vector<Kernel*> KernelList;
     typedef std::vector<std::string> StringList;
 
@@ -21,6 +23,10 @@ namespace opengl{
     typedef std::unordered_map<std::string, int> NamedIndex;
     typedef std::vector<std::string> TensorNameList;
     typedef std::vector<std::pair<std::string, Tensor*>> NamedTensorList;
+
+
+    // data format
+    typedef dlxnet::TensorProto::DataFormat DataFormat;
 }//namespace opengl
 
 

@@ -41,6 +41,8 @@ namespace opengl{
         // set default for dilation and groups now
         group_size_=1;
         dilation_=1;
+
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }
 
 

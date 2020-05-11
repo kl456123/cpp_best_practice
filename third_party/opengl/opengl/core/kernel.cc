@@ -1,5 +1,6 @@
 #include "opengl/core/kernel.h"
 #include "opengl/core/program.h"
+#include "opengl/core/tensor.h"
 #include "opengl/utils/macros.h"
 
 
@@ -53,6 +54,12 @@ namespace opengl{
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             LOG(FATAL) << "Framebuffer not complete.";
         }
+    }
+
+    DataFormat Kernel::GetOutputDFormat(int i)const{
+        CHECK_LT(i, output_tensor_dformats_.size());
+        CHECK_GE(i, 0);
+        return output_tensor_dformats_[i];
     }
 
 

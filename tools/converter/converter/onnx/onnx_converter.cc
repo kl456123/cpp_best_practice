@@ -19,8 +19,6 @@ void ONNXConverter::MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
         dlcl_tensor->add_dims(onnx_tensor.dims(i));
         num_elements  *= onnx_tensor.dims(i);
     }
-    // handle data type and data format
-    dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
 
     // handle tensor value
     const void* tensor_content = onnx_tensor.raw_data().data();
@@ -132,6 +130,18 @@ void ONNXConverter::Run(){
                 dlxnet::TensorProto* tensor = node_ptr->mutable_attr()
                     ->mutable_const_attr()->mutable_value();
                 MakeTensorFromProto(*iter->second, tensor);
+
+                // handle corner case
+                if(op_type=="Conv" && j==1){
+                    // set filter data format
+                    tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
+                }else{
+                    // set data format
+                    tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
+                }
+                // default data format for pytorch(onnx)
+                tensor->set_data_format(dlxnet::TensorProto::NCHW);
+
                 total_tensor_names.insert({input_name, output_tensor_index});
                 graph->add_tensor_names(input_name);
             }

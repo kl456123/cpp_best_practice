@@ -2,6 +2,7 @@
 #define OPENGL_CORE_KERNEL_H_
 #include <string>
 
+#include "opengl/core/opengl.h"
 #include "opengl/core/types.h"
 #include "opengl/core/dlxnet.pb.h"
 
@@ -26,6 +27,8 @@ namespace opengl{
             void Compute(){
                 Compute(input_tensors_, output_tensors_);
             }
+
+            DataFormat GetOutputDFormat(int i)const;
 
             /*!
              * Compute output shapes according to their input tensor shape
@@ -57,6 +60,8 @@ namespace opengl{
 
             std::vector<int> input_tensor_indexes_;
             std::vector<int> output_tensor_indexes_;
+
+            std::vector<DataFormat> output_tensor_dformats_;
 
             // make it can fill input and output tensors
             friend class FBOSession;

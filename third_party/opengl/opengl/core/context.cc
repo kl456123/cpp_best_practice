@@ -33,15 +33,54 @@ namespace opengl{
             LOG(INFO)<<"max group invacations: "<<work_grp_inv;
         }
 
+    void Context::ConvertTensorNCHWToNHWC4(const Tensor* cpu_tensor, void** out){
+
+        const int n = cpu_tensor->shape()[0];
+        const int c = cpu_tensor->shape()[1];
+        const int h = cpu_tensor->shape()[2];
+        const int w = cpu_tensor->shape()[3];
+
+        const int num_elements = n*UP_DIV(c, 4)*4*h*w;
+        float* data = new float[num_elements];
+        memset(data, 0, sizeof(float)*num_elements);
+        float* orig_data = cpu_tensor->host<float>();
+        for(int i=0;i<cpu_tensor->num_elements();++i){
+            int cur = i;
+            const int w_i = cur%w;
+            cur/=w;
+            const int h_i = cur%h;
+            cur/=h;
+            const int c_i = cur%c;
+            cur/=c;
+            const int n_i = cur;
+            const int offset = (((n_i*h+h_i)*w+w_i)*UP_DIV(c, 4)+c_i/4)*4+c_i%4;
+            data[offset] = orig_data[i];
+        }
+        *out = data;
+    }
+
     void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
         // insanity check first
         // the same data format, nhwc4
-        void* nhwc4_data=nullptr;
-        if(cpu_tensor->dformat()==dlxnet::TensorProto::NHWC){
-            // convert to nhwc4
-            ConvertTensorNHWCToNHWC4(cpu_tensor, &nhwc4_data);
+        void* data=nullptr;
+        LOG(INFO)<<"device data format: "<<device_tensor->dformat();
+        if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
+            if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
+                // convert to nhwc4
+                ConvertTensorNHWCToNHWC4(cpu_tensor, &data);
+            }else if(cpu_tensor->dformat()== dlxnet::TensorProto::NCHW){
+                ConvertTensorNCHWToNHWC4(cpu_tensor, &data);
+            }else{
+                LOG(FATAL)<<"Unsupported cpu_tensor dformat: "<<cpu_tensor->dformat();
+            }
+
+
+        }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){
+            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW)
+                <<"dformat of cpu tensor for filter should be NCHW";
+            ConvertTensorNCHWToHWN4C4(cpu_tensor, &data);
         }else{
-            nhwc4_data = cpu_tensor->host();
+            data = cpu_tensor->host();
         }
         // same number of bytes
         // CHECK_EQ(cpu_tensor->size(), device_tensor->size());
@@ -49,19 +88,47 @@ namespace opengl{
         const int height = device_tensor->device<Texture>()->shape()[1];
         OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, device_tensor->device<Texture>()->id()));
         OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
-                    kFormat, kDataType, nhwc4_data));
+                    kFormat, kDataType, data));
+    }
+    void Context::ConvertTensorNCHWToHWN4C4(const Tensor* tensor, void** out){
+        // handle pytorch filter
+        // from (out, in, h, w) to (h*w, out_4*in_4*in4, out4)
+        // where in_4 = UP_DIV(in, 4), out_4=UP_DIV(out, 4), in4=out4=4
+        const int n_in = tensor->shape()[0];
+        const int n_out = tensor->shape()[1];
+        const int h = tensor->shape()[2];
+        const int w = tensor->shape()[3];
+        const int in_4 = UP_DIV(n_in, 4);
+        const int out_4 = UP_DIV(n_out, 4);
+        const int num_elements = h*w*in_4*out_4*4*4;
+        float* data = new float[num_elements];
+        float* orig_data = tensor->host<float>();
+        for(int i=0;i<tensor->num_elements();++i){
+            // decompose i to four-element tuple
+            int cur = i;
+            const int w_i = cur%w;
+            cur /= w;
+            const int h_i = cur%h;
+            cur/=h;
+            const int in_i = cur%n_in;
+            cur/=n_in;
+            const int out_i = cur;
+
+            // then compose them to 3-element tuple
+            const int hw_i = h_i*w+w_i;
+            const int io4_i = (out_i/4 *in_4+in_i/4)*4+in_i%4;
+            const int offset = (hw_i*in_4*out_4*4+io4_i)*4+out_i%4;
+            data[offset] = orig_data[i];
+        }
+        *out = data;
     }
 
     void Context::ConvertTensorNHWCToNHWC4(const Tensor* tensor, void** out){
-        // make sure it is in cpu host
-        CHECK_EQ(tensor->mem_type(), Tensor::HOST_MEMORY);
-
         // otherwise fall to nhwc4 case
         const int image_height = tensor->num()*tensor->height();
         const int image_width = UP_DIV(tensor->channel(), 4) * tensor->width();
         const int orig_channel = tensor->channel();
         size_t num_elements = image_height * image_width * 4;
-        size_t bytes = num_elements * sizeof(float);
         // copy from data to host_
         float* data = new float[num_elements];
         memset(data, 0, sizeof(float)*num_elements);
@@ -93,11 +160,6 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
-        // insanity check first
-        // the same data format, nhwc4
-        // CHECK_EQ(cpu_tensor->dformat(), device_tensor->dformat());
-        // same number of bytes
-        // CHECK_EQ(cpu_tensor->size(), device_tensor->size());
         void* nhwc4_data=nullptr;
         if(cpu_tensor->dformat()==dlxnet::TensorProto::NHWC){
             // convert to nhwc4

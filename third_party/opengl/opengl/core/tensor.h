@@ -2,6 +2,7 @@
 #define TENSOR_H_
 #include <vector>
 
+#include "opengl/core/types.h"
 #include "opengl/core/texture.h"
 #include "opengl/core/buffer.h"
 #include "opengl/utils/macros.h"
@@ -9,8 +10,15 @@
 #include <glog/logging.h>
 
 namespace opengl{
-    typedef std::vector<int> INTLIST;
-    typedef dlxnet::TensorProto::DataFormat DataFormat;
+    //TODO(breakpoint) put all tensor attributes in a struct
+    // enum Tensor::DataType;
+    // enum Tensor::MemoryType;
+
+    // struct TensorAttributes{
+    // Tensor::DataType dtype;
+    // Tensor::MemoryType mem_type;
+    // Tensor::DataFormat dformat;
+    // };
 
     class TensorShape{
         public:
@@ -25,7 +33,7 @@ namespace opengl{
                 return size;
             }
 
-            const INTLIST& dims()const{return dims_;}
+            const IntList& dims()const{return dims_;}
             void add_dim(int dim){
                 dims_.emplace_back(dim);
             }
@@ -64,11 +72,13 @@ namespace opengl{
 
             // initialize tensor with shape and type
             // other than content value
-            Tensor(DataType dtype, INTLIST shape, MemoryType mem_type=HOST_MEMORY);
+            Tensor(DataType dtype, IntList shape, MemoryType mem_type=HOST_MEMORY,
+                    DataFormat dformat=dlxnet::TensorProto::NHWC);
 
             // make tensor from cpu host memory
             template<typename T>
-                Tensor(DataType dtype, INTLIST shape, T* data);
+                Tensor(DataType dtype, IntList shape, T* data,
+                        DataFormat dformat=dlxnet::TensorProto::NHWC);
 
             // make tensor from proto
             Tensor(const dlxnet::TensorProto& tensor_proto);
@@ -96,7 +106,7 @@ namespace opengl{
                 GLuint device_id(){
                     return reinterpret_cast<T*>(device_)->id();
                 }
-            const INTLIST& shape()const{return shape_.dims();}
+            const IntList& shape()const{return shape_.dims();}
             size_t num_elements()const{return shape_.num_elements();}
             const int size()const{return size_;}
             MemoryType mem_type()const{
@@ -171,12 +181,11 @@ namespace opengl{
             Tensor& operator=(Tensor&& other)=delete;
     };
 
-    inline Tensor::Tensor(DataType dtype, INTLIST shapes, MemoryType mem_type)
-        :shape_(shapes), dtype_(dtype),mem_type_(mem_type){
+    inline Tensor::Tensor(DataType dtype, IntList shapes, MemoryType mem_type, DataFormat dformat)
+        :shape_(shapes), dtype_(dtype),mem_type_(mem_type), dformat_(dformat){
             AmendShape();
 
             size_t num_elements, bytes;
-            dformat_=dlxnet::TensorProto::NHWC;
             num_elements = shape_.num_elements();
 
             if(dtype==DT_FLOAT){
@@ -185,7 +194,6 @@ namespace opengl{
                 bytes = sizeof(int)*num_elements;
             }
 
-
             // shape and type
             size_ = bytes;
             if(mem_type==HOST_MEMORY){
@@ -193,10 +201,19 @@ namespace opengl{
             }else if(mem_type==DEVICE_BUFFER){
                 device_ = new ShaderBuffer(bytes);
             }else if(mem_type==DEVICE_TEXTURE){
-                // when use texture, reorganize the shape to (H, W, 4)
-                const int image_height = shape_[0]*shape_[1];
-                const int image_width = UP_DIV(shape_[3], 4) * shape_[2];
-                dformat_ = dlxnet::TensorProto::NHWC4;
+                int image_height, image_width ;
+                if(dformat_==dlxnet::TensorProto::NHWC4){
+                    // when use texture, reorganize the shape to (H, W, 4)
+                    image_height = shape_[0]*shape_[1];
+                    image_width = UP_DIV(shape_[3], 4) * shape_[2];
+                }else if(dformat_==dlxnet::TensorProto::HWN4C4){
+                    // by default, shape_ = (N_in, N_out, h, w)
+                    // image (H*W, N4*C4*4, 4)
+                    image_height = shape_[2]*shape_[3];
+                    image_width = UP_DIV(shape_[0], 4)*UP_DIV(shape_[1], 4)*4;
+                }else{
+                    LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
+                }
                 device_ = new Texture({image_height, image_width}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
             }else{
                 LOG(FATAL)<<"unsupported types!";

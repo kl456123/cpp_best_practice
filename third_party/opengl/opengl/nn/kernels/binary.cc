@@ -65,7 +65,9 @@ namespace opengl{
         output_shapes[0] = input_shapes[0];
     }
 
-    void BinaryKernel::SetupAttr(const dlxnet::Attribute& attr){}
+    void BinaryKernel::SetupAttr(const dlxnet::Attribute& attr){
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+    }
 
     REGISTER_KERNEL_WITH_NAME(BinaryKernel, "Add");
 }//namespace opengl

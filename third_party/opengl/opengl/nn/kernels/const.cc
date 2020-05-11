@@ -9,6 +9,8 @@ namespace opengl{
         auto& const_tensor = attr.const_attr().value();
 
         tensor_ = new Tensor(const_tensor);
+
+        output_tensor_dformats_.emplace_back(const_tensor.target_data_format());
     }
 
     ConstKernel::ConstKernel(Context* context)

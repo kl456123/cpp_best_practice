@@ -23,6 +23,8 @@ namespace opengl{
             // buffer in nhwc layout, texture in (nh, w, c4, 4) layout
             void ConvertTensorNHWCToNHWC4(const Tensor* nhwc_tensor, void** nhwc4_data);
             void ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor);
+            void ConvertTensorNCHWToHWN4C4(const Tensor* tensor, void** out);
+            void ConvertTensorNCHWToNHWC4(const Tensor* tensor, void** out);
 
             // primitive apis operate buffer and image
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);

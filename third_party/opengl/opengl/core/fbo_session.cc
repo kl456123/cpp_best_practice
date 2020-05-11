@@ -192,7 +192,7 @@ namespace opengl{
 
             // allocate memory
             total_tensors_[input_index] = new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
-                    Tensor::DEVICE_TEXTURE);
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::NHWC4);
 
             // upload data, initialize input tensor
             context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index]);
@@ -212,9 +212,10 @@ namespace opengl{
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
+                auto dformat = kernel->GetOutputDFormat(j);
                 total_tensors_[kernel->output_tensor_indexes_[j]] =
                     new Tensor(Tensor::DT_FLOAT, output_shapes[j],
-                            Tensor::DEVICE_TEXTURE);
+                            Tensor::DEVICE_TEXTURE, dformat);
             }
         }
         OPENGL_CHECK_ERROR;
@@ -234,7 +235,8 @@ namespace opengl{
 
             const int tensor_index = tensor_name_index_[tensor_name];
             const Tensor* gpu_tensor = total_tensors_[tensor_index];
-            Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape());
+            Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape(),
+                    Tensor::HOST_MEMORY, dlxnet::TensorProto::NHWC);
             context_->CopyDeviceTensorToCPU(gpu_tensor, cpu_tensor);
             outputs->emplace_back(cpu_tensor);
         }

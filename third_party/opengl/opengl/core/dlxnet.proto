@@ -5,17 +5,35 @@ package dlxnet;
 message TensorProto{
     // data format and data type
     enum DataFormat{
+        // input image layout in pytorch(N, channel, H, W)
         NCHW=0;
+
+        // input image layout in dlxnet framework
         NHWC=1;
-        NHWC4=2;
+
+        // there are some other data format used in target device
+        // the most common data format used in input
+        // and output of all nodes, make sure the last dim
+        // should always be 4 to match with gpu device rgba format
+        NHWC4=3;
+
+        // the data format should be used for convolution filter,
+        // filter should accept nhwc4 tensor input and output the same format
+        // tensor so that the hwn4c4
+        HWN4C4=4;
     };
+
     enum DataType{
         FLOAT32=0;
         FLOAT16=1;
         INT32=2;
         INT8=3;
     };
+    // data format used in proto model file
     DataFormat data_format=1;
+
+    // data format used in target device
+    DataFormat target_data_format = 8;
     DataType data_type=2;
 
     repeated int32 dims=3;
