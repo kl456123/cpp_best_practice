@@ -59,10 +59,15 @@ namespace opengl{
 
 
         program_->Activate();
-        int tex_w = texture1->shape()[0];
-        int tex_h = texture1->shape()[1];
+        // int tex_w = texture1->shape()[0];
+        // int tex_h = texture1->shape()[1];
+        auto input_shape = texture1->shape();
+        auto output_shape = outputs[0]->shape();
 
-        program_->set_vec2i("image_shape", tex_w, tex_h);
+        program_->set_vec3i("input_shape", input_shape[1],
+                input_shape[2], input_shape[3]);
+        program_->set_vec3i("output_shape", output_shape[1],
+                output_shape[2], output_shape[3]);
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);
@@ -97,6 +102,8 @@ namespace opengl{
         // image_shape: (n, h, w, c)
         auto& image_shape = input_shapes[0];
         auto& filter_shape = input_shapes[1];
+        CHECK_EQ(image_shape.size(), 4);
+        CHECK_EQ(filter_shape.size(), 4);
         // check the conv2d parameters accordind to filter shapes
         // check filter is valid
         // filter_shape: (n_out, n_in , h, w)
@@ -105,9 +112,9 @@ namespace opengl{
         // channel should be the same with input image
         CHECK_EQ(filter_shape[1], image_shape[3]);
 
-        const int output_height = (image_shape[0]-kernel_size_+2*padding_+1)/stride_;
-        const int output_width = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;
-        output_shapes[0] = {output_height, output_width};
+        const int output_height = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;
+        const int output_width = (image_shape[2]-kernel_size_+2*padding_+1)/stride_;
+        output_shapes[0] = {image_shape[0], output_height, output_width, filter_shape[0]};
     }
 
     REGISTER_KERNEL_WITH_NAME(Conv2DKernel, "Conv");

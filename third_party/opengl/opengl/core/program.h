@@ -37,8 +37,16 @@ namespace opengl{
                 glUniform2f(GetLocation(name), x, y);
             }
 
+            void set_vec3(const std::string& name, float x, float y, float z)const{
+                glUniform3f(GetLocation(name), x, y, z);
+            }
+
             void set_vec2i(const std::string& name, int x, int y)const{
                 glUniform2i(GetLocation(name), x, y);
+            }
+
+            void set_vec3i(const std::string& name, int x, int y, int z)const{
+                glUniform3i(GetLocation(name), x, y, z);
             }
 
             void set_buffer(GLuint SSBO, GLenum target){

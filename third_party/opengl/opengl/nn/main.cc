@@ -95,7 +95,7 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::NamedTensorList inputs;
-    ::opengl::TensorNameList output_names({"conv2d1.bias"});
+    ::opengl::TensorNameList output_names({"output"});
     const int input_width = 224;
     const int input_height = 224;
     const int output_width = 224;

@@ -140,9 +140,18 @@ namespace opengl{
             }
             const int height()const{
                 CHECK_EQ(shape_.dims_size(), 4);
+                if(dformat_==dlxnet::TensorProto::NHWC
+                        ||dformat_==dlxnet::TensorProto::NHWC4
+                        ||dformat_==dlxnet::TensorProto::HWN4C4){
                 return shape_[1];
+                }else{
+                    // nchw
+                    return shape_[2];
+                }
             }
             const int num()const{
+                // for all data format in dlxnet framework,
+                // the first dim always be batch dim
                 CHECK_EQ(shape_.dims_size(), 4);
                 return shape_[0];
             }
