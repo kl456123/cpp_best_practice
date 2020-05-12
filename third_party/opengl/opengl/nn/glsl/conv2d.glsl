@@ -32,6 +32,7 @@ void main() {
     int bias_pos_y = batch_ind;
 
     color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
+    /* color = vec4(0.0); */
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i-padding;

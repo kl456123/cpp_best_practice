@@ -131,16 +131,7 @@ void ONNXConverter::Run(){
                     ->mutable_const_attr()->mutable_value();
                 MakeTensorFromProto(*iter->second, tensor);
 
-                // handle corner case
-                if(op_type=="Conv" && j==1){
-                    // set filter data format
-                    tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
-                }else{
-                    // set data format
-                    tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
-                }
-                // default data format for pytorch(onnx)
-                tensor->set_data_format(dlxnet::TensorProto::NCHW);
+                op_converter->SetTensorInfo(tensor, j);
 
                 total_tensor_names.insert({input_name, output_tensor_index});
                 graph->add_tensor_names(input_name);

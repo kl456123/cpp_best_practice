@@ -16,7 +16,36 @@ class ConvOpConverter: public OpConverter{
         ConvOpConverter(){}
         virtual ~ConvOpConverter(){}
         virtual void Run(dlxnet::NodeProto* dst_node, const void* src_node)override;
+        virtual void SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor_index);
 };
+
+void ConvOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor_index){
+    // only filter and bias can be set
+    CHECK(tensor_index==1||tensor_index==2);
+
+    if(tensor_index==1){
+        // filter
+        dlcl_tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
+        // set shape
+        // no need to change filter shape due to that it has
+        // nchw(n_out, n_in, h, w) dformat already
+        CHECK_EQ(dlcl_tensor->dims_size(), 4);
+    }else{
+        // bias, shape(n_out)
+        dlcl_tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
+        CHECK_EQ(dlcl_tensor->dims_size(), 1);
+        const int n_out = dlcl_tensor->dims(0);
+
+        // set shape
+        // TODO(breakpoint)simpliy it
+        dlcl_tensor->clear_dims();
+        dlcl_tensor->add_dims(1);
+        dlcl_tensor->add_dims(n_out);
+        dlcl_tensor->add_dims(1);
+        dlcl_tensor->add_dims(1);
+    }
+    dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
+}
 
 
 void ConvOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){

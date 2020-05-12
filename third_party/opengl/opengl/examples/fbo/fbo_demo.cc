@@ -320,7 +320,7 @@ int main(int argc, char* argv[]){
 
     auto output = CreateTexture(nullptr, width, height);
 
-    auto output2 = CreateTexture(nullptr, width, height, 10);
+    // auto output2 = CreateTexture(nullptr, width, height, 10);
 
     ////////////////////////////////////////
     // Compute(Render)
@@ -333,7 +333,7 @@ int main(int argc, char* argv[]){
     OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
     OPENGL_CALL(glViewport(0, 0, width, height));
     // Set "renderedTexture" as our colour attachement #0
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, output , 0);
+    OPENGL_CALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, output , 0));
 
     // Set the list of draw buffers.
     GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};

@@ -15,9 +15,8 @@ class OpConverter{
         // derived class implement this func
         virtual void Run(dlxnet::NodeProto* dst_node, const void* src_node)=0;
 
-        // TODO(breakpoint) add description here
-        virtual void AddInputConstant(dlxnet::GraphProto* graph,
-                std::unordered_map<std::string, int>* total_tensor_names);
+        // set tensor shape ,dformat and target dformat used in target device
+        virtual void SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor_index);
 };
 
 
