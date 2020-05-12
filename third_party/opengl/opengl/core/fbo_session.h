@@ -28,7 +28,8 @@ namespace opengl{
             // load graph from protobuf binary in disk
             void LoadGraph(std::string model_path);
 
-            void GetOutputs(const TensorNameList& output_names, TensorList* outputs);
+            void GetOutputs(const TensorNameList& output_names,
+                   const StringList& output_dformats, TensorList* outputs);
 
             std::string DebugString()const;
 

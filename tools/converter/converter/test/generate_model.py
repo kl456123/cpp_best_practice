@@ -22,7 +22,7 @@ def generate_onnx(saved_path):
         saved_path: string, specify where to store the model
     """
     # build graph first
-    inputs = torch.ones(1, 3, 224, 224)
+    inputs = torch.ones(1, 3, 3, 3)
     model = Model()
 
     input_names = ['input']
@@ -34,6 +34,7 @@ def generate_onnx(saved_path):
         verbose=True,
         output_names=output_names,
         input_names=input_names)
+    print(model(inputs))
 
 
 if __name__ == '__main__':

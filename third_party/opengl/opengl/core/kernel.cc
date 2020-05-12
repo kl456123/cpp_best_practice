@@ -39,8 +39,8 @@ namespace opengl{
         CHECK_EQ(outputs.size(), 1);
         CHECK_EQ(outputs[0]->mem_type(), Tensor::DEVICE_TEXTURE);
 
-        const int width = outputs[0]->shape()[0];
-        const int height = outputs[0]->shape()[1];
+        const int width = outputs[0]->device<Texture>()->shape()[0];
+        const int height = outputs[0]->device<Texture>()->shape()[1];
         OPENGL_CALL(glViewport(0, 0, width, height));
 
 

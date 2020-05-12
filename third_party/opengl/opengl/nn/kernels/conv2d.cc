@@ -52,16 +52,15 @@ namespace opengl{
 
     void Conv2DKernel::Compute(TensorList& inputs, TensorList& outputs){
         OPENGL_CALL(glUseProgram(program_->program_id()));
-        auto texture1 = inputs[0]->device<Texture>();
-        auto texture2 = inputs[1]->device<Texture>();
+        auto input_image = inputs[0]->device<Texture>();
+        auto input_filter = inputs[1]->device<Texture>();
+        auto input_bias = inputs[2]->device<Texture>();
         SetFrameBuffer(outputs);
         SetVertexShader();
 
 
         program_->Activate();
-        // int tex_w = texture1->shape()[0];
-        // int tex_h = texture1->shape()[1];
-        auto input_shape = texture1->shape();
+        auto input_shape = input_image->shape();
         auto output_shape = outputs[0]->shape();
 
         program_->set_vec3i("input_shape", input_shape[1],
@@ -74,13 +73,18 @@ namespace opengl{
         OPENGL_CHECK_ERROR;
         // input
         {
-            program_->set_image2D("input_image", texture1->id(),  0);
+            program_->set_image2D("input_image", input_image->id(),  0);
             OPENGL_CHECK_ERROR;
         }
 
         // filter
         {
-            program_->set_image2D("input_filter", texture2->id(),  1);
+            program_->set_image2D("input_filter", input_filter->id(),  1);
+            OPENGL_CHECK_ERROR;
+        }
+        // bias
+        {
+            program_->set_image2D("input_bias", input_bias->id(),  2);
             OPENGL_CHECK_ERROR;
         }
 

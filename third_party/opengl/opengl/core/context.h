@@ -21,10 +21,18 @@ namespace opengl{
             // for now convert it in host memory instead of device memory
             // TODO(breakpoint) add 1d representation in fragment shader to support nhwc format
             // buffer in nhwc layout, texture in (nh, w, c4, 4) layout
+            // conversion between nhwc and nhwc4
             void ConvertTensorNHWCToNHWC4(const Tensor* nhwc_tensor, void** nhwc4_data);
             void ConvertTensorNHWC4ToNHWC(void* out, Tensor* tensor);
+
+            // conversion between nchw and hwn4c4
             void ConvertTensorNCHWToHWN4C4(const Tensor* tensor, void** out);
+            void ConvertTensorHWN4C4ToNCHW(void* out, Tensor* tensor);
+
+            // torch dformat to dlxnet dformat
             void ConvertTensorNCHWToNHWC4(const Tensor* tensor, void** out);
+
+            void ConvertTensorHWN4C4ToNHWC(void* src, Tensor* tensor);
 
             // primitive apis operate buffer and image
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);

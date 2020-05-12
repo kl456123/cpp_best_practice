@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <assert.h>
+#include <cmath>
 #include <cstring>
 #include "opengl/core/init.h"
 #include "opengl/core/types.h"
@@ -29,7 +30,7 @@ float* AllocateHostMemory(std::vector<int> dims, bool fill_data=true){
     memset(image_data, 0, sizeof(float)*num_elements);
     if(fill_data){
         for(int i=0;i<num_elements;i++){
-            image_data[i] = random()%256/256.0;
+            image_data[i] = 1.0;
         }
     }
     return image_data;
@@ -46,8 +47,12 @@ void Conv2DCPU(const float* input_data,
         int output_width,
         int output_height,
         int input_channels,
-        int output_channels){
-    // 1D representation of hwc for all args
+        int output_channels,
+        int dilation,
+        int groups){
+    // input_data: (N, H, W, C)
+    // output_data: (N, H, W, C)
+    // filter_data: (N_out, N_in, H, W)
     for(int oc=0;oc<output_channels;++oc){
         const int filter_base = oc*kernel_size*kernel_size*input_channels;
         for(int i=0;i<output_height;++i){
@@ -56,8 +61,8 @@ void Conv2DCPU(const float* input_data,
                 float sum = 0;
                 for(int r=0;r<kernel_size;++r){
                     for(int s=0;s<kernel_size;++s){
-                        int input_index_x = j*stride-padding+s;
-                        int input_index_y = i*stride-padding+r;
+                        int input_index_x = j*stride-padding+s*dilation;
+                        int input_index_y = i*stride-padding+r*dilation;
                         int input_index = input_index_y*input_width+input_index_x;
                         if(input_index_x<0||input_index_x>=input_width){
                             continue;
@@ -69,7 +74,7 @@ void Conv2DCPU(const float* input_data,
                         int filter_index=r*kernel_size+s;
                         for(int c=0;c<input_channels;++c){
                             float a = input_data[input_index*input_channels+c];
-                            float b = filter_data[filter_base+filter_index*input_channels+c];
+                            float b = filter_data[filter_base+c*kernel_size*kernel_size+filter_index];
                             sum+=a*b;
                         }
                     }
@@ -92,24 +97,24 @@ int main(int argc, char** argv){
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
+    // conv2d params
+    const int input_width = 3;
+    const int input_height = 3;
+    const int input_channels = 3;
+    const int num_inputs = 1;
+    const int kernel_size = 3;
+    const int stride = 1;
+    const int padding = 1;
+    const int groups = 1;
+    const int dilation = 1;
+
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::NamedTensorList inputs;
-    ::opengl::TensorNameList output_names({"output"});
-    const int input_width = 224;
-    const int input_height = 224;
-    const int output_width = 224;
-    const int output_height = 224;
-    const int input_channels = 3;
-    const int output_channels = 1;
-
-    std::vector<int> image_shape = {input_height, input_width, input_channels};
-    std::vector<int> filter_shape = {output_channels, 3, 3, input_channels};
-    std::vector<int> output_shape = {output_height,output_width,output_channels};
-    auto input_data =  AllocateHostMemory(image_shape, true);
-    auto filter_data =  AllocateHostMemory(filter_shape, true);
-    auto output_data = AllocateHostMemory(output_shape, false);
-    // inputs.emplace_back();
+    ::opengl::TensorNameList output_names({"output", "conv2d1.weight", "input"});
+    ::opengl::StringList dformats({"NHWC", "NCHW", "NHWC"});
+    std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
+    auto cpu_input_data =  AllocateHostMemory(image_shape, true);
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     std::string model_path = "./demo.dlx";
@@ -119,23 +124,55 @@ int main(int argc, char** argv){
         <<session->DebugString();
 
     // init graph according to inputs
-    session->Setup({{"input", new Tensor(Tensor::DT_FLOAT, image_shape, input_data)}});
+    session->Setup({{"input", new Tensor(Tensor::DT_FLOAT, image_shape, cpu_input_data)}});
 
     // do computation for the graph
     session->Run();
 
     // get cpu outputs from device
-    session->GetOutputs(output_names, &outputs_cpu);
+    session->GetOutputs(output_names, dformats, &outputs_cpu);
+    const float* ogl_filter_data = outputs_cpu[1]->host<float>();
+    const float* ogl_output_data = outputs_cpu[0]->host<float>();
+    const float* ogl_input_data = outputs_cpu[2]->host<float>();
+    const int filter_num_elements = outputs_cpu[1]->num_elements();
+    const int output_num_elements = outputs_cpu[0]->num_elements();
+    const int input_num_elements = outputs_cpu[2]->num_elements();
 
-    Conv2DCPU(input_data, filter_data, output_data, 3,1,1, input_width, input_height,
-            output_width,output_height, input_channels, output_channels);
+    // nhwc
+    auto output_shape = outputs_cpu[0]->shape();
+    const int output_width = output_shape[2];
+    const int output_height = output_shape[1];
+    const int output_channels = output_shape[3];
+
+    auto cpu_output_data = AllocateHostMemory(output_shape, false);
+    const float* cpu_filter_data = ogl_filter_data;
+    Conv2DCPU(cpu_input_data, cpu_filter_data, cpu_output_data, kernel_size,
+            stride,padding, input_width, input_height,
+            output_width,output_height, input_channels, output_channels, dilation, groups);
+    // check input
+    for(int i=0;i<input_num_elements;++i){
+        CHECK_EQ(cpu_input_data[i], ogl_input_data[i])
+            <<"Error When index: "<< i;
+    }
+
+    // check filter
+    // for(int i=0;i<filter_num_elements;++i){
+    // CHECK_EQ(cpu_filter_data[i], ogl_filter_data[i])
+    // <<"Error When index: "<< i;
+    // }
+    // const float precision = 1e-7; // failed when mediump
+    const float precision = 1e-6;
 
     // check the result
-    // CheckTensorSame(outputs_cpu);
-    for(int i=0;i<outputs_cpu[0]->num_elements();++i){
-        float actual_value = outputs_cpu[0]->host<float>()[i];
-        float expect_value = input_data[i];
-        CHECK_EQ(actual_value, expect_value)<<"Error When index: "<< i;
+    for(int i=0;i<output_num_elements;++i){
+        float actual_value = ogl_output_data[i];
+        float expect_value = cpu_output_data[i];
+        CHECK_LT(std::fabs(actual_value- expect_value), precision)<<"Error When index: "<< i;
+    }
+
+    // print output
+    for(int i=0; i<std::min(output_num_elements, 100); ++i){
+        LOG(INFO)<<ogl_output_data[i];
     }
 
     LOG(INFO)<<"BiasAdd Success";

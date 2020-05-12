@@ -223,10 +223,13 @@ namespace opengl{
 
 
 
-    void FBOSession::GetOutputs(const TensorNameList& output_names, TensorList* outputs){
+    void FBOSession::GetOutputs(const TensorNameList& output_names,
+            const StringList& output_dformats, TensorList* outputs){
+        CHECK_EQ(output_names.size(), output_dformats.size());
         outputs->clear();
         outputs->reserve(output_names.size());
 
+        int index = 0;
         for(auto& tensor_name: output_names){
             auto iter = tensor_name_index_.find(tensor_name);
             if(iter==tensor_name_index_.end()){
@@ -235,8 +238,17 @@ namespace opengl{
 
             const int tensor_index = tensor_name_index_[tensor_name];
             const Tensor* gpu_tensor = total_tensors_[tensor_index];
+            auto dformat_str = output_dformats[index++];
+            DataFormat dformat;
+            if(dformat_str=="NHWC"){
+                dformat = dlxnet::TensorProto::NHWC;
+            }else if(dformat_str=="NCHW"){
+                dformat = dlxnet::TensorProto::NCHW;
+            }else{
+                LOG(FATAL)<<"only nhwc and nchw dformats are supported for now";
+            }
             Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape(),
-                    Tensor::HOST_MEMORY, dlxnet::TensorProto::NHWC);
+                    Tensor::HOST_MEMORY, dformat);
             context_->CopyDeviceTensorToCPU(gpu_tensor, cpu_tensor);
             outputs->emplace_back(cpu_tensor);
         }

@@ -1,5 +1,6 @@
 uniform sampler2D input_image;
 uniform sampler2D input_filter;
+uniform sampler2D input_bias;
 // conv2d params
 uniform int kernel_size;
 uniform int stride_size;
@@ -14,17 +15,23 @@ out vec4 color;
 // filter shape: (h*w, out_4*in_4*in4, out4)
 // image shape: (n*h, w*in_4, in4)
 // output shape: (n*h, w*out_4, out4)
+// bias shape: (n*1, 1*out_4, out4)
 // where in4=out4 = 4
 void main() {
-    color = vec4(0.0);
     ivec2 pos = ivec2(gl_FragCoord.xy);
     // decompose pos
+    // pos = (w*out_4_i, nh_i)
+    // output_shape=(h,w,c)
     int output_index_y = pos.y%output_shape.x;
     int batch_ind = pos.y/output_shape.x;
 
-    int out_4_ind = pos.y%UP_DIV(output_shape.z, 4);
-    int output_index_x = pos.x/output_shape.y;
+    int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
+    int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
+    int bias_pos_x = out_4_ind;
+    int bias_pos_y = batch_ind;
+
+    color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i-padding;
@@ -43,6 +50,7 @@ void main() {
                 int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
 
                 // get input filter
+                // filter shape: (h*w, out_4*in_4*in4, out4)
                 int filter_pos_y = j*kernel_size+i;
                 int filter_pos_x = (out_4_ind*UP_DIV(input_shape.z, 4)+in_4_ind)*4;
                 vec4 k0 = texelFetch(input_filter, ivec2(filter_pos_x,   filter_pos_y), 0);

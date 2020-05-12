@@ -130,24 +130,35 @@ namespace opengl{
             const bool Initialized()const{
                 return initialized_;
             }
+
             const int channel()const{
                 CHECK_EQ(shape_.dims_size(), 4);
-                return shape_[3];
+                if(dformat_==dlxnet::TensorProto::NHWC
+                        ||dformat_==dlxnet::TensorProto::NHWC4){
+                    return shape_[3];
+                }
+                return shape_[1];
             }
             const int width()const{
                 CHECK_EQ(shape_.dims_size(), 4);
-                return shape_[2];
+                if(dformat_==dlxnet::TensorProto::NHWC
+                        ||dformat_==dlxnet::TensorProto::NHWC4){
+                    return shape_[2];
+                }
+                return shape_[3];
             }
             const int height()const{
                 CHECK_EQ(shape_.dims_size(), 4);
                 if(dformat_==dlxnet::TensorProto::NHWC
-                        ||dformat_==dlxnet::TensorProto::NHWC4
-                        ||dformat_==dlxnet::TensorProto::HWN4C4){
-                return shape_[1];
-                }else{
-                    // nchw
-                    return shape_[2];
+                        ||dformat_==dlxnet::TensorProto::NHWC4){
+                    return shape_[1];
                 }
+                // nchw or hwn4c4
+                // note that for hwn4c4, it is designed for
+                // filter. due to filter is nchw(n_out,n_in, h, w)
+                // and it is not changed during transformation so it fall
+                // to nchw case
+                return shape_[2];
             }
             const int num()const{
                 // for all data format in dlxnet framework,
@@ -216,14 +227,15 @@ namespace opengl{
                     image_height = shape_[0]*shape_[1];
                     image_width = UP_DIV(shape_[3], 4) * shape_[2];
                 }else if(dformat_==dlxnet::TensorProto::HWN4C4){
-                    // by default, shape_ = (N_in, N_out, h, w)
+                    // by default, shape_ = (N_out, N_in, h, w)
                     // image (H*W, N4*C4*4, 4)
                     image_height = shape_[2]*shape_[3];
                     image_width = UP_DIV(shape_[0], 4)*UP_DIV(shape_[1], 4)*4;
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }
-                device_ = new Texture({image_height, image_width}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+                size_ = image_height*image_width*4*sizeof(float);
+                device_ = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
             }else{
                 LOG(FATAL)<<"unsupported types!";
             }

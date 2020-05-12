@@ -33,6 +33,33 @@ namespace opengl{
             LOG(INFO)<<"max group invacations: "<<work_grp_inv;
         }
 
+    void Context::ConvertTensorHWN4C4ToNCHW(void* src, Tensor* tensor){
+        float* nchw_data = tensor->host<float>();
+        float* hwn4c4_data = (float*)src;
+        const int num_elements = tensor->num_elements();
+        const int up_channel = UP_DIV(tensor->channel(), 4)*4;
+        const int c = tensor->channel();
+        const int h = tensor->height();
+        const int w = tensor->width();
+        const int n = tensor->num();
+        const int n4 = UP_DIV(n, 4);
+        const int c4 = UP_DIV(c, 4);
+
+        for(int i=0;i<num_elements;++i){
+            int cur = i;
+            const int w_i = cur%w;
+            cur/=w;
+            const int h_i = cur%h;
+            cur/=h;
+            const int c_i = cur%c;
+            cur/=c;
+            const int n_i = cur;
+            const int offset = ((((h_i*w+w_i)*n4+n_i/4)*c4+c_i/4)*4+c_i%4)*4+n_i%4;
+
+            nchw_data[i]=hwn4c4_data[offset];
+        }
+    }
+
     void Context::ConvertTensorNCHWToNHWC4(const Tensor* cpu_tensor, void** out){
 
         const int n = cpu_tensor->shape()[0];
@@ -63,7 +90,6 @@ namespace opengl{
         // insanity check first
         // the same data format, nhwc4
         void* data=nullptr;
-        LOG(INFO)<<"device data format: "<<device_tensor->dformat();
         if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
                 // convert to nhwc4
@@ -94,14 +120,15 @@ namespace opengl{
         // handle pytorch filter
         // from (out, in, h, w) to (h*w, out_4*in_4*in4, out4)
         // where in_4 = UP_DIV(in, 4), out_4=UP_DIV(out, 4), in4=out4=4
-        const int n_in = tensor->shape()[0];
-        const int n_out = tensor->shape()[1];
+        const int n_out = tensor->shape()[0];
+        const int n_in = tensor->shape()[1];
         const int h = tensor->shape()[2];
         const int w = tensor->shape()[3];
         const int in_4 = UP_DIV(n_in, 4);
         const int out_4 = UP_DIV(n_out, 4);
         const int num_elements = h*w*in_4*out_4*4*4;
         float* data = new float[num_elements];
+        memset(data, 0, sizeof(float)*num_elements);
         float* orig_data = tensor->host<float>();
         for(int i=0;i<tensor->num_elements();++i){
             // decompose i to four-element tuple
@@ -160,13 +187,7 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
-        void* nhwc4_data=nullptr;
-        if(cpu_tensor->dformat()==dlxnet::TensorProto::NHWC){
-            // convert to nhwc4
-            ConvertTensorNHWCToNHWC4(cpu_tensor, &nhwc4_data);
-        }else{
-            nhwc4_data = cpu_tensor->host();
-        }
+        void* data=new float[device_tensor->size()];
 
         GLint ext_format, ext_type;
         const int width = device_tensor->device<Texture>()->shape()[0];
@@ -181,10 +202,23 @@ namespace opengl{
                 device_tensor->device<Texture>()->id() , 0);
         // download
         OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, nhwc4_data));
+        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
 
-        // copy nhwc4_data to cpu_tensor
-        ConvertTensorNHWC4ToNHWC(nhwc4_data, cpu_tensor);
+        if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
+            // only one cpu dformat supported here
+            // may be more target dformat will be supported in the future
+            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NHWC);
+            // copy data to cpu_tensor
+            ConvertTensorNHWC4ToNHWC(data, cpu_tensor);
+        }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){
+            // now used to download filter generated from onnx model
+            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW);
+            ConvertTensorHWN4C4ToNCHW(data, cpu_tensor);
+        }else{
+            LOG(FATAL)<<"unsupported conversion from device_dformat: "
+                <<device_tensor->dformat()<<" -> cpu_dformat: "
+                <<cpu_tensor->dformat();
+        }
     }
 
     void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){

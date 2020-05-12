@@ -28,6 +28,7 @@ namespace opengl{
                     float* target_data = new float[num_elements()];
                     host_ = static_cast<void*>(target_data);
                     dtype_ = DT_FLOAT;
+                    size_ = sizeof(float)*num_elements();
                     for(int i=0;i<num_elements();++i){
                         target_data[i] = tensor_proto.float_data(i);
                     }
@@ -38,6 +39,7 @@ namespace opengl{
                 {
                     int* target_data = new int[num_elements()];
                     host_ = static_cast<void*>(target_data);
+                    size_ = sizeof(int)*num_elements();
                     dtype_ = DT_INT;
                     for(int i=0;i<num_elements();++i){
                         target_data[i] = tensor_proto.int32_data(i);
