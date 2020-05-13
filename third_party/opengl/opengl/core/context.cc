@@ -198,8 +198,8 @@ namespace opengl{
         CHECK_EQ(ext_type, kDataType)<<"unmatched type";
         CHECK_EQ(ext_format, kFormat)<<"unmatched format";
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                device_tensor->device<Texture>()->id() , 0);
+        OPENGL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                device_tensor->device<Texture>()->id() , 0));
         // download
         OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
         OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));

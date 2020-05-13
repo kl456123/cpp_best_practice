@@ -1,3 +1,17 @@
+/* This file demostrate how to use framebuffer object
+ * to do gpgpu computation task, especial in some case
+ * that we cannot use compute shader in opengles-3.0 or
+ * more old version.
+ * But in some case the demo file will also fail due to
+ * lack of some features, like `glFramebufferTexture`, the
+ * api cannot be used in some device or runtime. so be careful
+ * when error happens in `OPENGL_CHECK_ERROR`
+ *
+ *
+ *
+ *
+ */
+
 #include <string.h>
 #include <fstream>
 
@@ -15,6 +29,7 @@
 GLuint vertex_shader_;
 GLuint fragment_shader;
 GLuint program;
+GLuint frame_buffer;
 
 // core parameters, maybe some data types cannot supported
 // in some platform
@@ -102,6 +117,27 @@ void CreateVertexShader(){
     vertex_shader_ = CreateShader(GL_VERTEX_SHADER, vertex_shader_text_);
 }
 
+void SetVertexShader(){
+    auto point_attrib = GLuint(glGetAttribLocation(program, "point"));
+    OPENGL_CALL(glEnableVertexAttribArray(point_attrib));
+
+    OPENGL_CALL(glVertexAttribPointer(point_attrib, 2, GL_FLOAT, GL_FALSE,
+                sizeof(Vertex), nullptr));
+}
+
+void SetFrameBuffer(int height, int width, GLuint output_texture){
+    OPENGL_CALL(glViewport(0, 0, width, height));
+
+    // Set "renderedTexture" as our colour attachement #0
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+            output_texture , 0);
+
+    // Always check that our framebuffer is ok
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        LOG(FATAL) << "Framebuffer not complete.";
+    }
+}
+
 
 /*!
  * \brief Create a program that uses the given vertex and fragment shaders.
@@ -144,12 +180,6 @@ void CreateProgram(const std::string fname) {
 
     OPENGL_CALL(glDetachShader(program, vertex_shader_));
     OPENGL_CALL(glDetachShader(program, fragment_shader));
-
-    auto point_attrib = GLuint(glGetAttribLocation(program, "point"));
-    OPENGL_CALL(glEnableVertexAttribArray(point_attrib));
-
-    OPENGL_CALL(glVertexAttribPointer(point_attrib, 2, GL_FLOAT, GL_FALSE,
-                sizeof(Vertex), nullptr));
 }
 
 GLuint CreateTexture(const GLfloat *data, GLsizei width,
@@ -242,7 +272,7 @@ void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     CHECK_EQ(ext_format, format)<<"unmatched format";
     // OPENGL_CALL(glActiveTexture(GL_TEXTURE0 + tex_id));
     // OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
             texture , 0);
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
@@ -257,7 +287,7 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     OPENGL_CALL(glGenBuffers(1, &io_buffer));
 
     // specify which texture to read
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
             texture , 0);
 
     OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
@@ -286,23 +316,33 @@ void ReadShader(const std::string fname){
     }
 }
 
-int main(int argc, char* argv[]){
-    // Initialize Google's logging library.
-    google::InitGoogleLogging(argv[0]);
+void InitFrameBuffer(){
+    OPENGL_CALL(glGenFramebuffers(1, &frame_buffer));
 
-    ::opengl::example::InitContext();
+    // Create frame buffer And Check its Completation
+    OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
+    // Set the list of draw buffers.
+    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    // "1" is the size of DrawBuffers.
+    OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
+}
 
-    CreateVertexShader();
+void DestoryFrameBuffer(){
+    glDeleteFramebuffers(1, &frame_buffer);
+}
 
-    const int N = 100;
-    GLint width = N;
-    GLint height = N;
-    const int niters = 100;
-    const size_t num_elements = width * height * num_channels;
+void Run(std::vector<int> shape){
     std::random_device rd;
     std::mt19937 mt(rd());
     std::uniform_real_distribution<float> dist(1.0f, 2.0f);
 
+    const int width=shape[1];
+    const int height = shape[0];
+    const int num_channels = shape[2];
+    const int N = height;
+    CHECK_EQ(height, width)<<"Only square input is supported now";
+
+    const size_t num_elements = width * height * num_channels;
 
     CreateProgram("../opengl/examples/fbo/fragment_es.glsl");
 
@@ -327,69 +367,46 @@ int main(int argc, char* argv[]){
     ////////////////////////////////////////
     OPENGL_CALL(glUseProgram(program));
 
-    // Create frame buffer And Check its Completation
-    GLuint frame_buffer;
-    OPENGL_CALL(glGenFramebuffers(1, &frame_buffer));
-    OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer));
-    OPENGL_CALL(glViewport(0, 0, width, height));
-    // Set "renderedTexture" as our colour attachement #0
-    OPENGL_CALL(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, output , 0));
-
-    // Set the list of draw buffers.
-    GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    // "1" is the size of DrawBuffers.
-    OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
-
-    // Always check that our framebuffer is ok
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        LOG(FATAL) << "Framebuffer not complete.";
-    }
 
     // Tell the fragment shader what input textures to use.
+    SetFrameBuffer(height, width, output);
+    SetVertexShader();
     SetInput2D("A", input0, 0);
     SetInput2D("B", input1, 1);
 
     // set uniform
     SetInt("N", N);
 
-    // swarmming up
-    for (int iter = 0; iter < 10; ++iter) {
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
-    }
-    auto opengl_start = std::chrono::system_clock::now();
-    for (int iter = 0; iter < niters; ++iter) {
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
-    }
+    // auto opengl_start = std::chrono::system_clock::now();
+    OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+    OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+    glFinish();
 
 
-    auto opengl_end = std::chrono::system_clock::now();
-    LOG(INFO) << "opengl: "
-        << ((opengl_end - opengl_start).count() / niters);
+    // auto opengl_end = std::chrono::system_clock::now();
+    // LOG(INFO) << "opengl: "
+    // << ((opengl_end - opengl_start).count() / niters);
 
     ///////////////////////////////////////
     // Download output Data from Device
     std::vector<GLfloat> retrieved_data(static_cast<size_t>(num_elements));
-    Download_DMA(retrieved_data.data(), width, height, output);
+    Download(retrieved_data.data(), width, height, output);
+    // std::vector<GLfloat> retrieved_data2(static_cast<size_t>(num_elements));
+    // Download(retrieved_data2.data(), width, height, input0);
 
     std::vector<GLfloat> cpu_result(static_cast<size_t>(num_elements));
-    auto cpu_start = std::chrono::system_clock::now();
-    for (int iter = 0; iter < niters; ++iter) {
-        for (int row = 0; row != N; ++row) {
-            for (int col = 0; col != N; ++col) {
-                cpu_result[(row * N + col)*num_channels] = 0.0f;
-                for (int i = 0; i != N; ++i) {
-                    GLfloat a = texture0_data[(row * N + i)*num_channels];
-                    GLfloat b = texture1_data[(i * N + col)*num_channels];
-                    cpu_result[(row * N + col)*num_channels] += a * b;
-                }
+    // auto cpu_start = std::chrono::system_clock::now();
+    for (int row = 0; row != N; ++row) {
+        for (int col = 0; col != N; ++col) {
+            cpu_result[(row * N + col)*num_channels] = 0.0f;
+            for (int i = 0; i != N; ++i) {
+                GLfloat a = texture0_data[(row * N + i)*num_channels];
+                GLfloat b = texture1_data[(i * N + col)*num_channels];
+                cpu_result[(row * N + col)*num_channels] += a * b;
             }
         }
     }
-    auto cpu_end = std::chrono::system_clock::now();
+    // auto cpu_end = std::chrono::system_clock::now();
 
     // just test instead of print for big matrix Multiplication
     for (size_t i = 0; i < retrieved_data.size(); ++i) {
@@ -400,11 +417,31 @@ int main(int argc, char* argv[]){
         }
     }
 
-    LOG(INFO) << "cpu:    "
-        << ((cpu_end - cpu_start).count() / niters);
+    // LOG(INFO) << "cpu:    "
+    // << ((cpu_end - cpu_start).count() / niters);
+}
 
-    glDeleteFramebuffers(1, &frame_buffer);
+int main(int argc, char* argv[]){
+    // Initialize Google's logging library.
+    google::InitGoogleLogging(argv[0]);
 
+    ::opengl::example::InitContext();
+    InitFrameBuffer();
+
+    CreateVertexShader();
+
+    // some params
+    const int N = 100;
+    GLint width = N;
+    GLint height = N;
+    const int niters = 100;
+
+    for(int i=0;i<niters;++i){
+        Run({height, width, num_channels});
+    }
+
+
+    DestoryFrameBuffer();
     ::opengl::example::DestroyContext();
 
     LOG(INFO)<<"No Error Found!";

@@ -47,7 +47,7 @@ namespace opengl{
         auto output_texture = outputs[0]->device<Texture>()->id();
 
         // Set "renderedTexture" as our colour attachement #0
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                 output_texture , 0);
 
         // Always check that our framebuffer is ok

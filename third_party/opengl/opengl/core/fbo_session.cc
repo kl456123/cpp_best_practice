@@ -37,12 +37,6 @@ namespace opengl{
     }
 
     void FBOSession::SetupFrameBuffer(){
-
-        OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
-        // Set the list of draw buffers.
-        GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-        // "1" is the size of DrawBuffers.
-        OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
     }
 
     void FBOSession::LoadGraph(const std::string file_path){
@@ -157,6 +151,11 @@ namespace opengl{
 
             // only need to create it once
             OPENGL_CALL(glGenFramebuffers(1, &frame_buffer_));
+            OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
+            // Set the list of draw buffers.
+            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+            // "1" is the size of DrawBuffers.
+            OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
         }
 
     void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){
