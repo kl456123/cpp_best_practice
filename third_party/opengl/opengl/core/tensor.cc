@@ -1,3 +1,4 @@
+#include <random>
 #include "opengl/core/tensor.h"
 
 
@@ -53,5 +54,42 @@ namespace opengl{
         initialized_=true;
         mem_type_ = HOST_MEMORY;
         dformat_=tensor_proto.data_format();
+    }
+
+    // here we just allocate memory in host memory in hard code
+    // TODO(breakpoint) add customs allocator input to allow
+    // allocate device memory
+    /*static*/ Tensor* Tensor::Empty(DataType dtype, IntList shape,
+            DataFormat dformat){
+        Tensor* tensor = new Tensor(dtype, shape, (float*)nullptr, dformat);
+        const int num_elements = tensor->num_elements();
+        float* image_data = new float[num_elements];
+        tensor->set_host(image_data);
+        return tensor;
+    }
+
+    /*static*/ Tensor* Tensor::Random(DataType dtype, IntList shape,
+            DataFormat dformat){
+        Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
+        float* data = tensor->host<float>();
+        const int num_elements = tensor->num_elements();
+        for(int i=0;i<num_elements;++i){
+            data[i] = 1.0*random()/RAND_MAX;
+        }
+        return tensor;
+    }
+
+    /*static*/ Tensor* Tensor::Zeros(DataType dtype, IntList shape,
+            DataFormat dformat){
+        Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
+        memset(tensor->host(), 0, sizeof(float)*tensor->num_elements());
+        return tensor;
+    }
+
+    /*static*/ Tensor* Tensor::Ones(DataType dtype, IntList shape,
+            DataFormat dformat){
+        Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
+        memset(tensor->host(), 1, sizeof(float)*tensor->num_elements());
+        return tensor;
     }
 }//namespace opengl

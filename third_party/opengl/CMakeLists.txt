@@ -78,6 +78,7 @@ endif()
 # deeplearning framework using opengl backend
 if (BUILD_NN)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn)
+    set(GL_NN gl_nn)
 endif()
 
 if(BUILD_TEST)

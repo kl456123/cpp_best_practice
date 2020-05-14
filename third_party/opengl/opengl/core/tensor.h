@@ -75,13 +75,26 @@ namespace opengl{
             Tensor(DataType dtype, IntList shape, MemoryType mem_type=HOST_MEMORY,
                     DataFormat dformat=dlxnet::TensorProto::NHWC);
 
-            // make tensor from cpu host memory
+            // make tensor from cpu host memory, data is defined by user.
             template<typename T>
                 Tensor(DataType dtype, IntList shape, T* data,
                         DataFormat dformat=dlxnet::TensorProto::NHWC);
 
-            // make tensor from proto
+            // make tensor from proto, common used when
+            // loading graph proto model
             Tensor(const dlxnet::TensorProto& tensor_proto);
+
+            // to help test or debug, no need to allocate data by user
+            // some helper funcs zeros, ones, empty, random
+            // note that callee dont own it.
+            static Tensor* Random(DataType dtype, IntList shape,
+                    DataFormat dformat=dlxnet::TensorProto::NHWC);
+            static Tensor* Empty(DataType dtype, IntList shape,
+                    DataFormat dformat=dlxnet::TensorProto::NHWC);
+            static Tensor* Ones(DataType dtype, IntList shape,
+                    DataFormat dformat=dlxnet::TensorProto::NHWC);
+            static Tensor* Zeros(DataType dtype, IntList shape,
+                    DataFormat dformat=dlxnet::TensorProto::NHWC);
             ~Tensor();
 
             // get data pointer from device or cpu host

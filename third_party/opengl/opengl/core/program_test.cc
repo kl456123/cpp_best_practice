@@ -24,12 +24,12 @@ namespace opengl{
         initializer();
         auto program = Program();
         EXPECT_FALSE(program.program_id()==0);
-        program.AttachFile(kSourceFname);
-        EXPECT_OPENGL_NO_ERROR;
-        program.Link();
-        EXPECT_OPENGL_NO_ERROR;
-        program.Activate();
-        EXPECT_OPENGL_NO_ERROR;
+        // program.AttachFile(kSourceFname);
+        // EXPECT_OPENGL_NO_ERROR;
+        // program.Link();
+        // EXPECT_OPENGL_NO_ERROR;
+        // program.Activate();
+        // EXPECT_OPENGL_NO_ERROR;
     }
 
     TEST(Program, AttachMultipleFiles){
