@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import torch
+from torchvision.models import resnet
 
 
 class Model(torch.nn.Module):
@@ -22,8 +23,9 @@ def generate_onnx(saved_path):
         saved_path: string, specify where to store the model
     """
     # build graph first
-    inputs = torch.ones(1, 3, 3, 3)
-    model = Model()
+    inputs = torch.ones(1, 3, 224, 224)
+    # model = Model()
+    model = resnet.resnet50()
 
     input_names = ['input']
     output_names = ['output']
@@ -34,7 +36,7 @@ def generate_onnx(saved_path):
         verbose=True,
         output_names=output_names,
         input_names=input_names)
-    print(model(inputs))
+    print(model(inputs).shape)
 
 
 if __name__ == '__main__':
