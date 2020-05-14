@@ -1,5 +1,13 @@
 #ifndef TENSOR_H_
 #define TENSOR_H_
+/*      Core Data Class in All DeepLearning Framework
+ * class Tensor includes tensor shape and its buffer storing real data
+ * and contains some informations like dtype, dformat, mem_type and etc.
+ *      As for user, all should to know is that data should only be initilized
+ * in host memory, if you want to initialize data whatever you want in device,
+ * you must copy data from host to memory by youself, Initialize data in device
+ * is not allowed.
+ */
 #include <vector>
 
 #include "opengl/core/types.h"
@@ -122,6 +130,7 @@ namespace opengl{
             const IntList& shape()const{return shape_.dims();}
             size_t num_elements()const{return shape_.num_elements();}
             const int size()const{return size_;}
+            const DataType dtype()const{return dtype_;}
             MemoryType mem_type()const{
                 return mem_type_;
             }
@@ -237,13 +246,13 @@ namespace opengl{
                 int image_height, image_width ;
                 if(dformat_==dlxnet::TensorProto::NHWC4){
                     // when use texture, reorganize the shape to (H, W, 4)
-                    image_height = shape_[0]*shape_[1];
-                    image_width = UP_DIV(shape_[3], 4) * shape_[2];
+                    image_height = num()*height();
+                    image_width = UP_DIV(channel(), 4) * width();
                 }else if(dformat_==dlxnet::TensorProto::HWN4C4){
                     // by default, shape_ = (N_out, N_in, h, w)
                     // image (H*W, N4*C4*4, 4)
-                    image_height = shape_[2]*shape_[3];
-                    image_width = UP_DIV(shape_[0], 4)*UP_DIV(shape_[1], 4)*4;
+                    image_height = width()*height();
+                    image_width = UP_DIV(num(), 4)*UP_DIV(channel(), 4)*4;
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }

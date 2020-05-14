@@ -3,7 +3,17 @@
 
 
 namespace opengl{
-    Tensor::~Tensor(){}
+    Tensor::~Tensor(){
+        if(mem_type()==HOST_MEMORY){
+            // host memory
+            CHECK_NOTNULL(host_);
+            CHECK_EQ(dtype(), DT_FLOAT);
+            delete reinterpret_cast<float*>(host_);
+        }else{
+            // device memory
+            delete reinterpret_cast<Texture*>(device_);
+        }
+    }
 
     template<>
         Tensor::Tensor(DataType dtype, IntList shape, float* data, DataFormat dformat)

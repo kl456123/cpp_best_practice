@@ -84,34 +84,6 @@ int main(int argc, char** argv){
         const int output_height = output_shape[1];
         const int output_channels = output_shape[3];
 
-        // Tensor *cpu_output_tensor  = Tensor::Empty(Tensor::DT_FLOAT, output_shape);
-        // auto cpu_output_data = AllocateHostMemory(output_shape, false);
-        // const float* cpu_filter_data = ogl_filter_data;
-        // const float* cpu_bias_data = ogl_bias_data;
-        // Conv2DCPU(cpu_input_data, cpu_filter_data, cpu_bias_data, cpu_output_data,
-        // kernel_size, stride, padding, input_width, input_height,
-        // output_width, output_height, input_channels, output_channels, dilation, groups);
-        // check input
-        // for(int i=0;i<input_num_elements;++i){
-        // CHECK_EQ(cpu_input_data[i], ogl_input_data[i])
-        // <<"Error When index: "<< i;
-        // }
-
-        // check filter
-        // for(int i=0;i<filter_num_elements;++i){
-        // CHECK_EQ(cpu_filter_data[i], ogl_filter_data[i])
-        // <<"Error When index: "<< i;
-        // }
-        // const float precision = 1e-7; // failed when mediump
-
-        // check the result
-        // for(int i=0;i<output_num_elements;++i){
-        // float actual_value = ogl_output_data[i];
-        // float expect_value = cpu_output_data[i];
-        // CHECK_LT(std::fabs(actual_value- expect_value), precision)<<"Error When index: "<< i
-        // <<" Actualy Value: "<<actual_value<<" Extect Value: "<<expect_value;
-        // }
-
         // print output
         for(int i=0; i<std::min(output_num_elements, 100); ++i){
             LOG(INFO)<<ogl_output_data[i];

@@ -77,7 +77,7 @@ namespace opengl{
         }
     }//namespace
 
-    TEST(Conv2d, Conv2dAdd){
+    TEST(Conv2dTest, Conv2dAdd){
         InitOGLContext();
 
         auto session = InitSession();
