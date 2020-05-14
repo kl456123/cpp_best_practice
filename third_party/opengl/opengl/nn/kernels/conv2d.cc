@@ -60,13 +60,13 @@ namespace opengl{
 
 
         program_->Activate();
-        auto input_shape = input_image->shape();
+        auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
 
-        program_->set_vec3i("input_shape", input_shape[1],
-                input_shape[2], input_shape[3]);
-        program_->set_vec3i("output_shape", output_shape[1],
-                output_shape[2], output_shape[3]);
+        program_->set_vec3i("input_shape", inputs[0]->height(),
+                inputs[0]->width(), inputs[0]->channel());
+        program_->set_vec3i("output_shape", outputs[0]->height(),
+                outputs[0]->width(), outputs[0]->channel());
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);

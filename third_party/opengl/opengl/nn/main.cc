@@ -110,7 +110,7 @@ int main(int argc, char** argv){
 
     // some params
     std::string model_path = "./demo.dlx";
-    const int num_iters = 1000;
+    const int num_iters = 10;
     const float precision = 1e-6;
 
     // prepare inputs and outputs
@@ -152,9 +152,9 @@ int main(int argc, char** argv){
         auto cpu_output_data = AllocateHostMemory(output_shape, false);
         const float* cpu_filter_data = ogl_filter_data;
         const float* cpu_bias_data = ogl_bias_data;
-        Conv2DCPU(cpu_input_data, cpu_filter_data, cpu_bias_data, cpu_output_data,
-                kernel_size, stride, padding, input_width, input_height,
-                output_width, output_height, input_channels, output_channels, dilation, groups);
+        // Conv2DCPU(cpu_input_data, cpu_filter_data, cpu_bias_data, cpu_output_data,
+                // kernel_size, stride, padding, input_width, input_height,
+                // output_width, output_height, input_channels, output_channels, dilation, groups);
         // check input
         // for(int i=0;i<input_num_elements;++i){
         // CHECK_EQ(cpu_input_data[i], ogl_input_data[i])
@@ -169,12 +169,12 @@ int main(int argc, char** argv){
         // const float precision = 1e-7; // failed when mediump
 
         // check the result
-        for(int i=0;i<output_num_elements;++i){
-            float actual_value = ogl_output_data[i];
-            float expect_value = cpu_output_data[i];
-            CHECK_LT(std::fabs(actual_value- expect_value), precision)<<"Error When index: "<< i
-                <<" Actualy Value: "<<actual_value<<" Extect Value: "<<expect_value;
-        }
+        // for(int i=0;i<output_num_elements;++i){
+            // float actual_value = ogl_output_data[i];
+            // float expect_value = cpu_output_data[i];
+            // CHECK_LT(std::fabs(actual_value- expect_value), precision)<<"Error When index: "<< i
+                // <<" Actualy Value: "<<actual_value<<" Extect Value: "<<expect_value;
+        // }
 
         // print output
         for(int i=0; i<std::min(output_num_elements, 100); ++i){
