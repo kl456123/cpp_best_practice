@@ -7,17 +7,7 @@
 
 
 
-// no comma
-// DEFINE_OP_CONVERTER(ConvOpConverter)
-
-
-class ConvOpConverter: public OpConverter{
-    public:
-        ConvOpConverter(){}
-        virtual ~ConvOpConverter(){}
-        virtual void Run(dlxnet::NodeProto* dst_node, const void* src_node)override;
-        virtual void SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor_index);
-};
+DECLARE_OP_CONVERTER(Conv);
 
 void ConvOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor_index){
     // only filter and bias can be set

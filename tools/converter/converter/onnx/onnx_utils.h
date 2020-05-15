@@ -10,5 +10,8 @@
 void ParseAttrValueToString(const onnx::AttributeProto&,
         std::string* pieces);
 
+typedef google::protobuf::RepeatedPtrField<onnx::AttributeProto> AttributeProtoList;
+void ParseAttrListToString(const AttributeProtoList& attr_list, std::string* pieces);
+
 
 #endif
