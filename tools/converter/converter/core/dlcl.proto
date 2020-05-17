@@ -112,6 +112,9 @@ message AvePoolAttribute{
 }
 
 message GemmAttribute{
+    float alpha=1;
+    float beta=2;
+    int32 transB=3;
 }
 
 message Attribute{
