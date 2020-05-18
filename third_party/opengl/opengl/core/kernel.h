@@ -35,6 +35,20 @@ namespace opengl{
              */
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs)=0;
+
+            // some accessors
+            void set_kernel_name(std::string name){
+                kernel_name_ = name;
+            }
+            void set_kernel_type(std::string name){
+                kernel_type_ = name;
+            }
+            std::string kernel_name()const{
+                return kernel_name_;
+            }
+            std::string kernel_type()const{
+                return kernel_type_;
+            }
         protected:
             // attach output tensor to the target(fbo)
             // used in compute function of subclass
@@ -65,6 +79,9 @@ namespace opengl{
 
             // make it can fill input and output tensors
             friend class FBOSession;
+
+            std::string kernel_name_;
+            std::string kernel_type_;
     };
 }//namespace opengl
 

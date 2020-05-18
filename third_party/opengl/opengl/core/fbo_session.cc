@@ -65,6 +65,8 @@ namespace opengl{
             }
             // setup program for each kernel here
             kernel->SetupProgram(vertex_shader_);
+            kernel->set_kernel_name(node.name());
+            kernel->set_kernel_type(node.type());
 
             kernel->SetupAttr(node.attr());
             // fill inputs and outputs

@@ -20,6 +20,7 @@ namespace opengl{
         // set value from tensor_
         // for now just copy host memory data to device
         CHECK(inputs.size()==0)<<"Input should be empty in ConstKernel";
+        DLOG(INFO)<<"Load Weights From CPU in Const Kernel: "<<kernel_name_;
         context_->CopyCPUTensorToDevice(tensor_, outputs[0]);
     }
 

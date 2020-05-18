@@ -46,12 +46,10 @@ namespace opengl{
     }
 
 
-    Conv2DKernel::~Conv2DKernel(){
-        if(program_!=nullptr){delete program_;}
-    }
+    Conv2DKernel::~Conv2DKernel(){}
 
     void Conv2DKernel::Compute(TensorList& inputs, TensorList& outputs){
-        OPENGL_CALL(glUseProgram(program_->program_id()));
+        program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
         auto input_filter = inputs[1]->device<Texture>();
         auto input_bias = inputs[2]->device<Texture>();
@@ -59,7 +57,6 @@ namespace opengl{
         SetVertexShader();
 
 
-        program_->Activate();
         auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
 
@@ -70,7 +67,6 @@ namespace opengl{
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);
-        OPENGL_CHECK_ERROR;
         // input
         {
             program_->set_image2D("input_image", input_image->id(),  0);

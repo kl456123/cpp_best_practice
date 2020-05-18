@@ -18,9 +18,7 @@ namespace opengl{
         }
 
 
-    BinaryKernel::~BinaryKernel(){
-        if(program_!=nullptr){delete program_;}
-    }
+    BinaryKernel::~BinaryKernel(){}
 
     void BinaryKernel::Compute(TensorList& inputs, TensorList& outputs){
         OPENGL_CALL(glUseProgram(program_->program_id()));

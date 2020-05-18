@@ -13,7 +13,9 @@ namespace opengl{
     Kernel::Kernel(Context* context)
         :context_(context){}
 
-    Kernel::~Kernel(){}
+    Kernel::~Kernel(){
+        if(program_!=nullptr){delete program_;}
+    }
 
     void Kernel::SetupProgram(GLuint vertex_shader){
         if(kernel_fname_.empty()){

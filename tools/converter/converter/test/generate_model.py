@@ -8,11 +8,13 @@ class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
         self.conv2d1 = torch.nn.Conv2d(3, 1, kernel_size=3, stride=1, padding=1)
-        self.conv2d2 = torch.nn.Conv2d(1, 1, kernel_size=3, stride=1, padding=1)
+        self.batchnorm = torch.nn.BatchNorm2d(1)
+        self.relu = torch.nn.ReLU()
 
     def forward(self, x):
         x = self.conv2d1(x)
-        x = self.conv2d2(x)
+        x = self.batchnorm(x)
+        x = self.relu(x)
         return x
 
 
@@ -24,7 +26,8 @@ def generate_onnx(saved_path):
     """
     # build graph first
     inputs = torch.ones(1, 3, 224, 224)
-    # model = Model()
+    model = Model()
+    # res = model(inputs)
     model = resnet.resnet50()
 
     input_names = ['input']
@@ -36,7 +39,7 @@ def generate_onnx(saved_path):
         verbose=True,
         output_names=output_names,
         input_names=input_names)
-    print(model(inputs).shape)
+    # print(model(inputs).shape)
 
 
 if __name__ == '__main__':
