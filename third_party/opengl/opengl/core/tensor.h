@@ -189,8 +189,15 @@ namespace opengl{
                 return shape_[0];
             }
 
+            void CheckShape(const TensorShape& shape){
+                for(int i=0;i<shape.dims_size();++i){
+                    CHECK_GT(shape[i], 0)<<"shape axis "<<i<<" is zero";
+                }
+            }
+
             void AmendShape(){
                 // make sure the length of shape equals to 4
+                CheckShape(shape_);
                 int dims_size = shape_.dims_size();
                 if(dims_size<4){
                     for(int i=0;i<4-dims_size;++i){
@@ -250,12 +257,15 @@ namespace opengl{
                     image_width = UP_DIV(channel(), 4) * width();
                 }else if(dformat_==dlxnet::TensorProto::HWN4C4){
                     // by default, shape_ = (N_out, N_in, h, w)
-                    // image (H*W, N4*C4*4, 4)
-                    image_height = width()*height();
-                    image_width = UP_DIV(num(), 4)*UP_DIV(channel(), 4)*4;
+                    // image (H*W*N4, C4*4, 4), merge N4 to height due to
+                    // spatial dim is small in most common cases for filter tensor
+                    image_height = width()*height()*UP_DIV(num(), 4);
+                    image_width = UP_DIV(channel(), 4)*4;
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }
+                CHECK_GT(image_width, 0);
+                CHECK_GT(image_height, 0);
                 size_ = image_height*image_width*4*sizeof(float);
                 device_ = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
             }else{

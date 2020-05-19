@@ -24,7 +24,6 @@ void GemmOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor,
         dlcl_tensor->add_dims(1);
 
         // set format
-        dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
         dlcl_tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
     }else{
         // 2. fc.bias(N_out)
@@ -32,11 +31,14 @@ void GemmOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor,
         const int n_out = dlcl_tensor->dims(0);
 
         dlcl_tensor->clear_dims();
-        dlcl_tensor->dims(1);
-        dlcl_tensor->dims(n_out);
-        dlcl_tensor->dims(1);
-        dlcl_tensor->dims(1);
+        dlcl_tensor->add_dims(1);
+        dlcl_tensor->add_dims(n_out);
+        dlcl_tensor->add_dims(1);
+        dlcl_tensor->add_dims(1);
+        // set format
+        dlcl_tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
     }
+    dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
 }
 
 void GemmOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){

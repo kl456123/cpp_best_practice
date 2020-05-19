@@ -27,8 +27,8 @@ def generate_onnx(saved_path):
     # build graph first
     inputs = torch.ones(1, 3, 224, 224)
     model = Model()
-    # res = model(inputs)
-    model = resnet.resnet50()
+    res = model(inputs)
+    #  model = resnet.resnet50()
 
     input_names = ['input']
     output_names = ['output']

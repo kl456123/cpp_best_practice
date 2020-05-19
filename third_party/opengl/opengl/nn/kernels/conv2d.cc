@@ -52,7 +52,7 @@ namespace opengl{
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
         auto input_filter = inputs[1]->device<Texture>();
-        auto input_bias = inputs[2]->device<Texture>();
+        bool use_bias = inputs.size()>2;
         SetFrameBuffer(outputs);
         SetVertexShader();
 
@@ -78,8 +78,9 @@ namespace opengl{
             program_->set_image2D("input_filter", input_filter->id(),  1);
             OPENGL_CHECK_ERROR;
         }
-        // bias
-        {
+        if(use_bias){
+            // bias
+            auto input_bias = inputs[2]->device<Texture>();
             program_->set_image2D("input_bias", input_bias->id(),  2);
             OPENGL_CHECK_ERROR;
         }
@@ -93,7 +94,7 @@ namespace opengl{
     void Conv2DKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
         // its order list as input, weights, bias
-        CHECK_EQ(input_shapes.size(), 3);
+        CHECK(input_shapes.size()==3||input_shapes.size()==2);
         output_shapes.clear();
         output_shapes.resize(1);
         for(auto& input_shape:input_shapes){

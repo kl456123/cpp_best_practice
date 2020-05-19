@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "opengl/core/fbo_session.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel.h"
@@ -208,8 +210,35 @@ namespace opengl{
                 input_shapes.emplace_back(input_tensor->shape());
             }
 
+            if(kernel->kernel_name()=="493"){
+                const int tmp = 1+1;
+            }
             // infer output shapes from input shapes
             kernel->InferOutputShape(input_shapes, output_shapes);
+
+            // print input shape and output shape for debug
+            std::stringstream ss;
+            ss<<"In kernel \n type: "<<kernel->kernel_type()
+                <<" name: "<<kernel->kernel_name()<<"\n";
+            for(int j=0;j<input_shapes.size();++j){
+                // for each input shape
+                ss<<"(";
+                for(int k=0;k<input_shapes[j].size();++k){
+                    ss<<input_shapes[j][k]<<" ";
+                }
+                ss<<"), ";
+            }
+            ss<<"->";
+            for(int j=0;j<output_shapes.size();++j){
+                // for each output shape
+                ss<<"(";
+                for(int k=0;k<output_shapes[j].size();++k){
+                    ss<<output_shapes[j][k]<<" ";
+                }
+                ss<<")";
+            }
+            // DLOG(INFO)<<ss.str();
+
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
@@ -234,7 +263,7 @@ namespace opengl{
         for(auto& tensor_name: output_names){
             auto iter = tensor_name_index_.find(tensor_name);
             if(iter==tensor_name_index_.end()){
-                LOG(FATAL)<<"tensor_name: "<<tensor_name<<"Cannot Find";
+                LOG(FATAL)<<"tensor_name: "<<tensor_name<<" Cannot Find";
             }
 
             const int tensor_index = tensor_name_index_[tensor_name];

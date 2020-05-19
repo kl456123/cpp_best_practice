@@ -12,7 +12,7 @@ uniform ivec3 output_shape;
 out vec4 color;
 #define UP_DIV(x, y) (((x)+(y)-1)/(y))
 
-// filter shape: (h*w, out_4*in_4*in4, out4)
+// filter shape: (h*w* out_4, in_4*in4, out4)
 // image shape: (n*h, w*in_4, in4)
 // output shape: (n*h, w*out_4, out4)
 // bias shape: (n*1, 1*out_4, out4)
@@ -51,9 +51,9 @@ void main() {
                 int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
 
                 // get input filter
-                // filter shape: (h*w, out_4*in_4*in4, out4)
-                int filter_pos_y = j*kernel_size+i;
-                int filter_pos_x = (out_4_ind*UP_DIV(input_shape.z, 4)+in_4_ind)*4;
+                // filter shape: (h*w*out_4, in_4*in4, out4)
+                int filter_pos_y = (j*kernel_size+i)*UP_DIV(output_shape.z, 4)+out_4_ind;
+                int filter_pos_x = in_4_ind*4;
                 vec4 k0 = texelFetch(input_filter, ivec2(filter_pos_x,   filter_pos_y), 0);
                 vec4 k1 = texelFetch(input_filter, ivec2(filter_pos_x+1, filter_pos_y), 0);
                 vec4 k2 = texelFetch(input_filter, ivec2(filter_pos_x+2, filter_pos_y), 0);

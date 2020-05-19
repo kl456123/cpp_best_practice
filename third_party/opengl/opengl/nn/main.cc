@@ -21,6 +21,9 @@ using opengl::FBOSession;
 
 
 int main(int argc, char** argv){
+    // Initialize Google's logging library.
+    google::InitGoogleLogging(argv[0]);
+
     // glut_init(argc, argv);
     ::opengl::glfw_init();
     ::opengl::glew_init();
@@ -30,8 +33,8 @@ int main(int argc, char** argv){
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
     // conv2d params
-    const int input_width = 3;
-    const int input_height = 3;
+    const int input_width = 224;
+    const int input_height = 224;
     const int input_channels = 3;
     const int num_inputs = 1;
     const int kernel_size = 3;
@@ -48,8 +51,8 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::NamedTensorList inputs;
-    ::opengl::TensorNameList output_names({"output", "conv2d1.weight", "conv2d1.bias"});
-    ::opengl::StringList dformats({"NHWC", "NCHW", "NHWC"});
+    ::opengl::TensorNameList output_names({"output"});
+    ::opengl::StringList dformats({"NHWC"});
     std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
 
     inputs.resize(1);
@@ -72,9 +75,9 @@ int main(int argc, char** argv){
         session->GetOutputs(output_names, dformats, &outputs_cpu);
         const float* ogl_output_data = outputs_cpu[0]->host<float>();
         const int output_num_elements = outputs_cpu[0]->num_elements();
-        const float* ogl_filter_data = outputs_cpu[1]->host<float>();
-        const int filter_num_elements = outputs_cpu[1]->num_elements();
-        const float* ogl_bias_data = outputs_cpu[2]->host<float>();
+        // const float* ogl_filter_data = outputs_cpu[1]->host<float>();
+        // const int filter_num_elements = outputs_cpu[1]->num_elements();
+        // const float* ogl_bias_data = outputs_cpu[2]->host<float>();
         // const float* ogl_input_data = outputs_cpu[3]->host<float>();
         // const int input_num_elements = outputs_cpu[3]->num_elements();
 
