@@ -44,11 +44,21 @@ namespace opengl{
         void PoolKernel<pool_type>::Compute(TensorList& inputs, TensorList& outputs){
             program_->Activate();
             auto input_image = inputs[0]->device<Texture>();
-
             SetFrameBuffer(outputs);
             SetVertexShader();
+
+
+            auto input_shape = inputs[0]->shape();
+            auto output_shape = outputs[0]->shape();
+
+            program_->set_vec3i("input_shape", inputs[0]->height(),
+                    inputs[0]->width(), inputs[0]->channel());
             program_->set_vec3i("output_shape", outputs[0]->height(),
                     outputs[0]->width(), outputs[0]->channel());
+            program_->set_int("padding", padding_);
+            program_->set_int("kernel_size", kernel_size_);
+            program_->set_int("stride_size", stride_);
+            program_->set_int("pool_type", pool_type_);
             // input
             {
                 program_->set_image2D("input_image", input_image->id(),  0);
@@ -68,6 +78,12 @@ namespace opengl{
             auto& image_shape = input_shapes[0];
             if(pool_type_==GlobalAveragePool){
                 output_shapes[0]={image_shape[0],1, 1, image_shape[3]};
+                // set pool params according to the input shape
+                stride_=1;
+                // spatial dims
+                CHECK_EQ(image_shape[1], image_shape[2]);
+                kernel_size_=image_shape[1];
+                padding_=0;
             }else{
                 // compute output shape like conv2d
                 const int output_height = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;

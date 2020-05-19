@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import os
 import torch
 from torchvision.models import resnet
 
@@ -10,11 +11,18 @@ class Model(torch.nn.Module):
         self.conv2d1 = torch.nn.Conv2d(3, 1, kernel_size=3, stride=1, padding=1)
         self.batchnorm = torch.nn.BatchNorm2d(1)
         self.relu = torch.nn.ReLU()
+        self.maxpool = torch.nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
+        self.avgpool = torch.nn.AdaptiveAvgPool2d((1, 1))
+        self.flatten = torch.nn.Flatten(1)
+        # self.fc = linear();
 
     def forward(self, x):
-        x = self.conv2d1(x)
-        x = self.batchnorm(x)
-        x = self.relu(x)
+        # x = self.conv2d1(x)
+        # x = self.batchnorm(x)
+        #  x = self.relu(x)
+        # x = self.maxpool(x)
+        #  x = self.maxpool(x) + x
+        x = self.flatten(x)
         return x
 
 
@@ -26,9 +34,28 @@ def generate_onnx(saved_path):
     """
     # build graph first
     inputs = torch.ones(1, 3, 224, 224)
-    model = Model()
+
+    # model construction
+    #  model = Model()
+    model = resnet.resnet50()
+    # inferece works
+    model.eval()
+    pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])
+
+    # load weights
+    if os.path.exists(pth_path):
+        print("load weights from {}".format(pth_path))
+        try:
+            model.load_state_dict(torch.load(pth_path))
+        except RuntimeError:
+            print('load weights failed. the model is not initialized')
+
+    # inference
     res = model(inputs)
-    #  model = resnet.resnet50()
+    print(res)
+
+    # save in any time
+    torch.save(model.state_dict(), pth_path)
 
     input_names = ['input']
     output_names = ['output']

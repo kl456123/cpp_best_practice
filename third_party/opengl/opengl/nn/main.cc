@@ -45,7 +45,7 @@ int main(int argc, char** argv){
 
     // some params
     std::string model_path = "./demo.dlx";
-    const int num_iters = 10;
+    const int num_iters = 1;
     const float precision = 1e-6;
 
     // prepare inputs and outputs
@@ -65,7 +65,7 @@ int main(int argc, char** argv){
         // auto cpu_input_data =  AllocateHostMemory(image_shape, true);
         // init graph according to inputs
         inputs[0].first = "input";
-        inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape);
+        inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape);
         session->Setup(inputs);
 
         // do computation for the graph

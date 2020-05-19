@@ -99,7 +99,9 @@ namespace opengl{
     /*static*/ Tensor* Tensor::Ones(DataType dtype, IntList shape,
             DataFormat dformat){
         Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
-        memset(tensor->host(), 1, sizeof(float)*tensor->num_elements());
+        for(int i=0;i<tensor->num_elements();++i){
+            tensor->host<float>()[i] = 1.0;
+        }
         return tensor;
     }
 }//namespace opengl

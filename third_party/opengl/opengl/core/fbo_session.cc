@@ -237,7 +237,7 @@ namespace opengl{
                 }
                 ss<<")";
             }
-            // DLOG(INFO)<<ss.str();
+            DLOG(INFO)<<ss.str();
 
 
             // allocate memory for each output tensors according to their shapes

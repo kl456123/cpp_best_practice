@@ -21,36 +21,33 @@ namespace opengl{
     BinaryKernel::~BinaryKernel(){}
 
     void BinaryKernel::Compute(TensorList& inputs, TensorList& outputs){
-        OPENGL_CALL(glUseProgram(program_->program_id()));
-        auto texture1 = inputs[0]->device<Texture>();
-        auto texture2 = inputs[1]->device<Texture>();
+        program_->Activate();
+        auto input0 = inputs[0]->device<Texture>();
+        auto input1 = inputs[1]->device<Texture>();
         SetFrameBuffer(outputs);
         SetVertexShader();
 
 
-        program_->Activate();
-        int tex_w = texture1->shape()[0];
-        int tex_h = texture1->shape()[1];
+        auto input_shape = inputs[0]->shape();
+        auto output_shape = outputs[0]->shape();
 
-        program_->set_vec2i("image_shape", tex_w, tex_h);
-        OPENGL_CHECK_ERROR;
-        // input0
+        program_->set_vec3i("input_shape", inputs[0]->height(),
+                inputs[0]->width(), inputs[0]->channel());
+        // input
         {
-            program_->set_image2D("input0", texture1->id(),  0);
+            program_->set_image2D("input0", input0->id(),  0);
             OPENGL_CHECK_ERROR;
         }
 
-        // input1
+        // filter
         {
-            program_->set_image2D("input1", texture2->id(),  1);
+            program_->set_image2D("input1", input1->id(),  1);
             OPENGL_CHECK_ERROR;
         }
 
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
         glFinish();
-        // glDispatchCompute((GLuint)tex_w, (GLuint)tex_h, 1);
-
     }
 
     void BinaryKernel::InferOutputShape(TensorShapeList& input_shapes,

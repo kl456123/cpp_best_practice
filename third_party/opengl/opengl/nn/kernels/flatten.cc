@@ -48,13 +48,20 @@ namespace opengl{
         output_shapes.resize(1);
         CHECK_EQ(input_shapes[0].size(), 4);
         CHECK_EQ(output_shapes[0].size(), 0);
+        const int start_dim = axis_;
 
         int num_elements=1;
-        for(int i=0;i<input_shapes[0].size();++i){
+        for(int i=start_dim;i<input_shapes[0].size();++i){
             num_elements*=input_shapes[0][i];
-            output_shapes[0].emplace_back(1);
         }
-        output_shapes[0][3]=num_elements;
+        for(int i=0;i<start_dim;++i){
+            output_shapes[0].emplace_back(input_shapes[0][i]);
+        }
+        output_shapes[0].emplace_back(num_elements);
+        const int output_dim_size = output_shapes[0].size();
+        for(int i=0;i<4-output_dim_size;++i){
+            output_shapes[0].insert(output_shapes[0].begin()+1, 1);
+        }
     }
 
     FlattenKernel::~FlattenKernel(){}

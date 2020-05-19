@@ -21,6 +21,11 @@ namespace opengl{
             float alpha_;
             float beta_;
             int transB_;
+
+            // like conv2d
+            int padding_;
+            int stride_;
+            int kernel_size_;
     };
 }//namespace opengl
 
