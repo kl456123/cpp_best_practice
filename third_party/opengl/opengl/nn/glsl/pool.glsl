@@ -26,6 +26,7 @@ void main() {
 
     // init color value
     bool first = true;
+    color = vec4(0.0);
 
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {

@@ -43,6 +43,7 @@ namespace opengl{
 
         const int width = outputs[0]->device<Texture>()->shape()[0];
         const int height = outputs[0]->device<Texture>()->shape()[1];
+        LOG(INFO)<<"kernel_name: "<<kernel_name_<<", width: "<<width<<", height: "<<height;
         OPENGL_CALL(glViewport(0, 0, width, height));
 
 

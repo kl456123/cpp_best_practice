@@ -79,11 +79,6 @@ namespace opengl{
         output_shapes.resize(1);
 
         output_shapes[0] = input_shapes[0];
-        // input, running_mean, running_var, weight, bias
-        // const int channel = input_shapes[0];
-        // for(int i=1;i<input_shapes.size();++i){
-            // CHECK_EQ(input_shapes[i]->channel(), channel);
-        // }
     }
 
     BatchNormKernel::~BatchNormKernel(){}

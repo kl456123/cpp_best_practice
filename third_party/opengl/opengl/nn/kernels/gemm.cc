@@ -46,6 +46,7 @@ namespace opengl{
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);
+        program_->set_int("use_bias", int(use_bias));
         // input
         {
             program_->set_image2D("input_image", input_image->id(),  0);

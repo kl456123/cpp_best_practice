@@ -5,6 +5,8 @@ uniform sampler2D input_bias;
 uniform int kernel_size;
 uniform int stride_size;
 uniform int padding;
+// use int type to represent bool type
+uniform int use_bias;
 
 // height, width and channel of input and output
 uniform ivec3 input_shape;
@@ -31,8 +33,11 @@ void main() {
     int bias_pos_x = out_4_ind;
     int bias_pos_y = batch_ind;
 
-    color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
-    /* color = vec4(0.0); */
+    if(use_bias==1){
+        color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
+    }else{
+        color = vec4(0.0);
+    }
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i-padding;

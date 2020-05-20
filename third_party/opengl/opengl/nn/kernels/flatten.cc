@@ -27,6 +27,8 @@ namespace opengl{
 
         SetFrameBuffer(outputs);
         SetVertexShader();
+        program_->set_vec3i("input_shape", inputs[0]->height(),
+                inputs[0]->width(), inputs[0]->channel());
         program_->set_vec3i("output_shape", outputs[0]->height(),
                 outputs[0]->width(), outputs[0]->channel());
 

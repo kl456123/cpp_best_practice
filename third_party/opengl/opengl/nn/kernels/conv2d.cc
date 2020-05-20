@@ -67,6 +67,7 @@ namespace opengl{
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);
+        program_->set_int("use_bias", int(use_bias));
         // input
         {
             program_->set_image2D("input_image", input_image->id(),  0);
@@ -113,8 +114,8 @@ namespace opengl{
         // channel should be the same with input image
         CHECK_EQ(filter_shape[1], image_shape[3]);
 
-        const int output_height = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;
-        const int output_width = (image_shape[2]-kernel_size_+2*padding_+1)/stride_;
+        const int output_height = (image_shape[1]-kernel_size_+2*padding_)/stride_+1;
+        const int output_width = (image_shape[2]-kernel_size_+2*padding_)/stride_+1;
         output_shapes[0] = {image_shape[0], output_height, output_width, filter_shape[0]};
     }
 

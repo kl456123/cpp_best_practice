@@ -22,12 +22,11 @@ void main() {
     // compose output index use output shape
     int offset_base = ((batch_ind*output_shape.x+output_index_y)*output_shape.y+output_index_x)*
         output_shape.z+output_channel_index;
-    color = vec4(0.0);
-    /* color = texelFetch(input_image, pos, 0); */
     // input index equals to output index
     for(int i=0;i<4;++i){
         int offset0 = offset_base+i;
         if(offset0>=total_size){
+            // ignore blank memory location
             continue;
         }
 
@@ -45,15 +44,31 @@ void main() {
         int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+input_channel_index/4;
         int input_pos_y = input_batch_ind*input_shape.x+input_index_y;
         int input_pos_z = input_channel_index%4;
+        float value;
+
+        // pixel[input_pos_z]
         if(input_pos_z==0){
-            color.x = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).r;
-        }else if(input_pos_z==1){
-            color.y = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).g;
-        }else if(input_pos_z==2){
-            color.z = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).b;
-        }else{
-            color.w = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).a;
+            value = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).r;
+        }
+        else if(input_pos_z==1){
+            value = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).g;
+        }
+        else if(input_pos_z==2){
+            value = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).b;
+        }
+        else{
+            value = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).a;
         }
 
+        // like color[i]
+        if(i==0){
+            color.x = value;
+        }else if(i==1){
+            color.y = value;
+        }else if(i==2){
+            color.z = value;
+        }else{
+            color.w = value;
+        }
     }
 }

@@ -33,15 +33,10 @@ int main(int argc, char** argv){
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
     // conv2d params
-    const int input_width = 224;
-    const int input_height = 224;
+    const int input_width = 3;
+    const int input_height = 3;
     const int input_channels = 3;
     const int num_inputs = 1;
-    const int kernel_size = 3;
-    const int stride = 1;
-    const int padding = 1;
-    const int groups = 1;
-    const int dilation = 1;
 
     // some params
     std::string model_path = "./demo.dlx";
@@ -73,24 +68,9 @@ int main(int argc, char** argv){
 
         // get cpu outputs from device
         session->GetOutputs(output_names, dformats, &outputs_cpu);
-        const float* ogl_output_data = outputs_cpu[0]->host<float>();
-        const int output_num_elements = outputs_cpu[0]->num_elements();
-        // const float* ogl_filter_data = outputs_cpu[1]->host<float>();
-        // const int filter_num_elements = outputs_cpu[1]->num_elements();
-        // const float* ogl_bias_data = outputs_cpu[2]->host<float>();
-        // const float* ogl_input_data = outputs_cpu[3]->host<float>();
-        // const int input_num_elements = outputs_cpu[3]->num_elements();
-
-        // nhwc
-        auto output_shape = outputs_cpu[0]->shape();
-        const int output_width = output_shape[2];
-        const int output_height = output_shape[1];
-        const int output_channels = output_shape[3];
 
         // print output
-        for(int i=0; i<std::min(output_num_elements, 100); ++i){
-            LOG(INFO)<<ogl_output_data[i];
-        }
+        LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
 
     }
 

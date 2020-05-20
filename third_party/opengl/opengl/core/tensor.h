@@ -206,6 +206,9 @@ namespace opengl{
                 }
             }
 
+            std::string DebugString()const;
+            std::string ShortDebugString()const;
+
         private:
             // inner data pointer
             void* device_=nullptr;

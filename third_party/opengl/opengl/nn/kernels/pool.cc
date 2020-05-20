@@ -86,8 +86,8 @@ namespace opengl{
                 padding_=0;
             }else{
                 // compute output shape like conv2d
-                const int output_height = (image_shape[1]-kernel_size_+2*padding_+1)/stride_;
-                const int output_width = (image_shape[2]-kernel_size_+2*padding_+1)/stride_;
+                const int output_height = (image_shape[1]-kernel_size_+2*padding_)/stride_+1;
+                const int output_width = (image_shape[2]-kernel_size_+2*padding_)/stride_+1;
                 output_shapes[0] = {image_shape[0], output_height, output_width, image_shape[3]};
             }
 

@@ -1,4 +1,5 @@
 #include <random>
+#include <cmath>
 #include "opengl/core/tensor.h"
 
 
@@ -103,5 +104,46 @@ namespace opengl{
             tensor->host<float>()[i] = 1.0;
         }
         return tensor;
+    }
+
+    std::string Tensor::DebugString()const{
+        CHECK(is_host());
+        std::stringstream ss;
+        ss<<"\n";
+        auto&output_shape = shape();
+        for(int r=0;r<output_shape[0];++r){
+            for(int k=0;k<output_shape[1];++k){
+                for(int j=0;j<output_shape[2];++j){
+                    for(int i=0; i<output_shape[3]; ++i){
+                        const int offset = ((r*output_shape[1]+k)*output_shape[2]+j)*
+                            output_shape[3]+i;
+                        ss<<host<float>()[offset]<<", ";
+                        if(i&&i%5==0){
+                            ss<<"\n";
+                        }
+                    }
+                    ss<<"\n";
+                }
+                ss<<"\n";
+            }
+            ss<<"\n";
+        }
+        return ss.str();
+    }
+
+    std::string Tensor::ShortDebugString()const{
+        CHECK(is_host());
+        std::stringstream ss;
+        const size_t max_num_elements = 100;
+        ss<<"\n";
+        const int num = std::min(max_num_elements, num_elements());
+        for(int i=0;i<num;++i){
+            ss<< host<float>()[i] <<", ";
+            if(num-i>10&&i>10){
+                ss<<"..., ";
+                i = num-10;
+            }
+        }
+        return ss.str();
     }
 }//namespace opengl
