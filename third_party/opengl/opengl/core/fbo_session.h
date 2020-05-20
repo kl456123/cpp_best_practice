@@ -23,7 +23,9 @@ namespace opengl{
             void Run();
 
             // load graph from literal in memory
-            void LoadGraph(StringList kernel_names);
+            void LoadGraph(const ::dlxnet::ModelProto& model_proto);
+
+            void LoadGraph(const ::dlxnet::ModelProto&& model_proto);
 
             // load graph from protobuf binary in disk
             void LoadGraph(std::string model_path);
@@ -36,10 +38,6 @@ namespace opengl{
         private:
             void CreateVertexShader();
             GLuint CreateShader(GLenum shader_kind, const char *shader_src);
-
-            // attach output tensor to the target(fbo)
-            // used in compute function of subclass
-            void SetupFrameBuffer();
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
 

@@ -11,7 +11,13 @@
 #include <google/protobuf/text_format.h>
 
 namespace opengl{
+    // read functions
     bool ReadProtoFromBinary(const char* file_path, google::protobuf::Message* message);
+    void ReadProtoFromText(const std::string& fn, google::protobuf::Message* message);
+
+    // write functions
+    void WriteProtoToText(const std::string& fn, google::protobuf::Message& message);
+    void WriteProtoToBinary(const std::string& fn, google::protobuf::Message& message);
 }//namespace opengl
 
 

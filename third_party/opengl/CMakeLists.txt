@@ -31,6 +31,7 @@ set(CORE_SRC_NAMES
     texture.cc
     session.cc
     fbo_session.cc
+    scope.cc
     kernel.cc
     kernel_registry.cc
     init.cc

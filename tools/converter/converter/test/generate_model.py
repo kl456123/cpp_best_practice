@@ -8,8 +8,8 @@ from torchvision.models import resnet
 class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        in_channels = 3
-        out_channels = 3
+        in_channels = 10
+        out_channels = 5
         self.conv2d1 = torch.nn.Conv2d(
             in_channels, out_channels, kernel_size=3, stride=1, padding=1)
         self.batchnorm = torch.nn.BatchNorm2d(out_channels)
@@ -19,7 +19,7 @@ class Model(torch.nn.Module):
         self.flatten = torch.nn.Flatten(1)
         self.model = resnet.resnet50()
         # self.model.eval()
-        # self.fc = linear();
+        self.fc = torch.nn.Linear(10, 5);
 
     def forward(self, x):
         # x = self.model.conv1(x)
@@ -34,9 +34,10 @@ class Model(torch.nn.Module):
         # x = torch.flatten(x, 1)
         # x = self.model.fc(x)
         x = self.conv2d1(x)
-        x = self.batchnorm(x)
-        x = self.avgpool(x)
+        # x = self.batchnorm(x)
+        # x = self.avgpool(x)
         # x = self.relu(x)
+        # x = self.fc(x)
         # x = self.maxpool(x)
         # x = self.maxpool(x) + x
         # x = self.flatten(x)
@@ -51,7 +52,7 @@ def generate_onnx(saved_path):
     """
     # build graph first
     size = 3
-    inputs = torch.ones(1, 3, size, size)
+    inputs = torch.ones(1, 10, 3, 3)
 
     # model construction
     model = Model()

@@ -5,8 +5,8 @@
 
 GTEST_API_ int main(int argc, char** argv) {
     // disable log during test
-    FLAGS_logtostderr = true;
-    FLAGS_minloglevel = 5;
+    // FLAGS_logtostderr = true;
+    // FLAGS_minloglevel = 5;
     google::InitGoogleLogging(argv[0]);
 
     testing::InitGoogleTest(&argc, argv);

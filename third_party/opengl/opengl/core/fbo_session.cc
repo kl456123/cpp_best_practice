@@ -38,13 +38,25 @@ namespace opengl{
         glDeleteFramebuffers(1, &frame_buffer_);
     }
 
-    void FBOSession::SetupFrameBuffer(){
+    void FBOSession::LoadGraph(const std::string file_path){
+        auto model_proto = std::unique_ptr<::dlxnet::ModelProto>(
+                new ::dlxnet::ModelProto);
+        // load graph from disk
+        CHECK(ReadProtoFromBinary(file_path.c_str(), model_proto.get()))
+            <<"Load Graph "<<file_path <<"Failed";
+        LoadGraph(*model_proto);
     }
 
-    void FBOSession::LoadGraph(const std::string file_path){
-        // load graph from disk
-        CHECK(ReadProtoFromBinary(file_path.c_str(), model_))
-            <<"Load Graph "<<file_path <<"Failed";
+    void FBOSession::LoadGraph(const ::dlxnet::ModelProto&& model_proto){
+        LoadGraph(model_proto);
+    }
+
+
+    void FBOSession::LoadGraph(const ::dlxnet::ModelProto& model_proto){
+        *model_=model_proto;
+
+        // LOG(INFO)<<"Write proto to Text";
+        // WriteProtoToText("./demo.pbtxt", *model_);
 
         dlxnet::GraphProto graph = model_->graph();
         // create kernel and setup input and output for each node
@@ -153,6 +165,8 @@ namespace opengl{
 
             model_ = new dlxnet::ModelProto;
 
+            // set up global framebuffer, all nodes are only needed to
+            // attach output texture to the global frame buffer
             // only need to create it once
             OPENGL_CALL(glGenFramebuffers(1, &frame_buffer_));
             OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
@@ -177,9 +191,6 @@ namespace opengl{
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
         // for each kernel during computation
-        // set up global framebuffer, all nodes are only needed to
-        // attach output texture to the global frame buffer
-        SetupFrameBuffer();
 
         // allocate memory for input tensor(device_tensor) first
         // TODO(breakpoint) add input-typed kernel
