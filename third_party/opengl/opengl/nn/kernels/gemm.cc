@@ -86,7 +86,7 @@ namespace opengl{
         CHECK_EQ(input_shapes[1][1], input_shapes[0][3]);
         // check out_channels
         // TODO(breakpoint) bias shape is not correct, it should be NHWC instead of NCHW
-        CHECK_EQ(input_shapes[1][0], input_shapes[2][1]);
+        CHECK_EQ(input_shapes[1][0], input_shapes[2][3]);
 
         // Y: (N, 1, 1, C_out)
         output_shapes[0]={input_shapes[0][0], 1, 1, input_shapes[1][0]};

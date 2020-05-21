@@ -59,7 +59,7 @@ void main() {
 
         }
     }
-    if(pool_type==1){
+    if(pool_type!=0){
         // average pool
         color = color/(float(kernel_size*kernel_size));
     }

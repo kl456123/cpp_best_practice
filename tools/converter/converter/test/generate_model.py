@@ -22,18 +22,18 @@ class Model(torch.nn.Module):
         self.fc = torch.nn.Linear(10, 5);
 
     def forward(self, x):
-        # x = self.model.conv1(x)
-        # x = self.model.bn1(x)
-        # x = self.model.relu(x)
-        # x = self.model.maxpool(x)
-        # x = self.model.layer1(x)
-        # x = self.model.layer2(x)
-        # x = self.model.layer3(x)
-        # x = self.model.layer4(x)
-        # x = self.model.avgpool(x)
-        # x = torch.flatten(x, 1)
-        # x = self.model.fc(x)
-        x = self.conv2d1(x)
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
+        x = self.model.maxpool(x)
+        x = self.model.layer1(x)
+        x = self.model.layer2(x)
+        x = self.model.layer3(x)
+        x = self.model.layer4(x)
+        x = self.model.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.model.fc(x)
+        # x = self.conv2d1(x)
         # x = self.batchnorm(x)
         # x = self.avgpool(x)
         # x = self.relu(x)
@@ -52,11 +52,11 @@ def generate_onnx(saved_path):
     """
     # build graph first
     size = 3
-    inputs = torch.ones(1, 10, 3, 3)
+    inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
-    model = Model()
-    # model = resnet.resnet50()
+    # model = Model()
+    model = resnet.resnet50()
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])

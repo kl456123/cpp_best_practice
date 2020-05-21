@@ -221,9 +221,6 @@ namespace opengl{
                 input_shapes.emplace_back(input_tensor->shape());
             }
 
-            if(kernel->kernel_name()=="493"){
-                const int tmp = 1+1;
-            }
             // infer output shapes from input shapes
             kernel->InferOutputShape(input_shapes, output_shapes);
 

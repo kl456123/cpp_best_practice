@@ -23,10 +23,10 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    vec4 mean = texelFetch(input_mean, ivec2(0, out_4_ind), 0);
-    vec4 var = texelFetch(input_var, ivec2(0, out_4_ind), 0);
-    vec4 beta = texelFetch(input_beta, ivec2(0, out_4_ind), 0);
-    vec4 gamma = texelFetch(input_gamma, ivec2(0, out_4_ind), 0);
+    vec4 mean = texelFetch(input_mean, ivec2(out_4_ind, 0), 0);
+    vec4 var = texelFetch(input_var, ivec2(out_4_ind, 0), 0);
+    vec4 beta = texelFetch(input_beta, ivec2(out_4_ind, 0), 0);
+    vec4 gamma = texelFetch(input_gamma, ivec2(out_4_ind, 0), 0);
 
     color = (texelFetch(input_image, pos, 0)-mean)/sqrt(var+eps)*gamma+beta;
 }

@@ -134,9 +134,8 @@ namespace opengl{
     std::string Tensor::ShortDebugString()const{
         CHECK(is_host());
         std::stringstream ss;
-        const size_t max_num_elements = 100;
         ss<<"\n";
-        const int num = std::min(max_num_elements, num_elements());
+        const int num = num_elements();
         for(int i=0;i<num;++i){
             ss<< host<float>()[i] <<", ";
             if(num-i>10&&i>10){

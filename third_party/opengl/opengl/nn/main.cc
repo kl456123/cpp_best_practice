@@ -33,9 +33,9 @@ int main(int argc, char** argv){
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
     // conv2d params
-    const int input_width = 3;
-    const int input_height = 3;
-    const int input_channels = 10;
+    const int input_width = 224;
+    const int input_height = 224;
+    const int input_channels = 3;
     const int num_inputs = 1;
 
     // some params
@@ -46,8 +46,8 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::NamedTensorList inputs;
-    ::opengl::TensorNameList output_names({"output", "conv2d1.weight"});
-    ::opengl::StringList dformats({"NHWC", "NCHW"});
+    ::opengl::TensorNameList output_names({"output"});
+    ::opengl::StringList dformats({"NHWC"});
     std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
 
     inputs.resize(1);
@@ -70,7 +70,7 @@ int main(int argc, char** argv){
         session->GetOutputs(output_names, dformats, &outputs_cpu);
 
         // print output
-        LOG(INFO)<<outputs_cpu[0]->DebugString();
+        LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
         // LOG(INFO)<<outputs_cpu[1]->DebugString();
 
     }
