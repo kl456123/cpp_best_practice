@@ -62,3 +62,17 @@ if(BUILD_FBO)
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
     target_link_libraries(fbo_egl -lGLESv2 -lEGL glog::glog)
 endif()
+
+if(BUILD_NN)
+    # all examples about nn library
+    # classification task
+    add_executable(label_image label_image/main.cc)
+    target_link_libraries(label_image glog::glog ${GL_CORE} ${GL_NN})
+
+    # object detection task
+
+    # segmentation task
+
+    # keypoint task
+
+endif()

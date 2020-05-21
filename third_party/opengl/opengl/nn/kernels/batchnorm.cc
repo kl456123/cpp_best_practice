@@ -76,9 +76,14 @@ namespace opengl{
             TensorShapeList& output_shapes){
         CHECK_EQ(input_shapes.size(), 5);
         output_shapes.clear();
-        output_shapes.resize(1);
+        output_shapes.emplace_back(input_shapes[0]);
+    }
 
-        output_shapes[0] = input_shapes[0];
+    void BatchNormKernel::InferOutputShape(const TensorList& input_tensors,
+            TensorShapeList& output_shapes){
+        CHECK_EQ(input_tensors.size(), 5);
+        output_shapes.clear();
+        output_shapes.emplace_back(input_tensors[0]->shape());
     }
 
     BatchNormKernel::~BatchNormKernel(){}

@@ -92,6 +92,30 @@ namespace opengl{
             }
 
         }
+
+    template<PoolType pool_type>
+        void PoolKernel<pool_type>::InferOutputShape(const TensorList& input_tensors,
+                TensorShapeList& output_shapes){
+            CHECK_EQ(input_tensors.size(), 1);
+            output_shapes.clear();
+            output_shapes.resize(1);
+            if(pool_type_==GlobalAveragePool){
+                output_shapes[0]={input_tensors[0]->num(),1, 1, input_tensors[0]->channel()};
+                // set pool params according to the input shape
+                stride_=1;
+                // spatial dims
+                CHECK_EQ(input_tensors[0]->width(), input_tensors[0]->height());
+                kernel_size_=input_tensors[0]->width();
+                padding_=0;
+            }else{
+                // compute output shape like conv2d
+                const int output_height = (input_tensors[0]->height()-kernel_size_+2*padding_)/stride_+1;
+                const int output_width = (input_tensors[0]->width()-kernel_size_+2*padding_)/stride_+1;
+                output_shapes[0] = {input_tensors[0]->num(), output_height,
+                    output_width, input_tensors[0]->channel()};
+            }
+        }
+
     template<PoolType pool_type>
         PoolKernel<pool_type>::~PoolKernel(){}
 

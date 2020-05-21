@@ -16,8 +16,7 @@ namespace opengl{
         auto& flatten_params = attr.flatten_attr();
         axis_ = flatten_params.axis();
 
-        // single output
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+
     }
 
     void FlattenKernel::Compute(TensorList& inputs, TensorList& outputs){
@@ -45,6 +44,11 @@ namespace opengl{
 
     void FlattenKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
+        // set output dformat first, then we can according
+        // to dformat to infer output shape
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+
+        // single output
         CHECK_EQ(input_shapes.size(), 1);
         output_shapes.clear();
         output_shapes.resize(1);

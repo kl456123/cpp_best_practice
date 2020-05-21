@@ -56,7 +56,7 @@ def generate_onnx(saved_path):
 
     # model construction
     # model = Model()
-    model = resnet.resnet50()
+    model = resnet.resnet152()
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])

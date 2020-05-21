@@ -89,7 +89,31 @@ namespace opengl{
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
         glFinish();
+    }
 
+    void Conv2DKernel::InferOutputShape(const TensorList& input_tensors,
+            TensorShapeList& output_shapes){
+        // its order list as input, weights, bias
+        CHECK(input_tensors.size()==3||input_tensors.size()==2);
+        output_shapes.clear();
+        auto image_tensor = input_tensors[0];
+        auto filter_tensor = input_tensors[1];
+        CHECK_EQ(filter_tensor->height(), kernel_size_);
+        CHECK_EQ(filter_tensor->width(), kernel_size_);
+
+        // channel should be the same with input image
+        CHECK_EQ(filter_tensor->channel(), image_tensor->channel());
+
+        bool use_bias = input_tensors.size()>2;
+        if(use_bias){
+            // check bias shape
+            CHECK_EQ(filter_tensor->num(), input_tensors[2]->channel());
+        }
+
+        const int output_height = (image_tensor->height()-kernel_size_+2*padding_)/stride_+1;
+        const int output_width = (image_tensor->width()-kernel_size_+2*padding_)/stride_+1;
+        output_shapes.emplace_back(std::vector<int>({image_tensor->num(), output_height,
+                    output_width, image_tensor->channel()}));
     }
 
     void Conv2DKernel::InferOutputShape(TensorShapeList& input_shapes,

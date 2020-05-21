@@ -2,6 +2,7 @@
 #include "opengl/core/program.h"
 #include "opengl/core/tensor.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/fbo_session.h"
 
 
 namespace opengl{
@@ -57,6 +58,41 @@ namespace opengl{
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
             LOG(FATAL) << "Framebuffer not complete.";
         }
+    }
+
+    std::string Kernel::DebugString()const{
+        // print input shape and output shape for debug
+        std::stringstream ss;
+        ss<<"In kernel \n type: "<<kernel_type()
+            <<" name: "<<kernel_name()<<"\n";
+        // fill input and output
+        TensorShapeList input_shapes;
+        TensorShapeList output_shapes;
+        for(int index:input_tensor_indexes_){
+            input_shapes.emplace_back(session_->FindTensorById(index)->shape());
+        }
+        for(int index: output_tensor_indexes_){
+            output_shapes.emplace_back(session_->FindTensorById(index)->shape());
+        }
+
+        for(int j=0;j<input_tensor_indexes_.size();++j){
+            // for each input shape
+            ss<<"(";
+            for(int k=0;k<input_shapes[j].size();++k){
+                ss<<input_shapes[j][k]<<" ";
+            }
+            ss<<"), ";
+        }
+        ss<<"->";
+        for(int j=0;j<output_tensor_indexes_.size();++j){
+            // for each output shape
+            ss<<"(";
+            for(int k=0;k<output_shapes[j].size();++k){
+                ss<<output_shapes[j][k]<<" ";
+            }
+            ss<<")";
+        }
+        return ss.str();
     }
 
     DataFormat Kernel::GetOutputDFormat(int i)const{

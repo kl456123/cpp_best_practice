@@ -70,6 +70,20 @@ namespace opengl{
         glFinish();
     }
 
+    void GemmKernel::InferOutputShape(const TensorList& input_tensors,
+            TensorShapeList& output_shapes){
+        CHECK_EQ(input_tensors.size(), 3);
+        output_shapes.clear();
+        output_shapes.resize(1);
+        // check in_channels
+        CHECK_EQ(input_tensors[1]->channel(), input_tensors[0]->channel());
+        // check out_channels
+        CHECK_EQ(input_tensors[1]->num(), input_tensors[2]->channel());
+
+        // Y: (N, 1, 1, C_out)
+        output_shapes[0]={input_tensors[0]->num(), 1, 1, input_tensors[2]->channel()};
+    }
+
     void GemmKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
         // Y = WX+B

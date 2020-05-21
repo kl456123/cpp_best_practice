@@ -12,6 +12,8 @@ namespace opengl{
         public:
             BatchNormKernel(Context* context);
             virtual void Compute(TensorList& inputs, TensorList& outputs);
+            virtual void InferOutputShape(const TensorList& inputs,
+                    TensorShapeList& outputs);
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs);
             virtual void SetupAttr(const dlxnet::Attribute& attr);

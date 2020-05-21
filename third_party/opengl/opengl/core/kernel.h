@@ -10,6 +10,7 @@ namespace opengl{
     class Program;
     class Tensor;
     class Context;
+    class FBOSession;
 
     class Kernel{
         public:
@@ -30,11 +31,15 @@ namespace opengl{
 
             DataFormat GetOutputDFormat(int i)const;
 
+            std::string DebugString()const;
+
             /*!
              * Compute output shapes according to their input tensor shape
              */
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs)=0;
+            virtual void InferOutputShape(const TensorList& inputs,
+                    TensorShapeList& outputs){}
 
             // some accessors
             void set_kernel_name(std::string name){
@@ -48,6 +53,12 @@ namespace opengl{
             }
             std::string kernel_type()const{
                 return kernel_type_;
+            }
+            void set_session(FBOSession* session){
+                session_ = session;
+            }
+            FBOSession* session()const{
+                return session_;
             }
         protected:
             // attach output tensor to the target(fbo)
@@ -82,6 +93,9 @@ namespace opengl{
 
             std::string kernel_name_;
             std::string kernel_type_;
+
+            // reference of current activated session
+            FBOSession* session_=nullptr;
     };
 }//namespace opengl
 

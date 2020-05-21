@@ -79,6 +79,7 @@ namespace opengl{
             }
             // setup program for each kernel here
             kernel->SetupProgram(vertex_shader_);
+            kernel->set_session(this);
             kernel->set_kernel_name(node.name());
             kernel->set_kernel_type(node.type());
 
@@ -211,42 +212,21 @@ namespace opengl{
             // upload data, initialize input tensor
             context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index]);
         }
+
         for(int i=0;i<kernels_.size();++i){
             Kernel* kernel = kernels_[i];
-            TensorShapeList input_shapes, output_shapes;
-            // prepare input_shapes
+            TensorList input_tensors;
+            TensorShapeList output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
                 Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]];
                 CHECK(input_tensor)<<"input tensor is uninitialized of kernel index: "<<i;
-                input_shapes.emplace_back(input_tensor->shape());
+                input_tensors.emplace_back(input_tensor);
             }
 
             // infer output shapes from input shapes
-            kernel->InferOutputShape(input_shapes, output_shapes);
-
-            // print input shape and output shape for debug
-            std::stringstream ss;
-            ss<<"In kernel \n type: "<<kernel->kernel_type()
-                <<" name: "<<kernel->kernel_name()<<"\n";
-            for(int j=0;j<input_shapes.size();++j){
-                // for each input shape
-                ss<<"(";
-                for(int k=0;k<input_shapes[j].size();++k){
-                    ss<<input_shapes[j][k]<<" ";
-                }
-                ss<<"), ";
-            }
-            ss<<"->";
-            for(int j=0;j<output_shapes.size();++j){
-                // for each output shape
-                ss<<"(";
-                for(int k=0;k<output_shapes[j].size();++k){
-                    ss<<output_shapes[j][k]<<" ";
-                }
-                ss<<")";
-            }
-            DLOG(INFO)<<ss.str();
-
+            // Note that use input tensor as arg instead of input shapes
+            // we need dformat(like nhwc) info to derminate the output shape no only the input shape.
+            kernel->InferOutputShape(input_tensors, output_shapes);
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
@@ -255,6 +235,9 @@ namespace opengl{
                     new Tensor(Tensor::DT_FLOAT, output_shapes[j],
                             Tensor::DEVICE_TEXTURE, dformat);
             }
+
+            // log kernel info after kernel finalized
+            DLOG(INFO)<<kernel->DebugString();
         }
         OPENGL_CHECK_ERROR;
     }
@@ -269,13 +252,7 @@ namespace opengl{
 
         int index = 0;
         for(auto& tensor_name: output_names){
-            auto iter = tensor_name_index_.find(tensor_name);
-            if(iter==tensor_name_index_.end()){
-                LOG(FATAL)<<"tensor_name: "<<tensor_name<<" Cannot Find";
-            }
-
-            const int tensor_index = tensor_name_index_[tensor_name];
-            const Tensor* gpu_tensor = total_tensors_[tensor_index];
+            auto gpu_tensor = FindTensorByName(tensor_name);
             auto dformat_str = output_dformats[index++];
             DataFormat dformat;
             if(dformat_str=="NHWC"){
@@ -298,5 +275,20 @@ namespace opengl{
         ret_str+=model_->DebugString();
         ret_str+="\n";
         return ret_str;
+    }
+
+    Tensor* FBOSession::FindTensorByName(const std::string& tensor_name){
+        auto iter = tensor_name_index_.find(tensor_name);
+        if(iter==tensor_name_index_.end()){
+            LOG(FATAL)<<"tensor_name: "<<tensor_name<<" Cannot Find";
+        }
+
+        const int tensor_index = tensor_name_index_[tensor_name];
+        return FindTensorById(tensor_index);
+    }
+
+    Tensor* FBOSession::FindTensorById(const int id){
+        CHECK_LT(id, total_tensors_.size());
+        return total_tensors_[id];
     }
 }//namespace opengl

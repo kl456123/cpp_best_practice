@@ -50,6 +50,7 @@ namespace opengl{
     }
 
     ConstKernel::~ConstKernel(){
+        delete tensor_;
     }
 
     REGISTER_KERNEL_WITH_NAME(ConstKernel, "Const");

@@ -44,6 +44,9 @@ namespace opengl{
             // reorder all nodes in nodes_ topologically
             void TopologicalSort();
 
+            Tensor* FindTensorByName(const std::string& name);
+            Tensor* FindTensorById(const int id);
+
             GLuint vertex_shader_;
             Context* context_;
             KernelList kernels_;
@@ -67,6 +70,8 @@ namespace opengl{
 
             // output target in each kernel
             GLuint frame_buffer_;
+
+            friend class Kernel;
     };
 }//namespace opengl
 

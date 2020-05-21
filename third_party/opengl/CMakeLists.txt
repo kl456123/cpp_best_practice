@@ -32,6 +32,7 @@ set(CORE_SRC_NAMES
     session.cc
     fbo_session.cc
     scope.cc
+    tensor_format.cc
     kernel.cc
     kernel_registry.cc
     init.cc
@@ -70,16 +71,15 @@ add_library(${GL_CORE} ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES})
 
 
-# examples demo
-if (BUILD_EXAMPLES)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/examples)
-endif()
-
-
 # deeplearning framework using opengl backend
 if (BUILD_NN)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn)
     set(GL_NN gl_nn)
+endif()
+
+# examples demo
+if (BUILD_EXAMPLES)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/opengl/examples)
 endif()
 
 if(BUILD_TEST)

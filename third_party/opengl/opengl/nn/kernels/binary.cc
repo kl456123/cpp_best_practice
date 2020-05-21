@@ -50,6 +50,12 @@ namespace opengl{
         glFinish();
     }
 
+    void BinaryKernel::InferOutputShape(const TensorList& input_tensors,
+            TensorShapeList& output_shapes){
+        output_shapes.clear();
+        output_shapes.emplace_back(input_tensors[0]->shape());
+    }
+
     void BinaryKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
         output_shapes.clear();
