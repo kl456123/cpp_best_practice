@@ -26,7 +26,6 @@ int main(int argc, char** argv){
 
     // glut_init(argc, argv);
     ::opengl::glfw_init();
-    ::opengl::glew_init();
 
     int maxtexsize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
@@ -57,7 +56,6 @@ int main(int argc, char** argv){
         // <<session->DebugString();
 
     for(int i=0;i<num_iters;++i){
-        // auto cpu_input_data =  AllocateHostMemory(image_shape, true);
         // init graph according to inputs
         inputs[0].first = "input";
         inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape);
@@ -71,7 +69,6 @@ int main(int argc, char** argv){
 
         // print output
         LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
-        // LOG(INFO)<<outputs_cpu[1]->DebugString();
 
     }
 

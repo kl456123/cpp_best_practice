@@ -51,18 +51,18 @@ def generate_onnx(saved_path):
         saved_path: string, specify where to store the model
     """
     # build graph first
-    size = 3
+    pretrained = True
     inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
     # model = Model()
-    model = resnet.resnet152()
+    model = resnet.resnet50(pretrained=pretrained)
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])
 
     # load weights
-    if os.path.exists(pth_path):
+    if not pretrained and os.path.exists(pth_path):
         print("load weights from {}".format(pth_path))
         try:
             model.load_state_dict(torch.load(pth_path))
@@ -77,6 +77,7 @@ def generate_onnx(saved_path):
     else:
         print(res)
     print(res.shape)
+    print(res.argmax())
 
     # save in any time
     torch.save(model.state_dict(), pth_path)

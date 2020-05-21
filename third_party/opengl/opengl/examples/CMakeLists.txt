@@ -64,10 +64,12 @@ if(BUILD_FBO)
 endif()
 
 if(BUILD_NN)
+    find_package(OpenCV REQUIRED)
     # all examples about nn library
     # classification task
     add_executable(label_image label_image/main.cc)
-    target_link_libraries(label_image glog::glog ${GL_CORE} ${GL_NN})
+    set_target_properties(label_image PROPERTIES LINK_FLAGS -Wl,--no-as-needed)
+    target_link_libraries(label_image ${GL_NN} ${OpenCV_LIBS})
 
     # object detection task
 

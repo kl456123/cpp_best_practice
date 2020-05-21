@@ -67,7 +67,7 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-add_library(${GL_CORE} ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
+add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES})
 
 

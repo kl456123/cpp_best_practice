@@ -11,8 +11,9 @@ foreach(file_path ${NN_SRC_FNAMES})
 endforeach()
 
 # build nn shared library
-add_library(gl_nn ${NN_SRC_FILES})
+add_library(gl_nn SHARED ${NN_SRC_FILES})
 target_link_libraries(gl_nn gl_core)
 
-add_executable(main ${CMAKE_CURRENT_SOURCE_DIR}/main.cc ${NN_SRC_FILES})
+add_executable(main ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
+set_target_properties(main PROPERTIES LINK_FLAGS -Wl,--no-as-needed)
 target_link_libraries(main gl_nn)

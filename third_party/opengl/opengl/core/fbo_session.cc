@@ -216,17 +216,19 @@ namespace opengl{
         for(int i=0;i<kernels_.size();++i){
             Kernel* kernel = kernels_[i];
             TensorList input_tensors;
-            TensorShapeList output_shapes;
+            TensorShapeList input_shapes, output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
                 Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]];
                 CHECK(input_tensor)<<"input tensor is uninitialized of kernel index: "<<i;
                 input_tensors.emplace_back(input_tensor);
+                input_shapes.emplace_back(input_tensor->shape());
             }
 
             // infer output shapes from input shapes
             // Note that use input tensor as arg instead of input shapes
             // we need dformat(like nhwc) info to derminate the output shape no only the input shape.
-            kernel->InferOutputShape(input_tensors, output_shapes);
+            // kernel->InferOutputShape(input_tensors, output_shapes);
+            kernel->InferOutputShape(input_shapes, output_shapes);
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
