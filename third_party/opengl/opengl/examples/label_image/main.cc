@@ -28,8 +28,12 @@ bool ReadImage(const char* image_name, Tensor** out){
     const float mean_vals[3] = { 0.485, 0.456, 0.406};
     const float std_vals[3] = {0.229, 0.224, 0.225};
     auto mean = cv::Scalar(mean_vals[0], mean_vals[1], mean_vals[2]);
-    auto std = cv::Scalar(std_vals[0], std_vals[1], std_vals[2]);
-    image = (1/255.0 * image - mean)/std;
+    auto stds = cv::Scalar(std_vals[0], std_vals[1], std_vals[2]);
+    // use cv::divide to prevent from template deduction problem
+    // in arm platform
+    image = (1/255.0 * image - mean);
+    cv::divide(image, stds, image);
+
 
     std::vector<int>shape = {1, 224, 224, 3};
     // copy to tensor

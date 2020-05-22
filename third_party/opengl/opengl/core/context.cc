@@ -20,16 +20,9 @@ namespace opengl{
 
     Context::Context(Allocator* allocator)
         :allocator_(allocator){
-            // work group size
-            int work_grp_cnt[3];
-            //OPENGL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 0, &work_grp_cnt[0]));
-            //OPENGL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 1, &work_grp_cnt[1]));
-            //OPENGL_CALL(glGetIntegeri_v(GL_MAX_COMPUTE_WORK_GROUP_SIZE, 2, &work_grp_cnt[2]));
-            LOG(INFO)<<"max global (total) work group counts x:"<< work_grp_cnt[0]
-                <<" y:"<<work_grp_cnt[1]
-                <<" z:"<< work_grp_cnt[2];
+            // max size allowed when using texture
             int work_grp_inv;
-            // OPENGL_CALL(glGetIntegerv(GL_MAX_COMPUTE_WORK_GROUP_INVOCATIONS, &work_grp_inv));
+            OPENGL_CALL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &work_grp_inv));
             LOG(INFO)<<"max group invacations: "<<work_grp_inv;
         }
 

@@ -68,7 +68,9 @@ set(GL_CORE gl_core)
 
 # build core library
 add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
-target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES})
+# use both in case anyone of them not found
+target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
+    ${PROTOBUF_LIBRARY})
 
 
 # deeplearning framework using opengl backend
