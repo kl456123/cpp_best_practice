@@ -2,6 +2,7 @@
 #include <glog/logging.h>
 
 #include "core/config.h"
+#include "core/optimizer.h"
 #include "core/converter.h"
 
 
@@ -25,6 +26,14 @@ int main(int argc,char** argv){
     // init converter
     converter->Reset(converter_config);
     converter->Run();
+
+    // use custom optimizer
+    // add optimizer config
+    auto optimizer = Optimizer::Global();
+
+    converter->Optimize(optimizer);
+
+    // save model proto to binary file
     converter->Save();
 
     // LOG(INFO)<<converter->DebugString();

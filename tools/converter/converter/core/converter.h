@@ -3,6 +3,7 @@
 #include <string>
 #include "core/config.h"
 #include "core/registry.h"
+#include "core/optimizer.h"
 #include "dlcl.pb.h"
 
 
@@ -20,6 +21,11 @@ class Converter: public RegistryItemBase{
         }
 
         std::string DebugString()const;
+
+        const dlxnet::ModelProto& model()const{
+            return *model_;
+        }
+        void Optimize(const Optimizer* optimizer);
 
     protected:
         ConverterConfig converter_config_;

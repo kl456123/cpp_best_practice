@@ -27,3 +27,6 @@ std::string Converter::DebugString()const{
     ret_str+=model_->DebugString();
     return ret_str;
 }
+
+void Converter::Optimize(const Optimizer* optimizer){
+}

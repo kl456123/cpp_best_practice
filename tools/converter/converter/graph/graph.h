@@ -14,8 +14,7 @@ namespace graph{
     class Graph;
     class Node;
     class Edge;
-    struct NodeProperties{
-    };
+    struct NodeProperties;
 
     class Node{
         public:
@@ -25,13 +24,22 @@ namespace graph{
             void set_name(std::string name);
             const std::string& type_string() const;
         private:
+            enum NodeClass{
+                NC_UNINITIALIZED,
+                NC_OTHER
+            };
             friend class Graph;
             Node();
             Graph* graph_;
             int id_;       // -1 until Initialize() is called
+            NodeClass class_;
+            NodeProperties* properties() const { return props_.get(); }
+
+            void Initialize(int id,  std::shared_ptr<NodeProperties> props);
 
             std::vector<Edge*> in_edges_;
             std::vector<Edge*> out_edges_;
+            std::shared_ptr<NodeProperties> props_;
 
     };
 
@@ -65,13 +73,13 @@ namespace graph{
 
     class Graph{
         public:
-            explicit Graph(const ::dlxnet::ModelProto& model_proto);
+            explicit Graph();
             virtual ~Graph();
 
             // Adds a new node to this graph, and returns it. Infers the Op and
             // input/output types for the node. *this owns the returned instance.
             // Returns nullptr and sets *status on error.
-            Node* AddNode();
+            Node* AddNode(::dlxnet::NodeProto node_def);
 
             // Removes a node from this graph, including all edges from or to it.
             // *node should not be accessed after calling this function.
@@ -122,13 +130,8 @@ namespace graph{
             // REQUIRES: 0 <= id < num_node_ids().
             const Edge* FindEdgeId(int id) const { return edges_[id]; }
         private:
-            // If cost_node is non-null, then cost accounting (in CostModel)
-            // will be associated with that node rather than the new one being
-            // created.
-            //
             // Ownership of the returned Node is not transferred to caller.
-            Node* AllocateNode(std::shared_ptr<NodeProperties> props,
-                    const Node* cost_node, bool is_function_op);
+            Node* AllocateNode(std::shared_ptr<NodeProperties> props);
             void ReleaseNode(Node* node);
             // Insert edge in free_edges_ for possible reuse.
             void RecycleEdge(const Edge* edge);
