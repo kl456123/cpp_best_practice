@@ -1,21 +1,30 @@
 #ifndef CORE_OPTIMIZER_H_
 #define CORE_OPTIMIZER_H_
+#include <memory>
 #include <vector>
+#include <unordered_map>
 #include <string>
 
+#include "graph/graph.h"
+
 class OptimizationPass{
+    public:
+        virtual void Run(std::unique_ptr<graph::Graph>* graph)=0;
 };
 
 class Optimizer{
     public:
         static Optimizer* Global();
 
-        void RegisterPass();
-        void LookUpPass();
+        void RegisterPass(std::string pass_name,
+        OptimizationPass* pass);
+        void LookUpPass(const std::string pass_name,
+                OptimizationPass** pass)const;
+        void Optimize(std::unique_ptr<graph::Graph>* graph)const;
 
     private:
         Optimizer();
-        std::vector<OptimizationPass*> passes_;
+        std::unordered_map<std::string, OptimizationPass*> passes_;
 
 };
 
@@ -24,7 +33,7 @@ class RegisterOptimizationPassHelper{
     public:
         RegisterOptimizationPassHelper(
                 std::string pass_name){
-            Optimizer::Global()->RegisterPass(new Pass());
+            Optimizer::Global()->RegisterPass(pass_name, new Pass());
         }
 };
 

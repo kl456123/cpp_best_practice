@@ -18,6 +18,11 @@ namespace graph{
         : id_(-1),
         class_(NC_UNINITIALIZED),
         props_(nullptr){}
+    int32_t Node::num_outputs() const { return props_->node_def.input_index().size(); }
+    int32_t Node::num_inputs() const { return props_->node_def.input_index().size(); }
+    const std::string& Node::name() const { return props_->node_def.name(); }
+    // const string& Node::name() const { return props_->node_def.name(); }
+    // const OpDef& Node::op_def() const { return *props_->op_def; }
 
     void Node::Initialize(int id,  std::shared_ptr<NodeProperties> props){
         DCHECK_EQ(id_, -1);
@@ -47,11 +52,29 @@ namespace graph{
     }
 
     const Edge* Graph::AddEdge(Node* source, int x, Node* dest, int y){
-        return nullptr;
+        // check any edge free exist
+        Edge* e = nullptr;
+        e = new Edge;
+
+        // populate edge, add it to src node and dst node,
+        // then add it to graph
+        e->id_ = edges_.size();
+        e->src_ = source;
+        e->dst_ = dest;
+        e->src_output_ = x;
+        e->dst_input_ = y;
+        CHECK(source->out_edges_.insert(e).second);
+        CHECK(dest->in_edges_.insert(e).second);
+        edges_.push_back(e);
+        ++num_edges_;
+        return e;
     }
 
     std::string Graph::NewName(std::string prefix){
         return "";
+    }
+
+    void Graph::RemoveEdge(const Edge* edge){
     }
 
     Node* Graph::AllocateNode(std::shared_ptr<NodeProperties> props){

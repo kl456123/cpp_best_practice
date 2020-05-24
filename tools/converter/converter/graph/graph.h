@@ -8,6 +8,7 @@
 // #include "graph/edge.h"
 #include <string>
 #include <vector>
+#include <unordered_set>
 #include "dlcl.pb.h"
 
 namespace graph{
@@ -23,6 +24,11 @@ namespace graph{
             const std::string& name() const;
             void set_name(std::string name);
             const std::string& type_string() const;
+            const ::dlxnet::NodeProto& def() const;
+
+            // input and output
+            int32_t num_outputs() const;
+            int32_t num_inputs() const;
         private:
             enum NodeClass{
                 NC_UNINITIALIZED,
@@ -37,8 +43,8 @@ namespace graph{
 
             void Initialize(int id,  std::shared_ptr<NodeProperties> props);
 
-            std::vector<Edge*> in_edges_;
-            std::vector<Edge*> out_edges_;
+            std::set<Edge*> in_edges_;
+            std::set<Edge*> out_edges_;
             std::shared_ptr<NodeProperties> props_;
 
     };

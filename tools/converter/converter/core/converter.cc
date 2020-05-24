@@ -1,7 +1,9 @@
 #include<fstream>
+#include <memory>
 #include <glog/logging.h>
 
 #include "core/converter.h"
+#include "graph/graph_constructor.h"
 
 
 
@@ -29,4 +31,8 @@ std::string Converter::DebugString()const{
 }
 
 void Converter::Optimize(const Optimizer* optimizer){
+    // convert ModelProto to DAG-based Graph
+    auto base_graph = std::unique_ptr<graph::Graph>(new graph::Graph());
+    graph::ConvertGraphDefToGraph(model_->graph(), base_graph.get());
+    optimizer->Optimize(&base_graph);
 }
