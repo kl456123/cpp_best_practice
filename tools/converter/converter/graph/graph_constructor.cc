@@ -112,16 +112,6 @@ namespace graph{
                 auto& input_name = graph_def_.tensor_names(input_index);
                 bool is_input=false;
 
-                for(auto name: graph_def_.input_names()){
-                    if(input_name==name){
-                        is_input=true;
-                        break;
-                    }
-                }
-                if(is_input){
-                    continue;
-                }
-
                 auto iter = gdef_nodes_.find(input_name);
                 if (iter == gdef_nodes_.end()) {
                     LOG(FATAL)<<"Node '"<<node_def.name()

@@ -77,12 +77,35 @@ void ONNXConverter::Run(){
     std::unordered_map<const onnx::NodeProto*, dlxnet::NodeProto*> onnx_dlcl_map;
 
     // insert input tensor to total_tensor_names first
+    // map input_name to input tensor info
+    std::unordered_map<std::string, const onnx::ValueInfoProto*> input_tensor_map;
     const int input_tensor_count = graph_proto.input_size();
     for(int i=0;i<input_tensor_count;++i){
         // add tensor name to map and graph proto at the sametime
         auto& tensor_name = graph_proto.input(i).name();
         total_tensor_names.insert({tensor_name, total_tensor_names.size()});
+        input_tensor_map[tensor_name] = &graph_proto.input(i);
         graph->add_tensor_names(tensor_name);
+    }
+
+    // set input node first
+    for(const auto& iter: total_tensor_names){
+        auto& input_name = iter.first;
+        auto& input_index = iter.second;
+        dlxnet::NodeProto* node_ptr = graph->add_node();
+        node_ptr->set_name(iter.first);
+        node_ptr->set_type("Input");
+        node_ptr->add_output_index(input_index);
+        ::dlxnet::InputAttribute* input_attr = node_ptr->mutable_attr()
+                    ->mutable_input_attr();
+
+        // find input info from input_tensor_map
+        auto it = input_tensor_map.find(input_name);
+        const auto& tensorInfo = it->second->type().tensor_type();
+        const int input_dims_size = tensorInfo.shape().dim_size();
+        for(int i=0;i<input_dims_size;++i){
+            input_attr->add_dims(tensorInfo.shape().dim(i).dim_value());
+        }
     }
 
     // constant tensor map

@@ -73,6 +73,11 @@ namespace opengl{
         Kernel* kernel;
         for(auto& node: graph.node()){
             kernel=nullptr;
+            // TODO(breakpoint) handle with input node, ignore it for now
+            if(node.type()=="Input"){
+                LOG(INFO)<<"Ignore Node Type: "<<node.type();
+                continue;
+            }
             KernelRegistry::Global()->CreateKernel(node.type(), &kernel, context_);
             if(kernel==nullptr){
                 LOG(FATAL)<<"unsupported kernel name "<<node.type();
