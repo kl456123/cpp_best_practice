@@ -19,7 +19,7 @@ void Optimizer::LookUpPass(std::string pass_name,
     *out = iter->second;
 }
 
-void Optimizer::Optimize(std::unique_ptr<graph::Graph>* graph)const{
+void Optimizer::Optimize(graph::Graph* graph)const{
     std::vector<std::string> pass_names = {};
     // run all passes in order by default
     for(auto pass_name: pass_names){

@@ -29,6 +29,10 @@ namespace graph{
             // input and output
             int32_t num_outputs() const;
             int32_t num_inputs() const;
+            void input_edge(int idx, const Edge** e) const;
+            void output_edge(int idx, const Edge** e)const;
+            const std::set<Edge*>& in_edges() const { return in_edges_; }
+            const std::set<Edge*>& out_edges() const { return out_edges_; }
         private:
             enum NodeClass{
                 NC_UNINITIALIZED,
@@ -135,6 +139,8 @@ namespace graph{
             // not yet been re-used). *this owns the returned instance.
             // REQUIRES: 0 <= id < num_node_ids().
             const Edge* FindEdgeId(int id) const { return edges_[id]; }
+
+            void ToGraphDef(::dlxnet::GraphProto* graph_def) const;
         private:
             // Ownership of the returned Node is not transferred to caller.
             Node* AllocateNode(std::shared_ptr<NodeProperties> props);

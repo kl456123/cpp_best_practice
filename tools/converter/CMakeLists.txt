@@ -20,6 +20,7 @@ set(SRC_DIR ${ROOT_PATH}/core
     ${ROOT_PATH}/onnx/ops
     ${ROOT_PATH}/tf
     ${ROOT_PATH}/graph/
+    ${ROOT_PATH}/optimizers/
     ${ROOT_PATH}
     )
 

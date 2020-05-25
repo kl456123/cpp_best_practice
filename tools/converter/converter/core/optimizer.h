@@ -9,7 +9,8 @@
 
 class OptimizationPass{
     public:
-        virtual void Run(std::unique_ptr<graph::Graph>* graph)=0;
+        virtual void Run(graph::Graph* graph)=0;
+        virtual std::string name() const  =0;
 };
 
 class Optimizer{
@@ -17,10 +18,10 @@ class Optimizer{
         static Optimizer* Global();
 
         void RegisterPass(std::string pass_name,
-        OptimizationPass* pass);
+                OptimizationPass* pass);
         void LookUpPass(const std::string pass_name,
                 OptimizationPass** pass)const;
-        void Optimize(std::unique_ptr<graph::Graph>* graph)const;
+        void Optimize(graph::Graph* graph)const;
 
     private:
         Optimizer();
