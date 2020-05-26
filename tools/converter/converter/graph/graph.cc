@@ -19,8 +19,8 @@ namespace graph{
         : id_(-1),
         class_(NC_UNINITIALIZED),
         props_(nullptr){}
-    int32_t Node::num_outputs() const { return props_->node_def.input_index().size(); }
-    int32_t Node::num_inputs() const { return props_->node_def.input_index().size(); }
+    int32_t Node::num_outputs() const { return out_edges_.size(); }
+    int32_t Node::num_inputs() const { return in_edges_.size(); }
     const std::string& Node::name() const { return props_->node_def.name(); }
     const std::string& Node::type_string() const { return props_->node_def.type(); }
     const ::dlxnet::NodeProto& Node::def() const { return props_->node_def; }
@@ -135,33 +135,44 @@ namespace graph{
     void Graph::ToGraphDef(::dlxnet::GraphProto* graph_def) const{
         graph_def->Clear();
         graph_def->mutable_node()->Reserve(std::max(1, num_node_ids()));
-        std::vector<const Edge*>
-            inputs;  // Construct this outside the loop for speed.
+        std::vector<const Edge*> inputs;  // Construct this outside the loop for speed.
+
+        // map from tensor name to tensor index
+        std::unordered_map<std::string, int> total_tensor_names;
+
         for(int i=0;i<num_node_ids();++i){
             const Node* node = FindNodeId(i);
             auto node_def = graph_def->add_node();
             *node_def = node->def();
-
-            // Get the inputs for this Node.  We make sure control inputs are
-            // after data inputs, as required by GraphDef.
-            inputs.clear();
-            inputs.resize(node->num_inputs(), nullptr);
+            // set input index
             for (const Edge* edge : node->in_edges()) {
-                inputs[edge->dst_input()] = edge;
-            }
-            // Sort the control inputs for more predictable serialization.
-            std::sort(inputs.begin() + node->num_inputs(), inputs.end(),
-                    [](const Edge* a, const Edge* b) -> bool {
-                    return a->src()->name() < b->src()->name();
-                    });
-
-            node_def->clear_input_index();
-            node_def->mutable_input_index()->Reserve(inputs.size());
-
-            for (size_t i = 0; i < inputs.size(); ++i) {
-                const Edge* edge = inputs[i];
+                // make sure all input prepare
                 const Node* src = edge->src();
-                // AddInput(node_def, src->name(), edge->src_output());
+                // consider node name as output tensor name
+                // so only one output tensor is supported now.
+                // TODO(breakpoint) use node_name:out_index as tensor_name
+                auto iter = total_tensor_names.find(src->name());
+                CHECK(iter!=total_tensor_names.end())<<"Input Tensor "
+                    <<src->name()<<" Cannot be Prepared";
+                node_def->add_input_index(iter->second);
+            }
+            // Input Node Type
+            if(node->type_string()=="Input"){
+                graph_def->add_input_names(node->name());
+            }
+
+            // all endpoints in graph considered as output node
+            if(node->num_outputs()==0){
+                graph_def->add_output_names(node->name());
+            }
+
+            // set output index
+            for(const Edge* edge : node->out_edges()){
+                // const Node* dst = edge->dst();
+                const int tensor_index = total_tensor_names.size();
+                total_tensor_names.insert({node_def->name(), tensor_index});
+                graph_def->add_tensor_names(node_def->name());
+                node_def->add_output_index(tensor_index);
             }
         }
     }
