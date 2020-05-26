@@ -44,12 +44,14 @@ namespace optimizer{
             // get src and dst first
             auto src = node->input_edge(0)->src();
             auto dst = node->output_edge(0)->dst();
+            auto src_index = node->input_edge(0)->src_output();
+            auto dst_index = node->output_edge(0)->dst_input();
 
             // then remove current node
-            // graph->RemoveNode(node);
+            graph->RemoveNode(node);
 
             // finally reconnect prev node and next node
-            // graph->AddEdge(src, 0, dst, 0);
+            graph->AddEdge(src, src_index, dst, dst_index);
         }
     }
     REGISTER_PASS_WITH_NAME(Remapper, "Remapper");

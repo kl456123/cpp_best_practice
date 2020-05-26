@@ -193,6 +193,9 @@ namespace graph{
             if(node==nullptr){
                 continue;
             }
+            if(node->name()=="335"){
+                auto tmp = 1+1;
+            }
             auto node_def = graph_def->add_node();
             // set node_def from scratch
             node_def->mutable_attr()->CopyFrom(node->def().attr());
