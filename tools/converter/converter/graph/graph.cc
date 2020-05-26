@@ -19,11 +19,18 @@ namespace graph{
         : id_(-1),
         class_(NC_UNINITIALIZED),
         props_(nullptr){}
-    int32_t Node::num_outputs() const { return out_edges_.size(); }
-    int32_t Node::num_inputs() const { return in_edges_.size(); }
+    int32_t Node::num_outputs() const { return props_->node_def.output_index().size(); }
+    int32_t Node::num_inputs() const { return props_->node_def.input_index().size(); }
     const std::string& Node::name() const { return props_->node_def.name(); }
     const std::string& Node::type_string() const { return props_->node_def.type(); }
     const ::dlxnet::NodeProto& Node::def() const { return props_->node_def; }
+
+    std::string Node::DebugString() const {
+        std::stringstream ret;
+        ret<<"{name:'"<<name()<<"' id:"<<id_
+            <<" type: "<<type_string()<< "}";
+        return ret.str();
+    }
 
     void Node::Initialize(int id,  std::shared_ptr<NodeProperties> props){
         DCHECK_EQ(id_, -1);
@@ -194,7 +201,8 @@ namespace graph{
             node_def->set_doc_string(node->def().doc_string());
 
             // set input index
-            for (const Edge* edge : node->in_edges()) {
+            for (int i=0; i < node->num_inputs();++i) {
+                const Edge* edge = node->input_edge(i);
                 // make sure all input prepare
                 const Node* src = edge->src();
                 // consider node name as output tensor name
@@ -213,16 +221,15 @@ namespace graph{
             // all endpoints in graph considered as output node
             if(node->num_outputs()==0){
                 graph_def->add_output_names(node_def->name());
+            }else{
+                // only single output slot supported now
+                CHECK_EQ(node->num_outputs(), 1)<<node->DebugString();
             }
 
-            // set output index
-            for(const Edge* edge : node->out_edges()){
-                // const Node* dst = edge->dst();
-                const int tensor_index = total_tensor_names.size();
-                total_tensor_names.insert({node_def->name(), tensor_index});
-                graph_def->add_tensor_names(node_def->name());
-                node_def->add_output_index(tensor_index);
-            }
+            const int tensor_index = total_tensor_names.size();
+            total_tensor_names.insert({node_def->name(), tensor_index});
+            graph_def->add_tensor_names(node_def->name());
+            node_def->add_output_index(tensor_index);
 
             // check for some type
             if(node->type_string()=="Const"|| node->type_string()=="Input"){

@@ -123,7 +123,7 @@ void ONNXConverter::Run(){
         // dispatch each node handlers
         const auto& node_proto = graph_proto.node(i);
         const auto& op_type = node_proto.op_type();
-        LOG(INFO)<<"op_type: "<<op_type;
+        VLOG(1)<<"op_type: "<<op_type;
 
         // find op according to its name
         auto op_conveter_registry = Registry<OpConverter>::Global();

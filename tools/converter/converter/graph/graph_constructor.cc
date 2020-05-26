@@ -213,6 +213,8 @@ namespace graph{
 
     void GraphConstructor::MakeEdge(Node* src, int output_index, Node* dst,
             int input_index) {
+        LOG(INFO)<<src->name()<<":"<<output_index<<" -> "
+            <<dst->name()<<":"<<input_index;
         g_->AddEdge(src, output_index, dst, input_index);
     }
 
