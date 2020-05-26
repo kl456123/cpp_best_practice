@@ -52,6 +52,14 @@ namespace graph{
         }
     }
 
+    void Node::Clear() {
+        in_edges_.clear();
+        out_edges_.clear();
+        id_ = -1;
+        class_ = NC_UNINITIALIZED;
+        props_.reset();
+    }
+
     void Node::input_edge(int idx, const Edge** e) const {
         if (idx < 0 || idx >= num_inputs()) {
             LOG(FATAL)<<"Invalid input_edge index: "<< idx<< ", Node "<<
@@ -90,7 +98,27 @@ namespace graph{
         return node;
     }
 
+    void Graph::ReleaseNode(Node* node) {
+        nodes_[node->id()] = nullptr;
+        --num_nodes_;
+        node->Clear();
+    }
+
     void Graph::RemoveNode(Node* node){
+        // Remove any edges involving this node.
+        for (const Edge* e : node->in_edges_) {
+            CHECK_EQ(e->src_->out_edges_.erase(e), size_t{1});
+            edges_[e->id_] = nullptr;
+            --num_edges_;
+        }
+        node->in_edges_.clear();
+        for (const Edge* e : node->out_edges_) {
+            CHECK_EQ(e->dst_->in_edges_.erase(e), size_t{1});
+            edges_[e->id_] = nullptr;
+            --num_edges_;
+        }
+        node->out_edges_.clear();
+        ReleaseNode(node);
     }
 
     const Edge* Graph::AddEdge(Node* source, int x, Node* dest, int y){

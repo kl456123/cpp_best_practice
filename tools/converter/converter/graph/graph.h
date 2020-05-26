@@ -31,8 +31,9 @@ namespace graph{
             int32_t num_inputs() const;
             void input_edge(int idx, const Edge** e) const;
             void output_edge(int idx, const Edge** e)const;
-            const std::set<Edge*>& in_edges() const { return in_edges_; }
-            const std::set<Edge*>& out_edges() const { return out_edges_; }
+            const std::set<const Edge*>& in_edges() const { return in_edges_; }
+            const std::set<const Edge*>& out_edges() const { return out_edges_; }
+            void Clear();
         private:
             enum NodeClass{
                 NC_UNINITIALIZED,
@@ -47,8 +48,8 @@ namespace graph{
 
             void Initialize(int id,  std::shared_ptr<NodeProperties> props);
 
-            std::set<Edge*> in_edges_;
-            std::set<Edge*> out_edges_;
+            std::set<const Edge*> in_edges_;
+            std::set<const Edge*> out_edges_;
             std::shared_ptr<NodeProperties> props_;
 
     };

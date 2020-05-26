@@ -119,11 +119,7 @@ namespace opengl{
     template<PoolType pool_type>
         PoolKernel<pool_type>::~PoolKernel(){}
 
-    // REGISTER_KERNEL_WITH_NAME(PoolKernel<MaxPool>, "MaxPool");
-    // REGISTER_KERNEL_WITH_NAME(PoolKernel<AvePool>, "AvePool");
-    // TODO(breakpoint) __counter__ failed here at present, make it works
-    static auto _l1 = ::opengl::registry::KernelRegisterHelper<PoolKernel<MaxPool>>("MaxPool");
-    static auto _l2 = ::opengl::registry::KernelRegisterHelper<PoolKernel<AveragePool>>("AveragePool");
-    static auto _l3 = ::opengl::registry::KernelRegisterHelper<PoolKernel<GlobalAveragePool>>("GlobalAveragePool");
-    // REGISTER_KERNEL_WITH_NAME(PoolKernel, "GlobalAveragePool");
+    REGISTER_KERNEL_WITH_NAME(PoolKernel<MaxPool>, "MaxPool");
+    REGISTER_KERNEL_WITH_NAME(PoolKernel<AveragePool>, "AveragePool");
+    REGISTER_KERNEL_WITH_NAME(PoolKernel<GlobalAveragePool>, "GlobalAveragePool");
 }//namespace opengl

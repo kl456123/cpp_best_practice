@@ -33,12 +33,13 @@ namespace opengl{
 }//namespace opengl
 
 
-#define REGISTER_KERNEL(Class)   REGISTER_KERNEL_UNIQ(__COUNTER__, Class, #Class)
+#define REGISTER_KERNEL(Class)   REGISTER_KERNEL_UNIQ_HELPER(__COUNTER__, Class, #Class)
+#define REGISTER_KERNEL_UNIQ_HELPER(ctr, Class, name) REGISTER_KERNEL_UNIQ(ctr, Class, name)
 #define REGISTER_KERNEL_UNIQ(ctr, Class, class_name)                                \
-    static auto register##ctr = ::opengl::registry::KernelRegisterHelper<Class>(class_name)
+    static auto __register##ctr = ::opengl::registry::KernelRegisterHelper<Class>(class_name)
 
 #define REGISTER_KERNEL_WITH_NAME(Class, class_name) \
-    REGISTER_KERNEL_UNIQ(__COUNTER__, Class, class_name)
+    REGISTER_KERNEL_UNIQ_HELPER(__COUNTER__, Class, class_name)
 
 #endif
 
