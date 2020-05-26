@@ -8,6 +8,9 @@
 namespace optimizer{
     void MergeBatchNormToConvolution(graph::Node* bn_node, graph::Node* conv2d_node){
     }
+    void MergeBatchNormActivationToConvolution(graph::Node* act_node, graph::Node* bn_node,
+            graph::Node* conv2d_node){
+    }
 
     void Remapper::Run(graph::Graph* graph){
         // find conv2d bn bias
@@ -36,8 +39,16 @@ namespace optimizer{
             // conv + bn
             // merge them
             VLOG(1)<<"exist chance to merge conv and batchnorm here";
-            MergeBatchNormToConvolution(next_node, node);
-            nodes_to_delete.insert(next_node);
+
+            graph::Node* next_next_node = next_node->output_edge(0)->dst();
+            if(next_next_node->type_string()!="Relu"){
+                MergeBatchNormToConvolution(next_node, node);
+                nodes_to_delete.insert(next_node);
+            }else{
+                MergeBatchNormActivationToConvolution(next_next_node, next_node, node);
+                nodes_to_delete.insert(next_node);
+                nodes_to_delete.insert(next_next_node);
+            }
         }
 
         for(auto node: nodes_to_delete){
