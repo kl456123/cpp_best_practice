@@ -31,6 +31,10 @@ namespace graph{
             int32_t num_inputs() const;
             void input_edge(int idx, const Edge** e) const;
             void output_edge(int idx, const Edge** e)const;
+            // more helpful funcs
+            const Edge* input_edge(int idx)const;
+            const Edge* output_edge(int idx)const;
+
             const std::set<const Edge*>& in_edges() const { return in_edges_; }
             const std::set<const Edge*>& out_edges() const { return out_edges_; }
             void Clear();
@@ -140,6 +144,15 @@ namespace graph{
             // not yet been re-used). *this owns the returned instance.
             // REQUIRES: 0 <= id < num_node_ids().
             const Edge* FindEdgeId(int id) const { return edges_[id]; }
+
+            // The number of live nodes in the graph.
+            //
+            // Because nodes can be removed from the graph, num_nodes() is often
+            // smaller than num_node_ids(). If one needs to create an array of
+            // nodes indexed by node ids, num_node_ids() should be used as the
+            // array's size.
+            int num_nodes() const { return num_nodes_; }
+
 
             void ToGraphDef(::dlxnet::GraphProto* graph_def) const;
         private:

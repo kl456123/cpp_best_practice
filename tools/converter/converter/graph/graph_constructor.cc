@@ -159,14 +159,10 @@ namespace graph{
                 src_node = iter->second.node;
                 // only one output tensor in src node
                 src_index = 0;
+                CHECK(src_node!=nullptr) << "Node '" << node_def.name() << "': Connecting to invalid output "
+                    << 0 << " of source node " << node_name
+                    << " which has " << src_node->num_outputs() << " outputs.";
 
-                // validate src_index
-                if (src_node != nullptr && src_index >= src_node->num_outputs()) {
-                    std::ostringstream out;
-                    out << "Node '" << node_def.name() << "': Connecting to invalid output "
-                        << 0 << " of source node " << node_name
-                        << " which has " << src_node->num_outputs() << " outputs.";
-                }
                 inputs.emplace_back(node_name, src_node, src_index);
             }
             // populate the remain properties

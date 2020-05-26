@@ -38,13 +38,16 @@ class RegisterOptimizationPassHelper{
         }
 };
 
-#define REGISTER_PASS(Pass)  REGISTER_CLASS_UNIQUE_HELPER(Pass, __COUNTER__)
+#define REGISTER_PASS(Pass)  REGISTER_CLASS_UNIQUE_HELPER(Pass, __COUNTER__, #Pass)
 
-#define REGISTER_CLASS_UNIQUE_HELPER(pass, ctr) REGISTER_CLASS_UNIQUE(pass, ctr)
+#define REGISTER_CLASS_UNIQUE_HELPER(pass, ctr, name) REGISTER_CLASS_UNIQUE(pass, ctr, name)
 
-#define REGISTER_CLASS_UNIQUE(Pass, ctr)        \
+#define REGISTER_CLASS_UNIQUE(Pass, ctr, name)        \
     static auto __reg##Pass##ctr =      \
-    RegisterOptimizationPassHelper<Pass>(#Pass)
+    RegisterOptimizationPassHelper<Pass>(name)
+
+#define REGISTER_PASS_WITH_NAME(Pass, name) \
+    REGISTER_CLASS_UNIQUE_HELPER(Pass, __COUNTER__, name)
 
 
 

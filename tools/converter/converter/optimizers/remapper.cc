@@ -35,16 +35,22 @@ namespace optimizer{
             }
             // conv + bn
             // merge them
-            LOG(INFO)<<"exist chance to merge conv and batchnorm here";
+            VLOG(1)<<"exist chance to merge conv and batchnorm here";
             MergeBatchNormToConvolution(next_node, node);
             nodes_to_delete.insert(next_node);
         }
+
         for(auto node: nodes_to_delete){
-            graph->RemoveNode(node);
+            // get src and dst first
+            auto src = node->input_edge(0)->src();
+            auto dst = node->output_edge(0)->dst();
+
+            // then remove current node
+            // graph->RemoveNode(node);
+
+            // finally reconnect prev node and next node
+            // graph->AddEdge(src, 0, dst, 0);
         }
     }
-    REGISTER_PASS(Remapper);
-    REGISTER_PASS(Remapper);
+    REGISTER_PASS_WITH_NAME(Remapper, "Remapper");
 }
-
-// static auto _reg_remapper = RegisterOptimizationPassHelper<optimizer::Remapper>("Remapper");

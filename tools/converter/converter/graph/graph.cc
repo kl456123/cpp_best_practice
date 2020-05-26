@@ -98,6 +98,18 @@ namespace graph{
         return node;
     }
 
+    const Edge* Node::input_edge(int idx)const{
+        const Edge* e;
+        input_edge(idx, &e);
+        return e;
+    }
+
+    const Edge* Node::output_edge(int idx)const{
+        const Edge* e;
+        output_edge(idx, &e);
+        return e;
+    }
+
     void Graph::ReleaseNode(Node* node) {
         nodes_[node->id()] = nullptr;
         --num_nodes_;
@@ -170,8 +182,17 @@ namespace graph{
 
         for(int i=0;i<num_node_ids();++i){
             const Node* node = FindNodeId(i);
+            // The current Node in Index is already freed
+            if(node==nullptr){
+                continue;
+            }
             auto node_def = graph_def->add_node();
-            *node_def = node->def();
+            // set node_def from scratch
+            node_def->mutable_attr()->CopyFrom(node->def().attr());
+            node_def->set_name(node->name());
+            node_def->set_type(node->type_string());
+            node_def->set_doc_string(node->def().doc_string());
+
             // set input index
             for (const Edge* edge : node->in_edges()) {
                 // make sure all input prepare
@@ -180,18 +201,18 @@ namespace graph{
                 // so only one output tensor is supported now.
                 // TODO(breakpoint) use node_name:out_index as tensor_name
                 auto iter = total_tensor_names.find(src->name());
-                CHECK(iter!=total_tensor_names.end())<<"Input Tensor "
+                CHECK(iter!=total_tensor_names.end())<<"Input Tensor: "
                     <<src->name()<<" Cannot be Prepared";
                 node_def->add_input_index(iter->second);
             }
             // Input Node Type
             if(node->type_string()=="Input"){
-                graph_def->add_input_names(node->name());
+                graph_def->add_input_names(node_def->name());
             }
 
             // all endpoints in graph considered as output node
             if(node->num_outputs()==0){
-                graph_def->add_output_names(node->name());
+                graph_def->add_output_names(node_def->name());
             }
 
             // set output index
@@ -201,6 +222,28 @@ namespace graph{
                 total_tensor_names.insert({node_def->name(), tensor_index});
                 graph_def->add_tensor_names(node_def->name());
                 node_def->add_output_index(tensor_index);
+            }
+
+            // check for some type
+            if(node->type_string()=="Const"|| node->type_string()=="Input"){
+                // only one output port for constant node
+                CHECK_EQ(node_def->output_index_size(), 1)<<" In Index "<<i
+                    <<" Name: "<<node_def->name();
+                CHECK_EQ(node_def->input_index_size(), 0)<<" In Index "<<i
+                    <<" Name: "<<node_def->name();
+            }
+
+            if(node->type_string()=="Conv"){
+                CHECK_EQ(node_def->output_index_size(), 1);
+                CHECK(node_def->input_index_size()== 2
+                        ||node_def->input_index_size()== 3);
+            }
+
+            if(node->type_string()=="MaxPool"){
+                CHECK_EQ(node_def->output_index_size(), 1)<<" In Index "<<i
+                    <<" Name: "<<node_def->name();
+                CHECK_EQ(node_def->input_index_size(), 1)<<" In Index "<<i
+                    <<" Name: "<<node_def->name();
             }
         }
     }

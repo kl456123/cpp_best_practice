@@ -20,17 +20,25 @@ void Optimizer::LookUpPass(std::string pass_name,
 }
 
 void Optimizer::Optimize(graph::Graph* graph)const{
-    std::vector<std::string> pass_names = {};
+    std::vector<std::string> pass_names = {"Remapper"};
+    LOG(INFO)<<"The information of graph before optimized:"
+        << "Node Nums: "<<graph->num_nodes()
+        << "Edge Nums: "<<graph->num_edges();
     // run all passes in order by default
     for(auto pass_name: pass_names){
         OptimizationPass* pass=nullptr;
         LookUpPass(pass_name, &pass);
         pass->Run(graph);
     }
+
+    LOG(INFO)<<"The information of graph after optimized:"
+        << "Node Nums: "<<graph->num_nodes()
+        << "Edge Nums: "<<graph->num_edges();
 }
 
 /*static*/ Optimizer* Optimizer::Global(){
-    return new Optimizer();
+    static auto optimizer = new Optimizer();
+    return optimizer;
 }
 
 
