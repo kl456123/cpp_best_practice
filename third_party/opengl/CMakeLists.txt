@@ -44,7 +44,7 @@ set(CORE_SRC_NAMES
     dlxnet.pb.cc
     )
 
-set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc)
+set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env_time.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})

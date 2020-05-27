@@ -12,6 +12,7 @@
 #include "opengl/core/program.h"
 #include "opengl/core/session.h"
 #include "opengl/core/fbo_session.h"
+#include "opengl/utils/env_time.h"
 
 // only tensor is visible in nn module
 using opengl::Tensor;
@@ -53,8 +54,9 @@ int main(int argc, char** argv){
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
     // LOG(INFO)<<"ModelInfo After Load Graph: "
-        // <<session->DebugString();
-
+    // <<session->DebugString();
+    auto env_time = EnvTime::Default();
+    auto start_time = env_time->NowMicros();
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
         inputs[0].first = "input";
@@ -68,9 +70,13 @@ int main(int argc, char** argv){
         session->GetOutputs(output_names, dformats, &outputs_cpu);
 
         // print output
-        LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
+        // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
 
     }
+    auto duration_time = env_time->NowMicros()-start_time;
+    auto second_per_round = duration_time*1e-6/num_iters;
+    // force to display
+    std::cout<<"FPS: "<<second_per_round<<std::endl;
 
     LOG(INFO)<<"BiasAdd Success";
 
