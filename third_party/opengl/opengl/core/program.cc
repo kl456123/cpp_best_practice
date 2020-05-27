@@ -1,11 +1,12 @@
-#include "program.h"
+#include "opengl/core/program.h"
+#include "opengl/utils/macros.h"
 #include <fstream>
 #include <sstream>
 #include <glog/logging.h>
 
 namespace opengl{
     Program::~Program(){
-        glDeleteProgram(program_id_);
+        OPENGL_CALL(glDeleteProgram(program_id_));
     }
 
     OGLStatus Program::CreateShader(const std::string source, GLenum type, int* out){

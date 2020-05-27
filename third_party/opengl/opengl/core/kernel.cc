@@ -14,9 +14,7 @@ namespace opengl{
     Kernel::Kernel(Context* context)
         :context_(context){}
 
-    Kernel::~Kernel(){
-        if(program_!=nullptr){delete program_;}
-    }
+    Kernel::~Kernel(){}
 
     void Kernel::SetupProgram(GLuint vertex_shader){
         if(kernel_fname_.empty()){
@@ -24,7 +22,7 @@ namespace opengl{
             return;
         }
         // set program
-        program_ = new Program;
+        program_ .reset(new Program);
         (*program_).AttachFile(kernel_fname_, GL_FRAGMENT_SHADER)
             .AttachShader(vertex_shader);
         program_->Link();

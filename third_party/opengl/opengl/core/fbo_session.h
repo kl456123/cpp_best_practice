@@ -45,25 +45,24 @@ namespace opengl{
             void TopologicalSort();
 
             Tensor* FindTensorByName(const std::string& name);
+            // caller does not own it
             Tensor* FindTensorById(const int id);
 
             GLuint vertex_shader_;
             Context* context_;
-            KernelList kernels_;
+            OwnedKernelList kernels_;
 
             dlxnet::ModelProto* model_;
 
             // contains all tensors used in the session
             // may be some slots are null due to that pruned and optimization
-            std::vector<Tensor*> total_tensors_;
-
-            // contains all nodes used in the session
-            // including constant node
-            std::vector<Kernel*> nodes_;
+            OwnedTensorList total_tensors_;
 
             // check session is freezed or not
             // note that when graph is freezed, session can be called multiple times
             bool finalized_ = false;
+
+            bool graph_created_= false;
 
             // map from tensor name to index in total_tensors_
             NamedIndex tensor_name_index_;

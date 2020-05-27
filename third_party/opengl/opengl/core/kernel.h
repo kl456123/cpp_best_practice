@@ -68,9 +68,10 @@ namespace opengl{
             void SetVertexShader();
 
             // kernel program(opencl) or shader(opengl)
-            Program* program_;
+            std::unique_ptr<Program> program_;
 
             // opengl driver, it wrapping all API about platform(opengl or opencl)
+            // not owned
             Context* context_;
 
             // filename of kernel source file
@@ -80,6 +81,7 @@ namespace opengl{
             unsigned long work_sizes_[3];
 
             // store input and output indexes
+            // not owned
             std::vector<Tensor*> input_tensors_;
             std::vector<Tensor*> output_tensors_;
 

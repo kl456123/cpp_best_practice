@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import time
 import torch
 from torchvision.models import resnet
 
@@ -70,14 +71,21 @@ def generate_onnx(saved_path):
             print('load weights failed. the model is not initialized')
 
     # inference
-    res = model(inputs)
+    for i in range(3):
+        res = model(inputs)
+    start = time.time()
+    niters = 10
+    for i in range(niters):
+        res = model(inputs)
+    duration=time.time()-start
+    print(duration/niters)
     # convert from nchw to nhwc
-    if len(res.shape) == 4:
-        print(res.permute(0, 2, 3, 1))
-    else:
-        print(res)
-    print(res.shape)
-    print(res.argmax())
+    # if len(res.shape) == 4:
+        # print(res.permute(0, 2, 3, 1))
+    # else:
+        # print(res)
+    # print(res.shape)
+    # print(res.argmax())
 
     # save in any time
     torch.save(model.state_dict(), pth_path)

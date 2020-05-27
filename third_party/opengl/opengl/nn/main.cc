@@ -40,29 +40,40 @@ int main(int argc, char** argv){
 
     // some params
     std::string model_path = "./demo.dlx";
-    const int num_iters = 1;
+    const int num_iters = 200;
     const float precision = 1e-6;
 
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
-    ::opengl::NamedTensorList inputs;
     ::opengl::TensorNameList output_names({"output"});
     ::opengl::StringList dformats({"NHWC"});
-    std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
 
-    inputs.resize(1);
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
     // LOG(INFO)<<"ModelInfo After Load Graph: "
     // <<session->DebugString();
+
+    // warming up
+    for(int i=0;i<3;++i){
+        // init graph according to inputs
+        session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
+                    {num_inputs, input_height, input_width, input_channels})}});
+        // do computation for the graph
+        session->Run();
+
+        // get cpu outputs from device
+        session->GetOutputs(output_names, dformats, &outputs_cpu);
+
+        // print output
+        // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
+
+    }
     auto env_time = EnvTime::Default();
     auto start_time = env_time->NowMicros();
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
-        inputs[0].first = "input";
-        inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape);
-        session->Setup(inputs);
-
+        session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
+                    {num_inputs, input_height, input_width, input_channels})}});
         // do computation for the graph
         session->Run();
 

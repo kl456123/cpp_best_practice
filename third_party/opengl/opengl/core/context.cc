@@ -108,6 +108,11 @@ namespace opengl{
         OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, device_tensor->device<Texture>()->id()));
         OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
                     kFormat, kDataType, data));
+
+        // TODO(breakpoint) use Tensor
+        if(data){
+            free(data);
+        }
     }
     void Context::ConvertTensorNCHWToHWN4C4(const Tensor* tensor, void** out){
         // handle pytorch filter
@@ -180,7 +185,7 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
-        void* data=new float[device_tensor->size()];
+        void* data = new float[device_tensor->size()];
 
         GLint ext_format, ext_type;
         const int width = device_tensor->device<Texture>()->shape()[0];
@@ -212,6 +217,9 @@ namespace opengl{
                 <<device_tensor->dformat()<<" -> cpu_dformat: "
                 <<cpu_tensor->dformat();
         }
+
+        //TODO(breakpoint) cache it
+        free(data);
     }
 
     void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){

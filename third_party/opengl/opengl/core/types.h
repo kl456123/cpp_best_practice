@@ -15,6 +15,8 @@ namespace opengl{
     typedef std::vector<Tensor*> TensorList;
     typedef std::vector<IntList> TensorShapeList;
     typedef std::vector<Kernel*> KernelList;
+    typedef std::vector<std::unique_ptr<Kernel>>OwnedKernelList;
+    typedef std::vector<std::unique_ptr<Tensor>>OwnedTensorList;
     typedef std::vector<std::string> StringList;
 
     typedef std::function<void(Kernel**, Context*)> KernelFactory;

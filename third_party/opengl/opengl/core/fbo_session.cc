@@ -35,7 +35,8 @@ namespace opengl{
     }//namespace
 
     FBOSession::~FBOSession(){
-        glDeleteFramebuffers(1, &frame_buffer_);
+        OPENGL_CALL(glDeleteFramebuffers(1, &frame_buffer_));
+        // delete all tensors
     }
 
     void FBOSession::LoadGraph(const std::string file_path){
@@ -54,6 +55,8 @@ namespace opengl{
 
     void FBOSession::LoadGraph(const ::dlxnet::ModelProto& model_proto){
         *model_=model_proto;
+        // clear kernels first
+        kernels_.clear();
 
         // LOG(INFO)<<"Write proto to Text";
         // WriteProtoToText("./demo.pbtxt", *model_);
@@ -71,6 +74,7 @@ namespace opengl{
 
 
         Kernel* kernel;
+        std::unique_ptr<Kernel> kernel_ptr;
         for(auto& node: graph.node()){
             kernel=nullptr;
             // TODO(breakpoint) handle with input node, ignore it for now
@@ -79,6 +83,7 @@ namespace opengl{
                 continue;
             }
             KernelRegistry::Global()->CreateKernel(node.type(), &kernel, context_);
+            kernel_ptr.reset(kernel);
             if(kernel==nullptr){
                 LOG(FATAL)<<"unsupported kernel name "<<node.type();
             }
@@ -90,14 +95,16 @@ namespace opengl{
 
             kernel->SetupAttr(node.attr());
             // fill inputs and outputs
-            for(int i=0;i<node.input_index_size();++i){
+            for(int i=0; i<node.input_index_size(); ++i){
                 kernel->input_tensor_indexes_.emplace_back(node.input_index(i));
             }
-            for(int i=0;i<node.output_index_size();++i){
+            for(int i=0; i<node.output_index_size(); ++i){
                 kernel->output_tensor_indexes_.emplace_back(node.output_index(i));
             }
-            kernels_.emplace_back(kernel);
+            kernels_.emplace_back(std::move(kernel_ptr));
         }
+        finalized_ = false;
+        graph_created_ = true;
         OPENGL_CHECK_ERROR;
     }
 
@@ -143,20 +150,11 @@ namespace opengl{
     }
 
     void FBOSession::Run(){
+        CHECK(finalized_)<<"Please Setup Session First";
         for(int i=0;i<kernels_.size();++i){
-            Kernel* kernel = kernels_[i];
-
-            // clear first
-            kernel->input_tensors_.clear();
-            kernel->output_tensors_.clear();
-
-            // prepare input and output
-            for(auto& index:kernel->input_tensor_indexes_){
-                kernel->input_tensors_.emplace_back(total_tensors_[index]);
-            }
-
-            for(auto&index:kernel->output_tensor_indexes_){
-                kernel->output_tensors_.emplace_back(total_tensors_[index]);
+            auto& kernel = kernels_[i];
+            if(kernel->kernel_type()=="Const"){
+                continue;
             }
             kernel->Compute();
             OPENGL_CHECK_ERROR;
@@ -194,6 +192,7 @@ namespace opengl{
     }
 
     void FBOSession::Setup(const NamedTensorList& inputs_cpu){
+        CHECK(graph_created_)<<"No Graph Loaded!";
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
         // for each kernel during computation
@@ -210,23 +209,33 @@ namespace opengl{
             }
             const int input_index = iter->second;
 
-            // allocate memory
-            total_tensors_[input_index] = new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
-                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::NHWC4);
-
+            if(!finalized_){
+                // allocate memory in the first time
+                total_tensors_[input_index].reset(
+                        new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
+                            Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::NHWC4));
+            }
             // upload data, initialize input tensor
-            context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index]);
+            context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index].get());
+        }
+        if(finalized_){
+            return;
         }
 
         for(int i=0;i<kernels_.size();++i){
-            Kernel* kernel = kernels_[i];
+            auto& kernel = kernels_[i];
+            // clear input and output tensors
+            kernel->input_tensors_.clear();
+            kernel->output_tensors_.clear();
+
             TensorList input_tensors;
             TensorShapeList input_shapes, output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
-                Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]];
+                Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]].get();
                 CHECK(input_tensor)<<"input tensor is uninitialized of kernel index: "<<i;
                 input_tensors.emplace_back(input_tensor);
                 input_shapes.emplace_back(input_tensor->shape());
+                kernel->input_tensors_.emplace_back(input_tensor);
             }
 
             // infer output shapes from input shapes
@@ -238,14 +247,23 @@ namespace opengl{
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
                 auto dformat = kernel->GetOutputDFormat(j);
-                total_tensors_[kernel->output_tensor_indexes_[j]] =
-                    new Tensor(Tensor::DT_FLOAT, output_shapes[j],
-                            Tensor::DEVICE_TEXTURE, dformat);
+                auto output_tensor = new Tensor(Tensor::DT_FLOAT, output_shapes[j],
+                        Tensor::DEVICE_TEXTURE, dformat);
+                total_tensors_[kernel->output_tensor_indexes_[j]].reset(output_tensor);
+
+                kernel->output_tensors_.emplace_back(output_tensor);
+            }
+
+            if(kernel->kernel_type()=="Const"){
+                // precompute constant kernel
+                kernel->Compute();
+                OPENGL_CHECK_ERROR;
             }
 
             // log kernel info after kernel finalized
             DLOG(INFO)<<kernel->DebugString();
         }
+        finalized_ = true;
         OPENGL_CHECK_ERROR;
     }
 
@@ -296,6 +314,6 @@ namespace opengl{
 
     Tensor* FBOSession::FindTensorById(const int id){
         CHECK_LT(id, total_tensors_.size());
-        return total_tensors_[id];
+        return total_tensors_[id].get();
     }
 }//namespace opengl
