@@ -25,6 +25,7 @@ namespace graph{
             void set_name(std::string name);
             const std::string& type_string() const;
             const ::dlxnet::NodeProto& def() const;
+            ::dlxnet::NodeProto& def();
 
             // input and output
             int32_t num_outputs() const;

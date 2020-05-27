@@ -1,57 +1,191 @@
 #include <glog/logging.h>
+#include <vector>
+#include <cmath>
 #include <unordered_set>
 
 #include "optimizers/remapper.h"
+#include "optimizers/op_types.h"
 
 
 
 namespace optimizer{
-    void MergeBatchNormToConvolution(graph::Node* bn_node, graph::Node* conv2d_node){
+    namespace{
+        constexpr int kMissingIndex = -1;
+        // matched pattern
+        struct ContractionWithBatchNormAndActivation{
+            ContractionWithBatchNormAndActivation()=default;
+            ContractionWithBatchNormAndActivation(int contraction,
+                    int batchnorm, int activation)
+                :batchnorm(batchnorm), contraction(contraction),
+                activation(activation){}
+            int batchnorm=kMissingIndex;
+            int contraction=kMissingIndex;
+            int activation=kMissingIndex;
+        };
+
+        struct ContractionWithBatchNorm{
+            ContractionWithBatchNorm()=default;
+            ContractionWithBatchNorm(int contraction, int batchnorm)
+                :batchnorm(batchnorm), contraction(contraction){}
+            int batchnorm=kMissingIndex;
+            int contraction=kMissingIndex;
+        };
+
+        bool FindContractionWithBatchNorm(graph::Graph* graph,
+                int node_index,  ContractionWithBatchNorm* matched){
+            auto node = graph->FindNodeId(node_index);
+            if(!IsBatchnorm(*node)){
+                return false;
+            }
+            auto contraction_node = node->input_edge(0)->src();
+            if(!IsConv2D(*contraction_node)){
+                return false;
+            }
+            ContractionWithBatchNorm pattern{contraction_node->id(), node_index};
+            *matched = pattern;
+            return true;
+        }
+
+        bool FindContractionWithBatchNormAndActivation(graph::Graph* graph,
+                int node_index,  ContractionWithBatchNormAndActivation* matched){
+            // reverse traverse
+            auto node = graph->FindNodeId(node_index);
+            if(!IsActivation(*node))return false;
+
+            auto batchnorm_node = node->input_edge(0)->src();
+            ContractionWithBatchNorm base;
+            if(!FindContractionWithBatchNorm(graph, batchnorm_node->id(), &base)){
+                return false;
+            }
+            ContractionWithBatchNormAndActivation pattern{base.contraction,
+                base.batchnorm, node->id()};
+            *matched = pattern;
+            return true;
+        }
+
+        graph::Node* MakeNode(graph::Graph* graph, const std::vector<int> dims, int node_index){
+            // add const node to node_index
+            auto dst_node = graph->FindNodeId(node_index);
+            const int input_index = dst_node->num_inputs();
+            std::string node_name = dst_node->name()+":"+std::to_string(input_index);
+            ::dlxnet::NodeProto node_proto;
+            node_proto.set_name(node_name);
+            node_proto.set_type("Const");
+            // it equals to the node id in the graph
+            node_proto.add_output_index(graph->num_node_ids());
+            // set value
+            dlxnet::TensorProto* tensor = node_proto.mutable_attr()
+                ->mutable_const_attr()->mutable_value();
+            int num_elements=1;
+            for(auto dim:dims){
+                tensor->add_dims(dim);
+                num_elements*=dim;
+            }
+            // allocate it here
+            tensor->mutable_float_data()->Resize(num_elements, 0);
+            // set tensor info
+            tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
+            tensor->set_data_format(dlxnet::TensorProto::NCHW);
+            tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
+
+            auto src_node = graph->AddNode(node_proto);
+            graph->AddEdge(src_node, 0, dst_node, input_index);
+            return src_node;
+        }
+
+        void MergeBatchNormToConvolution(graph::Graph* graph,
+                ContractionWithBatchNorm& matched, std::vector<bool>* nodes_to_delete){
+            auto contraction_node  = graph->FindNodeId(matched.contraction);
+            auto batchnorm_node = graph->FindNodeId(matched.batchnorm);
+            // find batchnorm params
+            // gamma, beta, mean, var
+            auto gamma_node = batchnorm_node->input_edge(1)->src();
+            auto beta_node = batchnorm_node->input_edge(2)->src();
+            auto mean_node = batchnorm_node->input_edge(3)->src();
+            auto var_node = batchnorm_node->input_edge(4)->src();
+            auto epsilon = batchnorm_node->def().attr().batchnorm_attr().epsilon();
+
+            auto gamma_data = gamma_node->def().attr().const_attr().value().float_data();
+            auto beta_data = beta_node->def().attr().const_attr().value().float_data();
+            auto mean_data = mean_node->def().attr().const_attr().value().float_data();
+            auto var_data = var_node->def().attr().const_attr().value().float_data();
+
+            // get size
+            auto dims = gamma_node->def().attr().const_attr().value().dims();
+            int num_elements = 1;
+            for(auto dim: dims){
+                num_elements *= dim;
+            }
+
+            /// get conv2d params
+            auto weight_node = contraction_node->input_edge(1)->src();
+            bool use_bias = contraction_node->num_inputs()>2;
+            graph::Node* bias_node;
+            if(use_bias){
+                bias_node = contraction_node->input_edge(2)->src();
+            }else{
+                // add bias to graph
+                bias_node = MakeNode(graph, {1, num_elements, 1, 1},
+                        contraction_node->id());
+            }
+            auto bias_data = bias_node->def().mutable_attr()->mutable_const_attr()
+                ->mutable_value()->mutable_float_data()->mutable_data();
+            // n_out, n_in, h, w
+            auto weight_data = weight_node->def().mutable_attr()->mutable_const_attr()
+                ->mutable_value()->mutable_float_data()->mutable_data();
+            auto weight_dims = weight_node->def().attr().const_attr().value().dims();
+            const int chw = weight_dims[1]*weight_dims[2]*weight_dims[3];
+            // float* scale = new float[num_elements];
+            // float* bias = new float[num_elements];
+
+            // TODO(breakpoint) use parallel style
+            for(int i=0; i<num_elements; ++i){
+                auto scale = -gamma_data[i]*mean_data[i]/std::sqrt(var_data[i]+epsilon);
+                auto bias = beta_data[i];
+                for(int j=0;j<chw;++j){
+                    weight_data[i*chw+j] *=scale;
+                }
+                bias_data[i] = bias_data[i]*scale+bias;
+            }
+            (*nodes_to_delete)[matched.batchnorm] = true;
+        }
+
+        void MergeBatchNormActivationToConvolution(graph::Graph* graph,
+                ContractionWithBatchNormAndActivation& matched,
+                std::vector<bool>* nodes_to_delete){
+            ContractionWithBatchNorm base{matched.contraction, matched.batchnorm};
+            (*nodes_to_delete)[matched.activation] = true;
+            MergeBatchNormToConvolution(graph, base, nodes_to_delete);
+        }
     }
-    void MergeBatchNormActivationToConvolution(graph::Node* act_node, graph::Node* bn_node,
-            graph::Node* conv2d_node){
-    }
+
 
     void Remapper::Run(graph::Graph* graph){
-        // find conv2d bn bias
+        std::vector<bool> nodes_to_delete(graph->num_node_ids(), false);
 
-        std::unordered_set<graph::Node* > nodes_to_delete;
         for(int i=0;i<graph->num_node_ids();++i){
             // find specified pattern from each node
             auto node = graph->FindNodeId(i);
 
-            // ignore when processed already
-            if(nodes_to_delete.find(node)!=nodes_to_delete.end()){
-                continue;
-            }
+            if(nodes_to_delete[i])continue;
 
-            if(node->type_string()!="Conv"){
-                continue;
-            }
-            // fall to conv case
-            const graph::Edge* e=nullptr;
-            node->output_edge(0, &e);
-            graph::Node* next_node = e->dst();
-            // check the next node
-            if(next_node->type_string()!="BatchNormalization"){
-                continue;
-            }
-            // conv + bn
-            // merge them
-            VLOG(1)<<"exist chance to merge conv and batchnorm here";
+            ContractionWithBatchNormAndActivation contraction_with_batchnorm_activation;
+            ContractionWithBatchNorm contraction_with_batchnorm;
+            // if(FindContractionWithBatchNormAndActivation(graph, i, &contraction_with_batchnorm_activation)){
+            // MergeBatchNormActivationToConvolution(graph, contraction_with_batchnorm_activation,
+            // &nodes_to_delete);
+            // continue;
+            // }
 
-            graph::Node* next_next_node = next_node->output_edge(0)->dst();
-            if(next_next_node->type_string()!="Relu"){
-                MergeBatchNormToConvolution(next_node, node);
-                nodes_to_delete.insert(next_node);
-            }else{
-                MergeBatchNormActivationToConvolution(next_next_node, next_node, node);
-                nodes_to_delete.insert(next_node);
-                nodes_to_delete.insert(next_next_node);
+            if(FindContractionWithBatchNorm(graph, i, &contraction_with_batchnorm)){
+                MergeBatchNormToConvolution(graph, contraction_with_batchnorm, &nodes_to_delete);
+                continue;
             }
         }
 
-        for(auto node: nodes_to_delete){
+        for(int i=0;i<nodes_to_delete.size();++i){
+            if(!nodes_to_delete[i])continue;
+            auto node = graph->FindNodeId(i);
             // get src and dst first
             auto src = node->input_edge(0)->src();
             auto dst = node->output_edge(0)->dst();

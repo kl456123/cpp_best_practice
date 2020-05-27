@@ -24,6 +24,7 @@ namespace graph{
     const std::string& Node::name() const { return props_->node_def.name(); }
     const std::string& Node::type_string() const { return props_->node_def.type(); }
     const ::dlxnet::NodeProto& Node::def() const { return props_->node_def; }
+    ::dlxnet::NodeProto& Node::def() { return props_->node_def; }
 
     std::string Node::DebugString() const {
         std::stringstream ret;
@@ -101,7 +102,8 @@ namespace graph{
     Node* Graph::AddNode(::dlxnet::NodeProto node_def){
         // TODO(breakpoint) use kernel or kernel_type?
         const std::string op_type = node_def.type();
-        Node* node = AllocateNode(std::make_shared<NodeProperties>(node_def, op_type));
+        Node* node = AllocateNode(std::make_shared<NodeProperties>(
+                    std::move(node_def), op_type));
         return node;
     }
 
