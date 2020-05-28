@@ -54,20 +54,20 @@ int main(int argc, char** argv){
     // <<session->DebugString();
 
     // warming up
-    // for(int i=0;i<3;++i){
-        // // init graph according to inputs
-        // session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    // {num_inputs, input_height, input_width, input_channels})}});
-        // // do computation for the graph
-        // session->Run();
+    for(int i=0;i<3;++i){
+        // init graph according to inputs
+        session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
+                    {num_inputs, input_height, input_width, input_channels})}});
+        // do computation for the graph
+        session->Run();
 
-        // // get cpu outputs from device
-        // session->GetOutputs(output_names, dformats, &outputs_cpu);
+        // get cpu outputs from device
+        session->GetOutputs(output_names, dformats, &outputs_cpu);
 
-        // // print output
-        // // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
+        // print output
+        // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
 
-    // }
+    }
     auto env_time = EnvTime::Default();
     auto start_time = env_time->NowMicros();
     for(int i=0;i<num_iters;++i){
