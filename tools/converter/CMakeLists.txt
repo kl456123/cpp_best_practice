@@ -52,4 +52,5 @@ message(STATUS "[*] searching *.cpp")
 add_executable(Converter ${SRC_FILES} ${ProtoSources})
 
 
-target_link_libraries(Converter ${Protobuf_LIBRARIES} glog::glog)
+target_link_libraries(Converter ${Protobuf_LIBRARIES} 
+    ${PROTOBUF_LIBRARIES} glog::glog)
