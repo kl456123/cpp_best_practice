@@ -80,10 +80,10 @@ def generate_onnx(saved_path):
     duration=time.time()-start
     print(duration/niters)
     # convert from nchw to nhwc
-    # if len(res.shape) == 4:
-        # print(res.permute(0, 2, 3, 1))
-    # else:
-        # print(res)
+    if len(res.shape) == 4:
+        print(res.permute(0, 2, 3, 1))
+    else:
+        print(res)
     # print(res.shape)
     # print(res.argmax())
 

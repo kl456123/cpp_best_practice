@@ -140,8 +140,8 @@ namespace optimizer{
 
             // TODO(breakpoint) use parallel style
             for(int i=0; i<num_elements; ++i){
-                auto scale = -gamma_data[i]*mean_data[i]/std::sqrt(var_data[i]+epsilon);
-                auto bias = beta_data[i];
+                auto scale = gamma_data[i]/std::sqrt(var_data[i]+epsilon);
+                auto bias = -scale * mean_data[i] + beta_data[i];
                 for(int j=0;j<chw;++j){
                     weight_data[i*chw+j] *=scale;
                 }

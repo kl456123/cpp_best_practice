@@ -36,4 +36,7 @@ void Converter::Optimize(const Optimizer* optimizer){
     graph::ConvertGraphDefToGraph(model_->graph(), base_graph.get());
     optimizer->Optimize(base_graph.get());
     base_graph->ToGraphDef(model_->mutable_graph());
+
+    LOG(INFO)<<"The information of model proto after optimized:"
+        << "Node Nums: "<<model_->graph().node_size();
 }

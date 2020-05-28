@@ -7,6 +7,46 @@
 
 
 namespace graph{
+    namespace{
+
+        void TopologicalSort(const Graph* graph, std::vector<int>* sorted_node_indexes){
+            std::set<int> ready;
+            std::vector<int> pending;
+
+            for(int i=0;i<graph->num_node_ids();++i){
+                const Node* node = graph->FindNodeId(i);
+                // The current Node in Index is already freed
+                if(node==nullptr){
+                    pending.emplace_back(0);
+                    continue;
+                }
+
+                pending.emplace_back(node->num_inputs());
+                if(node->num_inputs()==0){
+                    ready.insert(i);
+                }
+            }
+            while(ready.size()){
+                int o = *ready.begin();
+                ready.erase(ready.begin());
+                const Node* node = graph->FindNodeId(o);
+                // skip unused op
+                if(node->out_edges().size()==0&&node->num_inputs()==0){continue;}
+                sorted_node_indexes->emplace_back(o);
+
+                // update succeed nodes
+                for(const Edge* edge: node->out_edges()){
+                    auto node_id = edge->dst()->id();
+                    if(node_id<0){continue;}
+                    CHECK_GT(pending[node_id], 0);
+                    pending[node_id]--;
+                    if(pending[node_id]==0){
+                        ready.insert(node_id);
+                    }
+                }
+            }
+        }
+    }
     struct NodeProperties{
         NodeProperties(::dlxnet::NodeProto node_def, const std::string op_type)
             :node_def(std::move(node_def)), op_type(op_type){}
@@ -19,8 +59,11 @@ namespace graph{
         : id_(-1),
         class_(NC_UNINITIALIZED),
         props_(nullptr){}
+    // note here we use num of input edge to get the num of input tensor slot
+    // due to it is one to one mapping for input for now
+    // but it is wrong for output due to prev node can feed tensor to multiple succeed nodes
     int32_t Node::num_outputs() const { return props_->node_def.output_index().size(); }
-    int32_t Node::num_inputs() const { return props_->node_def.input_index().size(); }
+    int32_t Node::num_inputs() const { return in_edges_.size(); }
     const std::string& Node::name() const { return props_->node_def.name(); }
     const std::string& Node::type_string() const { return props_->node_def.type(); }
     const ::dlxnet::NodeProto& Node::def() const { return props_->node_def; }
@@ -188,15 +231,15 @@ namespace graph{
 
         // map from tensor name to tensor index
         std::unordered_map<std::string, int> total_tensor_names;
+        // topological sort first and remove unused node at the same time
+        std::vector<int>  sorted_node_indexes;
+        TopologicalSort(this, &sorted_node_indexes);
 
-        for(int i=0;i<num_node_ids();++i){
+        for(auto i: sorted_node_indexes){
             const Node* node = FindNodeId(i);
             // The current Node in Index is already freed
             if(node==nullptr){
                 continue;
-            }
-            if(node->name()=="335"){
-                auto tmp = 1+1;
             }
             auto node_def = graph_def->add_node();
             // set node_def from scratch
