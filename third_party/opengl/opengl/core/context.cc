@@ -4,6 +4,8 @@
 #include "opengl/core/context.h"
 #include "opengl/core/program.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/driver.h"
+#include "opengl/core/tensor_format.h"
 
 
 namespace opengl{
@@ -78,11 +80,42 @@ namespace opengl{
         }
         *out = data;
     }
+    void Context::ConvertTensorNHWCToNHWC4(const Tensor* src_tensor, Tensor* dst_tensor){
+        // check format for src_tensor and dst_tensor
+        CHECK_EQ(src_tensor->dformat(), ::dlxnet::TensorProto::NHWC);
+        CHECK_EQ(dst_tensor->dformat(), ::dlxnet::TensorProto::NHWC4);
+
+        // check memory type
+        CHECK(src_tensor->is_host());
+        CHECK(dst_tensor->is_host());
+
+        // check size
+        CHECK_EQ(src_tensor->size(), dst_tensor->size());
+        const int num_elements = src_tensor->num_elements();
+
+        float* src_data = src_tensor->host<float>();
+        const int dst_channel = dst_tensor->channel()*4;
+        const int src_channel = src_tensor->channel();
+        float* dst_data = dst_tensor->host<float>();
+        for(int i=0;i<num_elements;++i){
+            if(i%dst_channel<src_channel){
+                dst_data[i] = src_data[i/dst_channel*src_channel+i%dst_channel];
+            }
+        }
+    }
 
     void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
         // insanity check first
         // the same data format, nhwc4
-        void* data=nullptr;
+        void* data = nullptr;
+        auto shapes = TensorShapeFromFormat(device_tensor->dformat(),
+                cpu_tensor->shape(), cpu_tensor->dformat());
+        // allocate tmp host tensor
+        Tensor host_tensor(device_tensor->dtype(), shapes, Tensor::HOST_MEMORY,
+                device_tensor->dformat());
+
+        data = host_tensor.host();
+
         if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
                 // convert to nhwc4
@@ -92,8 +125,6 @@ namespace opengl{
             }else{
                 LOG(FATAL)<<"Unsupported cpu_tensor dformat: "<<cpu_tensor->dformat();
             }
-
-
         }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){
             CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW)
                 <<"dformat of cpu tensor for filter should be NCHW";
@@ -101,13 +132,15 @@ namespace opengl{
         }else{
             data = cpu_tensor->host();
         }
-        // same number of bytes
-        // CHECK_EQ(cpu_tensor->size(), device_tensor->size());
-        const int width = device_tensor->device<Texture>()->shape()[0];
-        const int height = device_tensor->device<Texture>()->shape()[1];
-        OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, device_tensor->device<Texture>()->id()));
-        OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height,
-                    kFormat, kDataType, data));
+
+        auto texture = device_tensor->device<Texture>();
+        const int width = texture->width();
+        const int height = texture->height();
+        GLenum format = texture->format();
+        GLenum type = texture->type();
+        // TODO(breakpoint) why DMA is slower than non DMA
+        CopyHostToTexture(data, width, height, device_tensor->device<Texture>()->id(),
+                format, type);
 
         // TODO(breakpoint) use Tensor
         if(data){
@@ -185,22 +218,17 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
-        void* data = new float[device_tensor->size()];
+        float* data = new float[device_tensor->size()/sizeof(float)];
+        auto texture = device_tensor->device<Texture>();
 
-        GLint ext_format, ext_type;
-        const int width = device_tensor->device<Texture>()->shape()[0];
-        const int height = device_tensor->device<Texture>()->shape()[1];
+        const int width = texture->shape()[0];
+        const int height = texture->shape()[1];
+        // copy texture to host first
 
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
-        CHECK_EQ(ext_type, kDataType)<<"unmatched type";
-        CHECK_EQ(ext_format, kFormat)<<"unmatched format";
-
-        OPENGL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                device_tensor->device<Texture>()->id() , 0));
-        // download
-        OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));
-        OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
+        GLenum format = texture->format();
+        GLenum type = texture->type();
+        CopyTextureToHost(data, width, height, device_tensor->device<Texture>()->id(),
+                format, type);
 
         if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             // only one cpu dformat supported here

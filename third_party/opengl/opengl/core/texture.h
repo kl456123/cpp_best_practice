@@ -22,12 +22,14 @@ namespace opengl{
                 return dims_[0];
             }
             GLenum format()const{return format_;}
+            GLenum type()const{return type_;}
         private:
             GLenum target_;
             GLuint id_;
             GLenum format_;
             // width, height
             std::vector<int> dims_;
+            GLenum type_;
     };
 }//namespace opengl
 

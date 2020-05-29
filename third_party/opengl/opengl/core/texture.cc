@@ -28,11 +28,13 @@ namespace opengl{
             // GLenum internal_format = GL_RGBA32F;
             GLenum format = GL_RGBA;
 
+            type_ = GL_FLOAT;
+
             OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dims[0], dims[1],
-                    0, format, GL_FLOAT, image_data));
+                    0, format, type_, image_data));
 
             // store internal format
-            format_ = internal_format;
+            format_ = format;
         }
 
     Texture::~Texture(){

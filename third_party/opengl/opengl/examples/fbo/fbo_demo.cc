@@ -278,6 +278,31 @@ void Download(GLfloat *data, GLint width, GLint height, GLuint texture){
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type, data));
 }
 
+void Upload(GLfloat* data, GLuint texture, GLint width, GLint height){
+    OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
+    OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                width, height, format, GL_FLOAT, data));
+}
+
+void Upload_DMA(GLfloat* data, GLuint texture, GLint width, GLint height){
+    GLuint io_buffer;
+    OPENGL_CALL(glGenBuffers(1, &io_buffer));
+    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, io_buffer);
+    size_t bytes = width*height*num_channels*sizeof(float);
+    OPENGL_CALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, bytes, NULL, GL_STREAM_DRAW));
+
+    // copy data from host to pbo
+    void* mem = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, bytes, GL_MAP_WRITE_BIT);
+    CHECK_NOTNULL(mem);
+    memcpy(mem, data, bytes);
+    OPENGL_CALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+    // copy pbo to texture
+    OPENGL_CALL(glBindTexture(GL_TEXTURE_2D, texture));
+    OPENGL_CALL(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0,
+                width, height, format, GL_FLOAT, BUFFER_OFFSET(0)));
+    OPENGL_CALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+}
+
 void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     GLint ext_format, ext_type;
     glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
@@ -294,8 +319,10 @@ void Download_DMA(GLfloat* data, GLint width, GLint height, GLuint texture){
     OPENGL_CALL(glBindBuffer(GL_PIXEL_PACK_BUFFER, io_buffer));
     OPENGL_CALL(glBufferData(GL_PIXEL_PACK_BUFFER, bytes,
                 NULL, GL_STREAM_READ));
+    // copy data from fbo to pbo
     OPENGL_CALL(glReadPixels(0, 0, width, height, ext_format, ext_type,
                 BUFFER_OFFSET(0)));
+    // copy data from pbo to host
     void* mem = glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, bytes, GL_MAP_READ_BIT);
     CHECK_NOTNULL(mem);
     memcpy(data, mem, bytes);
@@ -355,8 +382,12 @@ void Run(std::vector<int> shape){
         texture0_data[i] = dist(mt);
         texture1_data[i] = dist(mt);
     }
-    auto input0 = CreateTexture(texture0_data.data(), width, height);
-    auto input1 = CreateTexture(texture1_data.data(), width, height);
+    //
+    auto input0 = CreateTexture(nullptr, width, height);
+    auto input1 = CreateTexture(nullptr, width, height);
+
+    Upload_DMA(texture0_data.data(), input0, width, height);
+    Upload_DMA(texture1_data.data(), input1, width, height);
 
     auto output = CreateTexture(nullptr, width, height);
 
@@ -390,7 +421,7 @@ void Run(std::vector<int> shape){
     ///////////////////////////////////////
     // Download output Data from Device
     std::vector<GLfloat> retrieved_data(static_cast<size_t>(num_elements));
-    Download(retrieved_data.data(), width, height, output);
+    Download_DMA(retrieved_data.data(), width, height, output);
     // std::vector<GLfloat> retrieved_data2(static_cast<size_t>(num_elements));
     // Download(retrieved_data2.data(), width, height, input0);
 

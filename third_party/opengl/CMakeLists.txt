@@ -36,6 +36,7 @@ set(CORE_SRC_NAMES
     kernel.cc
     kernel_registry.cc
     init.cc
+    driver.cc
     tensor.cc
     allocator.cc
     buffer_base.cc

@@ -15,6 +15,7 @@
 #include "opengl/core/buffer.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/dlxnet.pb.h"
+#include "opengl/core/tensor_format.h"
 #include <glog/logging.h>
 
 namespace opengl{
@@ -154,39 +155,16 @@ namespace opengl{
             }
 
             const int channel()const{
-                CHECK_EQ(shape_.dims_size(), 4);
-                if(dformat_==dlxnet::TensorProto::NHWC
-                        ||dformat_==dlxnet::TensorProto::NHWC4){
-                    return shape_[3];
-                }
-                return shape_[1];
+                return GetChannel(shape(), dformat_);
             }
             const int width()const{
-                CHECK_EQ(shape_.dims_size(), 4);
-                if(dformat_==dlxnet::TensorProto::NHWC
-                        ||dformat_==dlxnet::TensorProto::NHWC4){
-                    return shape_[2];
-                }
-                return shape_[3];
+                return GetWidth(shape(), dformat_);
             }
             const int height()const{
-                CHECK_EQ(shape_.dims_size(), 4);
-                if(dformat_==dlxnet::TensorProto::NHWC
-                        ||dformat_==dlxnet::TensorProto::NHWC4){
-                    return shape_[1];
-                }
-                // nchw or hwn4c4
-                // note that for hwn4c4, it is designed for
-                // filter. due to filter is nchw(n_out,n_in, h, w)
-                // and it is not changed during transformation so it fall
-                // to nchw case
-                return shape_[2];
+                return GetHeight(shape(), dformat_);
             }
             const int num()const{
-                // for all data format in dlxnet framework,
-                // the first dim always be batch dim
-                CHECK_EQ(shape_.dims_size(), 4);
-                return shape_[0];
+                return GetBatch(shape(), dformat_);
             }
 
             void CheckShape(const TensorShape& shape){
@@ -195,16 +173,16 @@ namespace opengl{
                 }
             }
 
-            void AmendShape(){
-                // make sure the length of shape equals to 4
-                CheckShape(shape_);
-                int dims_size = shape_.dims_size();
-                if(dims_size<4){
-                    for(int i=0;i<4-dims_size;++i){
-                        shape_.insert_dim(0, 1);
-                    }
-                }
-            }
+            // void AmendShape(){
+                // // make sure the length of shape equals to 4
+                // CheckShape(shape_);
+                // int dims_size = shape_.dims_size();
+                // if(dims_size<4){
+                    // for(int i=0;i<4-dims_size;++i){
+                        // shape_.insert_dim(0, 1);
+                    // }
+                // }
+            // }
 
             std::string DebugString()const;
             std::string ShortDebugString()const;
@@ -235,7 +213,7 @@ namespace opengl{
 
     inline Tensor::Tensor(DataType dtype, IntList shapes, MemoryType mem_type, DataFormat dformat)
         :shape_(shapes), dtype_(dtype),mem_type_(mem_type), dformat_(dformat){
-            AmendShape();
+            // AmendShape();
 
             size_t num_elements, bytes;
             num_elements = shape_.num_elements();

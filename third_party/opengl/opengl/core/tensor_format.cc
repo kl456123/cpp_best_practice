@@ -1,70 +1,130 @@
 #include "opengl/core/tensor_format.h"
+#include "opengl/utils/macros.h"
 
 namespace opengl{
-    bool FormatFromString(const std::string& format_str, TensorFormat* format) {
-        if (format_str == "NHWC") {
-            *format = TensorFormat::NHWC;
-            return true;
+    int GetChannel(const IntList& shape, DataFormat dformat){
+        CHECK_GE(shape.size(), 4);
+        if(dformat==::dlxnet::TensorProto::NHWC){
+            return shape[3];
         }
-        if (format_str == "NCHW") {
-            *format = TensorFormat::NCHW;
-            return true;
+        if(dformat==::dlxnet::TensorProto::NCHW){
+            return shape[1];
         }
-        if (format_str == "NCHW4") {
-            *format = TensorFormat::NCHW4;
-            return true;
+
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            return shape[3];
         }
-        if (format_str == "NHWC4") {
-            *format = TensorFormat::NHWC4;
-            return true;
+
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            return shape[3];
         }
-        return false;
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
     }
 
-    bool FilterFormatFromString(const std::string& format_str,
-            FilterTensorFormat* format) {
-        if (format_str == "OIHW") {
-            *format = FilterTensorFormat::OIHW;
-            return true;
+    int GetBatch(const IntList& shape,
+            DataFormat dformat){
+        CHECK_GE(shape.size(), 4);
+        if(dformat==::dlxnet::TensorProto::NHWC){
+            return shape[0];
         }
-        if (format_str == "HWI4O4") {
-            *format = FilterTensorFormat::HWI4O4;
-            return true;
+        if(dformat==::dlxnet::TensorProto::NCHW){
+            return shape[0];
         }
-        if (format_str == "HWIO") {
-            *format = FilterTensorFormat::HWIO;
-            return true;
+
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            return shape[0];
         }
-        return false;
+
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            return shape[2];
+        }
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
     }
 
-    std::string ToString(TensorFormat format) {
-        switch (format) {
-            case TensorFormat::NHWC:
-                return "NHWC";
-            case TensorFormat::NCHW:
-                return "NCHW";
-            case TensorFormat::NCHW4:
-                return "NCHW4";
-            case TensorFormat::NHWC4:
-                return "NHWC4";
-            default:
-                LOG(FATAL) << "Invalid Format: " << static_cast<int32_t>(format);
-                return "INVALID_FORMAT";
+    int GetWidth(const IntList& shape,
+            DataFormat dformat){
+        CHECK_GE(shape.size(), 4);
+        if(dformat==::dlxnet::TensorProto::NHWC){
+            return shape[2];
+        }
+        if(dformat==::dlxnet::TensorProto::NCHW){
+            return shape[3];
+        }
+
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            return shape[2];
+        }
+
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            return shape[1];
+        }
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
+    }
+
+    int GetHeight(const IntList& shape,
+            DataFormat dformat){
+        CHECK_GE(shape.size(), 4);
+        if(dformat==::dlxnet::TensorProto::NHWC){
+            return shape[1];
+        }
+        if(dformat==::dlxnet::TensorProto::NCHW){
+            return shape[2];
+        }
+
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            return shape[1];
+        }
+
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            return shape[0];
+        }
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
+    }
+
+    IntList MakeTensorShape(const int batch, const int height,
+            const int width, const int channels, DataFormat dformat){
+        if(dformat==::dlxnet::TensorProto::NHWC){
+            return {batch, height, width, channels};
+        }
+        if(dformat==::dlxnet::TensorProto::NCHW){
+            return {batch, channels, height, width};
+        }
+
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            return {batch, height, width, UP_DIV(channels, 4), 4};
+        }
+
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            return {height, width, UP_DIV(batch, 4), UP_DIV(channels, 4), 4, 4};
         }
     }
 
-    std::string ToString(FilterTensorFormat format){
-        switch (format) {
-            case FilterTensorFormat::HWIO:
-                return "HWIO";
-            case FilterTensorFormat::HWI4O4:
-                return "HWI4O4";
-            case FilterTensorFormat::OIHW:
-                return "OIHW";
-            default:
-                LOG(FATAL) << "Invalid Filter Format: " << static_cast<int32_t>(format);
-                return "INVALID_FORMAT";
+    IntList TensorShapeFromFormat(DataFormat dst_format,
+            const IntList& src_shape, DataFormat src_format) {
+        if (src_format == dst_format) {
+            return src_shape;
         }
+        auto channels = GetChannel(src_shape, src_format);
+        auto batch = GetBatch(src_shape, src_format);
+        auto width = GetWidth(src_shape, src_format);
+        auto height = GetHeight(src_shape, src_format);
+
+        // compose them according to dst_format
+        return MakeTensorShape(batch, height, width, channels, dst_format);
+    }
+
+    IntList MakeTextureShape(const IntList shape, DataFormat dformat){
+        // make sure the correct dformat
+        CHECK(dformat==::dlxnet::TensorProto::NHWC4
+                ||::dlxnet::TensorProto::HWN4C4);
+        if(dformat==::dlxnet::TensorProto::NHWC4){
+            CHECK_EQ(shape.size(), 5);
+            return {shape[2]*shape[3], shape[0]*shape[1], 4};
+        }
+        if(dformat==::dlxnet::TensorProto::HWN4C4){
+            CHECK_EQ(shape.size(), 6);
+            return {shape[3]*4, shape[0]*shape[1]*shape[2], 4};
+        }
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
     }
 }//namespace opengl
