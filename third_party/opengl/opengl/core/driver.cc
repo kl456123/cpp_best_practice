@@ -125,6 +125,8 @@ namespace opengl{
         GLint ext_format, ext_type;
         glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
         glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+        OPENGL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                    texture, 0));
         CHECK_EQ(ext_type, dtype)<<"unmatched type";
         CHECK_EQ(ext_format, format)<<"unmatched format";
         OPENGL_CALL(glReadBuffer(GL_COLOR_ATTACHMENT0));

@@ -35,7 +35,6 @@ namespace opengl{
 
     IntList TensorShapeFromFormat(DataFormat dst_format,
             const IntList& src_shape, DataFormat src_format);
-
 }//namespace
 
 

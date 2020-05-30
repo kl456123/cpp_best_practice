@@ -97,6 +97,7 @@ namespace opengl{
         if(dformat==::dlxnet::TensorProto::HWN4C4){
             return {height, width, UP_DIV(batch, 4), UP_DIV(channels, 4), 4, 4};
         }
+        LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
     }
 
     IntList TensorShapeFromFormat(DataFormat dst_format,

@@ -108,13 +108,13 @@ namespace opengl{
         // insanity check first
         // the same data format, nhwc4
         void* data = nullptr;
-        auto shapes = TensorShapeFromFormat(device_tensor->dformat(),
-                cpu_tensor->shape(), cpu_tensor->dformat());
-        // allocate tmp host tensor
-        Tensor host_tensor(device_tensor->dtype(), shapes, Tensor::HOST_MEMORY,
-                device_tensor->dformat());
+        // auto shapes = TensorShapeFromFormatv1(device_tensor->dformat(),
+                // cpu_tensor->shape(), cpu_tensor->dformat());
+        // // // allocate tmp host tensor
+        // Tensor host_tensor(device_tensor->dtype(), shapes, Tensor::HOST_MEMORY,
+                // device_tensor->dformat());
 
-        data = host_tensor.host();
+        // data = host_tensor.host();
 
         if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
