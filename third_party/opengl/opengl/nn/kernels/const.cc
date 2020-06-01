@@ -54,4 +54,5 @@ namespace opengl{
     }
 
     REGISTER_KERNEL_WITH_NAME(ConstKernel, "Const");
+    REGISTER_KERNEL_WITH_NAME(ConstKernel, "Constant");
 }//namespace opengl

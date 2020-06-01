@@ -3,8 +3,10 @@
 set(NN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kernels)
 
 set(NN_SRC_FNAMES conv2d.cc const.cc
-    binary.cc batchnorm.cc relu.cc 
-    pool.cc flatten.cc gemm.cc)
+    binary.cc batchnorm.cc relu.cc
+    pool.cc flatten.cc gemm.cc clip.cc
+    transpose.cc shape.cc gather.cc 
+    unsqueeze.cc concat.cc reshape.cc)
 
 foreach(file_path ${NN_SRC_FNAMES})
     set(NN_SRC_FILES ${NN_SRC_FILES} ${CMAKE_CURRENT_SOURCE_DIR}/kernels/${file_path})

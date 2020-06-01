@@ -1,6 +1,9 @@
 #ifndef OPENGL_CORE_PROGRAM_H_
 #define OPENGL_CORE_PROGRAM_H_
 #include <string>
+#include <vector>
+#include <glog/logging.h>
+
 #include "opengl/core/opengl.h"
 #include "opengl/utils/status.h"
 
@@ -51,6 +54,24 @@ namespace opengl{
 
             void set_buffer(GLuint SSBO, GLenum target){
                 glBindBufferBase(target, 1, SSBO);
+            }
+
+            void set_vec4(const std::string& name, float x, float y, float z, float w)const{
+                glUniform4f(GetLocation(name), x, y, z, w);
+            }
+
+            void set_vec4(const std::string& name, std::vector<float> list)const{
+                CHECK_EQ(list.size(), 4);
+                glUniform4f(GetLocation(name), list[0], list[1], list[2], list[3]);
+            }
+
+            void set_vec4i(const std::string& name, int x, int y, int z, int w)const{
+                glUniform4i(GetLocation(name), x, y, z, w);
+            }
+
+            void set_vec4i(const std::string& name, std::vector<int> list)const{
+                CHECK_EQ(list.size(), 4);
+                glUniform4i(GetLocation(name), list[0], list[1], list[2], list[3]);
             }
 
             void set_input_sampler2D(GLuint tex_output, GLenum internal_format){
