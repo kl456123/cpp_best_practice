@@ -105,10 +105,23 @@ message BinaryAttribute{
 message FlattenAttribute{
     int32 axis=1;
 }
+
+message ClipAttribute{
+    float min=1;
+    float max=2;
+}
+
+message TransposeAttribute{
+    repeated int32 perm=1;
+}
+
 message AvePoolAttribute{
     repeated int64 kernel_shape=1;
     repeated int64 strides=2;
     repeated int64 pads=3;
+}
+
+message ShapeAttribute{
 }
 
 message GemmAttribute{
@@ -119,6 +132,22 @@ message GemmAttribute{
 
 message InputAttribute{
     repeated int32 dims=3;
+}
+
+message UnsqueezeAttribute{
+    repeated int32 axes=1;
+}
+
+message ConcatAttribute{
+    int32 axis=1;
+}
+
+message ReshapeAttribute{
+    int32 axis=1;
+}
+
+message GatherAttribute{
+    int32 axis=1;
 }
 
 message Attribute{
@@ -136,6 +165,13 @@ message Attribute{
     BinaryAttribute binary_attr=8;
     GemmAttribute gemm_attr=9;
     InputAttribute input_attr=10;
+    ClipAttribute clip_attr = 11;
+    TransposeAttribute transpose_attr= 12;
+    ShapeAttribute shape_attr = 13;
+    GatherAttribute gather_attr = 14;
+    UnsqueezeAttribute unsqueeze_attr = 15;
+    ConcatAttribute concat_attr= 16;
+    ReshapeAttribute reshape_attr = 17;
 };
 
 

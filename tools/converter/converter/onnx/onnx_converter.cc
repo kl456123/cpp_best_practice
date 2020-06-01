@@ -225,7 +225,7 @@ for(int i=0;i<graph_proto.output_size();++i){
 }
 
 // input names
-for(int i=0;i<graph_proto.output_size();++i){
+for(int i=0;i<graph_proto.input_size();++i){
     graph->add_input_names(graph_proto.input(i).name());
 }
 
