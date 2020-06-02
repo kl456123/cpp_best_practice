@@ -17,6 +17,9 @@ namespace opengl{
 
     void ShapeKernel::Compute(TensorList& inputs, TensorList& outputs){
         DLOG(INFO)<<"ShapeKernel Inputs: "<<inputs.size();
+        CHECK_EQ(inputs.size(), 1);
+        // just copy tensor from cpu to device
+        context_->CopyCPUTensorToDevice(tensor_, outputs[0]);
     }
 
     void ShapeKernel::InferOutputShape(TensorShapeList& input_shapes,
@@ -30,9 +33,20 @@ namespace opengl{
         CHECK_EQ(input_shapes.size(), 1);
         const int dims_size = input_shapes[0].size();
         output_shapes[0] = {dims_size};
+
+        // create cpu tensor first
+        float* data = new float[dims_size];
+        for(int i=0;i<dims_size;++i){
+            data[i] = input_shapes[0][i];
+        }
+        // tensor own data
+        tensor_ = new Tensor(Tensor::DT_FLOAT, output_shapes[0],
+                data, output_tensor_dformats_[0]);
     }
 
-    ShapeKernel::~ShapeKernel(){}
+    ShapeKernel::~ShapeKernel(){
+        delete tensor_;
+    }
 
     REGISTER_KERNEL_WITH_NAME(ShapeKernel, "Shape");
 }//namespace opengl

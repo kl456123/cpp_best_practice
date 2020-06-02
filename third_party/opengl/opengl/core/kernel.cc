@@ -99,5 +99,14 @@ namespace opengl{
         return output_tensor_dformats_[i];
     }
 
+    void Kernel::InferOutputShape(const TensorList& inputs,
+            TensorShapeList& output_shapes){
+        TensorShapeList input_shapes;
+        for(auto input_tensor: inputs){
+            input_shapes.emplace_back(input_tensor->shape());
+        }
+        InferOutputShape(input_shapes, output_shapes);
+    }
+
 
 }//namespace opengl

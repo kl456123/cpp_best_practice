@@ -34,6 +34,9 @@ namespace opengl{
                    const StringList& output_dformats, TensorList* outputs);
 
             std::string DebugString()const;
+            Context* context()const{
+                return context_;
+            }
 
         private:
             void CreateVertexShader();

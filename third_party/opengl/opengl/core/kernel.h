@@ -38,8 +38,10 @@ namespace opengl{
              */
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs)=0;
+            // we need input tensor value to get the output shape for some ops
+            // like Reshape op
             virtual void InferOutputShape(const TensorList& inputs,
-                    TensorShapeList& outputs){}
+                    TensorShapeList& output_shapes);
 
             // some accessors
             void set_kernel_name(std::string name){
