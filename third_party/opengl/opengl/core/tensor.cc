@@ -19,7 +19,7 @@ namespace opengl{
     template<>
         Tensor::Tensor(DataType dtype, IntList shape, float* data, DataFormat dformat)
         :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY), dformat_(dformat){
-            AmendShape();
+            // AmendShape();
 
             size_ = shape_.num_elements()*sizeof(float);
             host_ = data;
@@ -32,7 +32,7 @@ namespace opengl{
         for(auto& dim:tensor_proto.dims()){
             shape_.add_dim(dim);
         }
-        AmendShape();
+        // AmendShape();
         // get tensor data
         switch(tensor_proto.data_type()){
             case dlxnet::TensorProto::FLOAT32:

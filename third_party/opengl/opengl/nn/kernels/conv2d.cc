@@ -39,8 +39,12 @@ namespace opengl{
         kernel_size_=conv2d_params.kernel_shape(0);
 
         // set default for dilation and groups now
-        group_size_=1;
-        dilation_=1;
+        group_size_=conv2d_params.group();
+        CHECK_GT(group_size_, 0);
+        CHECK_EQ(conv2d_params.dilations_size(), 2);
+        CHECK_EQ(conv2d_params.dilations(0), conv2d_params.dilations(1));
+        dilation_=conv2d_params.dilations(0);
+
 
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }
@@ -67,6 +71,8 @@ namespace opengl{
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);
+        program_->set_int("group", group_size_);
+        program_->set_int("dilation", dilation_);
         program_->set_int("use_bias", int(use_bias));
         // input
         {
@@ -136,10 +142,10 @@ namespace opengl{
         CHECK_EQ(filter_shape[2], kernel_size_);
         CHECK_EQ(filter_shape[3], kernel_size_);
         // channel should be the same with input image
-        CHECK_EQ(filter_shape[1], image_shape[3]);
+        CHECK_EQ(filter_shape[1]*group_size_, image_shape[3]);
 
-        const int output_height = (image_shape[1]-kernel_size_+2*padding_)/stride_+1;
-        const int output_width = (image_shape[2]-kernel_size_+2*padding_)/stride_+1;
+        const int output_height = (image_shape[1]-kernel_size_*dilation_+2*padding_)/stride_+1;
+        const int output_width = (image_shape[2]-kernel_size_*dilation_+2*padding_)/stride_+1;
         output_shapes[0] = {image_shape[0], output_height, output_width, filter_shape[0]};
     }
 

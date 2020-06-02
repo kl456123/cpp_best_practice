@@ -2,8 +2,10 @@ uniform sampler2D input_image;
 uniform sampler2D input_filter;
 uniform sampler2D input_bias;
 // conv2d params
-uniform int kernel_size;
 uniform int stride_size;
+uniform int kernel_size;
+uniform int group;
+uniform int dilation;
 uniform int padding;
 // use int type to represent bool type
 uniform int use_bias;
@@ -33,6 +35,9 @@ void main() {
     int bias_pos_x = out_4_ind;
     int bias_pos_y = batch_ind;
 
+    /* int out_group_size = output_shape.z/group; */
+    /* int in_group_size = input_shape.z/group; */
+
     if(use_bias==1){
         color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
     }else{
@@ -40,8 +45,8 @@ void main() {
     }
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
-            int input_index_x = output_index_x*stride_size+i-padding;
-            int input_index_y = output_index_y*stride_size+j-padding;
+            int input_index_x = output_index_x*stride_size+i*dilation-padding;
+            int input_index_y = output_index_y*stride_size+j*dilation-padding;
             if(input_index_x<0||input_index_x>=input_shape.y){
                 continue;
                 // when out of boundary

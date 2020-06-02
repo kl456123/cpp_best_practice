@@ -13,10 +13,20 @@ namespace {
         // handle tensor shape
         size_t num_elements =1;
         size_t dim_size = onnx_tensor.dims().size();
+
+        if(dim_size==0){
+            // handle corner case, it used in Reshape op
+            dlcl_tensor->add_dims(1);
+            dlcl_tensor->add_int32_data(0);
+            dlcl_tensor->set_data_type(dlxnet::TensorProto::INT32);
+            return;
+        }
         for (int i = 0; i < dim_size; ++i) {
             dlcl_tensor->add_dims(onnx_tensor.dims(i));
             num_elements  *= onnx_tensor.dims(i);
         }
+
+
 
         // handle tensor value
         const void* tensor_content = onnx_tensor.raw_data().data();
@@ -40,7 +50,7 @@ namespace {
                     break;
                 }
             default:
-                LOG(WARNING)<<"unsupported data type when converting tensor "
+                LOG(FATAL)<<"unsupported data type when converting tensor "
                     <<data_type;
         }
 
@@ -49,7 +59,7 @@ namespace {
 
 void  ConstOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor,
         int tensor_index){
-    LOG(FATAL)<<"Cannot set tensor info for const due to the only one input tensor";
+    OpConverter::SetTensorInfo(dlcl_tensor, tensor_index);
 }
 
 void ConstOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){
@@ -61,6 +71,9 @@ void ConstOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){
         if(attr.name()=="value"){
             dlxnet::TensorProto* tensor = dst_attr->mutable_value();
             MakeTensorFromProto(attr.t(), tensor);
+
+            // set tensor info here for constant node
+            SetTensorInfo(tensor, 0);
         }else{
             ParseAttrValueToString(attr, &res);
             LOG(INFO)<<res;

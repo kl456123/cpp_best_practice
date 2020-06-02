@@ -45,8 +45,22 @@ namespace opengl{
 
         output_shapes.clear();
         output_shapes.resize(1);
-        CHECK_EQ(input_shapes.size(), 1);
+        // CHECK_EQ(input_shapes.size(), 4);
+        CHECK_GE(input_shapes.size(), 2);
         output_shapes[0] = input_shapes[0];
+        output_shapes[0][axis_] = 0;
+        for(auto& input_shape: input_shapes){
+            CHECK_EQ(output_shapes[0].size(), input_shape.size());
+            for(int i=0;i<input_shape.size();++i){
+                if(i!=axis_){
+                    // all dim is the same except axis_ dim
+                    CHECK_EQ(input_shape[i], output_shapes[0][i]);
+                }else{
+                    // add in axis dim
+                    output_shapes[0][i]+=input_shape[i];
+                }
+            }
+        }
     }
 
     ConcatKernel::~ConcatKernel(){}

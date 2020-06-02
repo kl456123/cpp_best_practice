@@ -76,6 +76,8 @@ message Conv2dAttribute{
     repeated int64 kernel_shape=1;
     repeated int64 strides=2;
     repeated int64 pads=3;
+    repeated int64 dilations=4;
+    int64 group=5;
 };
 
 message ConstAttribute{

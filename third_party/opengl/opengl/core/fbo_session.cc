@@ -227,7 +227,8 @@ namespace opengl{
             // clear input and output tensors
             kernel->input_tensors_.clear();
             kernel->output_tensors_.clear();
-
+            LOG(INFO)<<"name: " << kernel->kernel_name()
+                        <<"type: "<<kernel->kernel_type();
             TensorList input_tensors;
             TensorShapeList input_shapes, output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
@@ -243,9 +244,14 @@ namespace opengl{
             // we need dformat(like nhwc) info to derminate the output shape no only the input shape.
             // kernel->InferOutputShape(input_tensors, output_shapes);
             kernel->InferOutputShape(input_shapes, output_shapes);
+            CHECK_GT(output_shapes.size(), 0);
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
+                CHECK_GT(output_shapes[j].size(), 0);
+                for(auto dim: output_shapes[j]){
+                    CHECK_GT(dim, 0);
+                }
                 auto dformat = kernel->GetOutputDFormat(j);
                 auto output_tensor = new Tensor(Tensor::DT_FLOAT, output_shapes[j],
                         Tensor::DEVICE_TEXTURE, dformat);

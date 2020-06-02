@@ -9,6 +9,7 @@ namespace opengl{
         auto& const_tensor = attr.const_attr().value();
 
         tensor_ = new Tensor(const_tensor);
+        CHECK_GT(tensor_->shape().size(), 0)<<DebugString();
 
         output_tensor_dformats_.emplace_back(const_tensor.target_data_format());
     }
@@ -32,19 +33,24 @@ namespace opengl{
         auto dformat = output_tensor_dformats_[0];
 
         std::vector<int> output_shape;
-        // change shape according to target dformat
-        if(dformat==dlxnet::TensorProto::NHWC4){
-            // nhwc
-            output_shape = {tensor_->num(), tensor_->height(),
-                tensor_->width(), tensor_->channel()};
-        }else if(dformat==dlxnet::TensorProto::HWN4C4){
-            // nchw
-            output_shape = {tensor_->num(), tensor_->channel(),
-                tensor_->height(), tensor_->width()};
+        // check it is image shape first(dims size is 4)
+        if(tensor_->shape().size()!=4){
+            output_shape=tensor_->shape();
         }else{
-            LOG(FATAL)<<"unsupported dformat in Const Kernel";
+            // change shape according to target dformat
+            if(dformat==dlxnet::TensorProto::NHWC4){
+                // nhwc
+                output_shape = {tensor_->num(), tensor_->height(),
+                    tensor_->width(), tensor_->channel()};
+            }else if(dformat==dlxnet::TensorProto::HWN4C4){
+                // nchw
+                output_shape = {tensor_->num(), tensor_->channel(),
+                    tensor_->height(), tensor_->width()};
+            }else{
+                LOG(FATAL)<<"unsupported dformat "
+                    << dformat << " in Const Kernel";
+            }
         }
-
         // get shape from outputs
         outputs.emplace_back(output_shape);
     }

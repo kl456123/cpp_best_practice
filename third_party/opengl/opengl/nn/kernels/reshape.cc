@@ -42,7 +42,7 @@ namespace opengl{
 
         output_shapes.clear();
         output_shapes.resize(1);
-        CHECK_EQ(input_shapes.size(), 1);
+        CHECK_EQ(input_shapes.size(), 2);
         output_shapes[0] = input_shapes[0];
     }
 

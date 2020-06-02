@@ -17,6 +17,10 @@ namespace opengl{
         for(auto item:unsqueeze_params.axes()){
             axes_.emplace_back(item);
         }
+
+        // check axes
+        // only support for pytorch due to torch.unsqueeze
+        CHECK_EQ(axes_.size(), 1);
     }
 
     void UnsqueezeKernel::Compute(TensorList& inputs, TensorList& outputs){
@@ -26,7 +30,7 @@ namespace opengl{
 
         SetFrameBuffer(outputs);
         SetVertexShader();
-        // program_->set_int("axis", axis_);
+        // program_->set_vec2i("axis", axis_[0], axis_[1]);
 
         // input
         {
@@ -49,6 +53,7 @@ namespace opengl{
         output_shapes.resize(1);
         CHECK_EQ(input_shapes.size(), 1);
         output_shapes[0] = input_shapes[0];
+        output_shapes[0].insert(output_shapes[0].begin()+axes_[0], 1);
     }
 
     UnsqueezeKernel::~UnsqueezeKernel(){}

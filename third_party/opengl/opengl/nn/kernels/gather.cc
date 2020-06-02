@@ -45,8 +45,9 @@ namespace opengl{
 
         output_shapes.clear();
         output_shapes.resize(1);
-        CHECK_EQ(input_shapes.size(), 1);
-        output_shapes[0] = input_shapes[0];
+        CHECK_EQ(input_shapes.size(), 2);
+        // output shape equals to input index
+        output_shapes[0] = input_shapes[1];
     }
 
     GatherKernel::~GatherKernel(){}
