@@ -35,8 +35,11 @@ namespace opengl{
 
     IntList TensorShapeFromFormat(DataFormat dst_format,
             const IntList& src_shape, DataFormat src_format);
+
+    // dformat strings and dformat enum
     std::string FormatToStr(DataFormat);
     DataFormat StrToFormat(std::string format_str);
+    DataFormat FormatToStride4(DataFormat);
 }//namespace
 
 

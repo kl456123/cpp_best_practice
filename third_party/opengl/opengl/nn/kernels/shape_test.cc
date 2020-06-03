@@ -40,7 +40,7 @@ namespace opengl{
         ::opengl::NamedTensorList inputs(1);
         ::opengl::TensorList outputs_cpu;
         inputs[0].first = "input";
-        inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape);
+        inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape, dlxnet::TensorProto::ANY);
 
         session->Setup(inputs);
 

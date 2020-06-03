@@ -123,8 +123,11 @@ namespace opengl{
     void CopyTextureToHost(void* data, GLint width, GLint height, GLuint texture,
             GLenum format, GLenum dtype){
         GLint ext_format, ext_type;
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+        ext_format = format;
+        ext_type = dtype;
+        //TODO(breakpoint) fix the bug here
+        // OPENGL_CALL(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format));
+        // OPENGL_CALL(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type));
         OPENGL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                     texture, 0));
         CHECK_EQ(ext_type, dtype)<<"unmatched type";
@@ -165,8 +168,8 @@ namespace opengl{
     void CopyTextureToHostDMA(void* data, GLint width, GLint height, GLuint texture,
             GLenum format, GLenum dtype){
         GLint ext_format, ext_type;
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format);
-        glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type);
+        OPENGL_CALL(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_FORMAT, &ext_format));
+        OPENGL_CALL(glGetIntegerv(GL_IMPLEMENTATION_COLOR_READ_TYPE, &ext_type));
         CHECK_EQ(ext_type, dtype)<<"unmatched type";
         CHECK_EQ(ext_format, format)<<"unmatched format";
 

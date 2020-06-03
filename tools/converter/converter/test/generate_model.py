@@ -23,6 +23,7 @@ class Model(torch.nn.Module):
         self.fc = torch.nn.Linear(10, 5);
 
     def forward(self, x):
+        x = x.reshape(x.shape[0], -1)
         # x = self.model.conv1(x)
         # x = self.model.bn1(x)
         # x = self.model.relu(x)
@@ -34,7 +35,7 @@ class Model(torch.nn.Module):
         # x = self.model.avgpool(x)
         # x = torch.flatten(x, 1)
         # x = self.model.fc(x)
-        x = self.conv2d1(x)
+        # x = self.conv2d1(x)
         # x = self.batchnorm(x)
         # x = self.avgpool(x)
         # x = self.relu(x)
@@ -56,8 +57,8 @@ def generate_onnx(saved_path):
     inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
-    # model = Model()
-    model = resnet.resnet18(pretrained=pretrained)
+    model = Model()
+    # model = resnet.resnet18(pretrained=pretrained)
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])

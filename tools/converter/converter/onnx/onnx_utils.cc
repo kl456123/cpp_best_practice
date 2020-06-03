@@ -56,11 +56,7 @@ void MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
     size_t dim_size = onnx_tensor.dims().size();
 
     if(dim_size==0){
-        // handle corner case, it used in Reshape op
         dlcl_tensor->add_dims(1);
-        dlcl_tensor->add_float_data(0);
-        dlcl_tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
-        return;
     }
     for (int i = 0; i < dim_size; ++i) {
         dlcl_tensor->add_dims(onnx_tensor.dims(i));
@@ -70,7 +66,22 @@ void MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
 
 
     // handle tensor value
-    const void* tensor_content = onnx_tensor.raw_data().data();
+    const void* tensor_content = nullptr;
+    switch(data_type){
+        #define CASE_DATA_TYPE(src, dst)                            \
+      case src:                                               \
+          tensor_content = onnx_tensor.dst##_data().data();   \
+          if (onnx_tensor.dst##_data_size() == 0) {           \
+              tensor_content = onnx_tensor.raw_data().data(); \
+          }                                                   \
+          break
+        CASE_DATA_TYPE(onnx::TensorProto_DataType_FLOAT, float);
+        CASE_DATA_TYPE(onnx::TensorProto_DataType_INT64, int64);
+        default:
+              LOG(INFO) << "[TODO]ONNX data type to support: " << onnx_tensor.data_type();
+    }
+
+    CHECK_NOTNULL(tensor_content);
     switch(data_type){
         case onnx::TensorProto::FLOAT:
             {
@@ -83,13 +94,11 @@ void MakeTensorFromProto(const onnx::TensorProto& onnx_tensor,
             }
         case onnx::TensorProto::INT64:
             {
-                LOG(FATAL)<<"unsupported data type when converting tensor "
-                    <<data_type;
-                auto source = (int32_t*)tensor_content;
+                auto source = (int64_t*)tensor_content;
                 for(int i=0;i<num_elements;++i){
-                    dlcl_tensor->add_int32_data(source[i]);
+                    dlcl_tensor->add_float_data(source[i]);
                 }
-                dlcl_tensor->set_data_type(dlxnet::TensorProto::INT32);
+                dlcl_tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
                 break;
             }
         default:

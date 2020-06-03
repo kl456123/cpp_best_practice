@@ -215,7 +215,7 @@ namespace opengl{
                 // allocate memory in the first time
                 total_tensors_[input_index].reset(
                         new Tensor(Tensor::DT_FLOAT, input_cpu->shape(),
-                            Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::NHWC4));
+                            Tensor::DEVICE_TEXTURE, FormatToStride4(input_cpu->dformat())));
             }
             // upload data, initialize input tensor
             context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index].get());

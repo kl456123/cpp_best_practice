@@ -9,12 +9,12 @@
 namespace opengl{
     ConcatKernel::ConcatKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/gather.glsl";
+            kernel_fname_ = "../opengl/nn/glsl/concat.glsl";
         }
 
     void ConcatKernel::SetupAttr(const dlxnet::Attribute& attr){
-        auto& gather_params = attr.gather_attr();
-        axis_= gather_params.axis();
+        auto& concat_params = attr.concat_attr();
+        axis_= concat_params.axis();
     }
 
     void ConcatKernel::Compute(TensorList& inputs, TensorList& outputs){
