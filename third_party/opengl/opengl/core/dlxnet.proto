@@ -21,6 +21,12 @@ message TensorProto{
         // filter should accept nhwc4 tensor input and output the same format
         // tensor so that the hwn4c4
         HWN4C4=4;
+
+        // the data format can be used for any more general tensor
+        ANY=5;
+
+        // designed for vector operators
+        ANY4=6;
     };
 
     enum DataType{

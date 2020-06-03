@@ -9,7 +9,7 @@ from torchvision.models import resnet
 class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        in_channels = 3
+        in_channels = 10
         out_channels = 5
         self.conv2d1 = torch.nn.Conv2d(
             in_channels, out_channels, kernel_size=3, stride=1, padding=1)
@@ -56,8 +56,8 @@ def generate_onnx(saved_path):
     inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
-    model = Model()
-    # model = resnet.resnet18(pretrained=pretrained)
+    # model = Model()
+    model = resnet.resnet18(pretrained=pretrained)
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])

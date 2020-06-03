@@ -35,6 +35,9 @@ namespace opengl{
 
             void ConvertTensorHWN4C4ToNHWC(void* src, Tensor* tensor);
 
+            void ConvertTensorToStride4(const Tensor* src_tensor, void** out);
+            void ConvertTensorFromStride4(void* src, Tensor* tensor);
+
             // primitive apis operate buffer and image
             void CopyImageToBuffer(Texture* texture, Buffer* buffer);
             void CopyBufferToImage(Texture* texture, Buffer* buffer);

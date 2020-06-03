@@ -26,7 +26,7 @@ namespace opengl{
             TensorShapeList& output_shapes){
         // set output dformat first, then we can according
         // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
 
         output_shapes.clear();
         output_shapes.resize(1);
@@ -41,7 +41,7 @@ namespace opengl{
         }
         // tensor own data
         tensor_ = new Tensor(Tensor::DT_FLOAT, output_shapes[0],
-                data, output_tensor_dformats_[0]);
+                data, dlxnet::TensorProto::ANY);
     }
 
     ShapeKernel::~ShapeKernel(){

@@ -13,7 +13,6 @@ class ONNXConverter: public Converter{
         virtual void Reset(const ConverterConfig config);
 
         void PrintSelf(){}
-        void MakeTensorFromProto(const onnx::TensorProto&, dlxnet::TensorProto*);
 };
 
 

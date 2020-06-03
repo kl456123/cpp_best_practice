@@ -40,10 +40,19 @@ namespace opengl{
 
         // set default for dilation and groups now
         group_size_=conv2d_params.group();
-        CHECK_GT(group_size_, 0);
-        CHECK_EQ(conv2d_params.dilations_size(), 2);
-        CHECK_EQ(conv2d_params.dilations(0), conv2d_params.dilations(1));
-        dilation_=conv2d_params.dilations(0);
+        if(group_size_==0){
+            group_size_=1;
+        }
+
+        // CHECK_GT(group_size_, 0);
+        if(conv2d_params.dilations_size()== 2){
+            CHECK_EQ(conv2d_params.dilations(0), conv2d_params.dilations(1));
+            dilation_=conv2d_params.dilations(0);
+        }else{
+            // set default
+            dilation_ = 1;
+        }
+
 
 
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);

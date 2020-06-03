@@ -6,6 +6,7 @@
 #include "opengl/core/kernel_registry.h"
 #include "opengl/utils/protobuf.h"
 #include "opengl/core/tensor.h"
+#include "opengl/core/tensor_format.h"
 
 
 namespace opengl{
@@ -87,11 +88,12 @@ namespace opengl{
             if(kernel==nullptr){
                 LOG(FATAL)<<"unsupported kernel name "<<node.type();
             }
-            // setup program for each kernel here
-            kernel->SetupProgram(vertex_shader_);
-            kernel->set_session(this);
             kernel->set_kernel_name(node.name());
             kernel->set_kernel_type(node.type());
+            kernel->set_session(this);
+
+            // setup program for each kernel here
+            kernel->SetupProgram(vertex_shader_);
 
             kernel->SetupAttr(node.attr());
             // fill inputs and outputs
@@ -222,13 +224,17 @@ namespace opengl{
             return;
         }
 
+        ready_.clear();
+        ready_.resize(total_tensors_.size());
+        std::fill(ready_.begin(), ready_.end(), false);
+
         for(int i=0;i<kernels_.size();++i){
             auto& kernel = kernels_[i];
             // clear input and output tensors
             kernel->input_tensors_.clear();
             kernel->output_tensors_.clear();
             LOG(INFO)<<"name: " << kernel->kernel_name()
-                        <<"type: "<<kernel->kernel_type();
+                <<"type: "<<kernel->kernel_type();
             TensorShapeList output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
                 Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]].get();
@@ -257,10 +263,11 @@ namespace opengl{
                 kernel->output_tensors_.emplace_back(output_tensor);
             }
 
-            if(kernel->kernel_type()=="Const"){
-                // precompute constant kernel
+            if(CheckKernelReady(kernel.get())){
+                // precompute kernel, not only used for constant kernel
                 kernel->Compute();
                 OPENGL_CHECK_ERROR;
+                UpdateKernelReady(kernel.get());
             }
 
             // log kernel info after kernel finalized
@@ -270,7 +277,22 @@ namespace opengl{
         OPENGL_CHECK_ERROR;
     }
 
+    bool FBOSession::CheckKernelReady(const Kernel* kernel){
+        // find all precondition
+        for(auto tensor_id: kernel->input_tensor_indexes_){
+            if(not ready_[tensor_id]){
+                return false;
+            }
+        }
+        return true;
+    }
 
+
+    void FBOSession::UpdateKernelReady(const Kernel* kernel){
+        for(auto tensor_id: kernel->output_tensor_indexes_){
+            ready_[tensor_id]=true;
+        }
+    }
 
     void FBOSession::GetOutputs(const TensorNameList& output_names,
             const StringList& output_dformats, TensorList* outputs){
@@ -282,14 +304,7 @@ namespace opengl{
         for(auto& tensor_name: output_names){
             auto gpu_tensor = FindTensorByName(tensor_name);
             auto dformat_str = output_dformats[index++];
-            DataFormat dformat;
-            if(dformat_str=="NHWC"){
-                dformat = dlxnet::TensorProto::NHWC;
-            }else if(dformat_str=="NCHW"){
-                dformat = dlxnet::TensorProto::NCHW;
-            }else{
-                LOG(FATAL)<<"only nhwc and nchw dformats are supported for now";
-            }
+            DataFormat dformat = StrToFormat(dformat_str);
             Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape(),
                     Tensor::HOST_MEMORY, dformat);
             context_->CopyDeviceTensorToCPU(gpu_tensor, cpu_tensor);

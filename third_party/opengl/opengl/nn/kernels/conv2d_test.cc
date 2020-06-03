@@ -1,12 +1,10 @@
 #include <cmath>
 #include <memory>
 #include <random>
-#include "opengl/core/fbo_session.h"
-#include "opengl/core/init.h"
-#include "opengl/core/scope.h"
-#include "opengl/test/test.h"
-#include "opengl/utils/macros.h"
+#include "opengl/nn/kernels/kernel_test_utils.h"
 #include "opengl/nn/kernels/conv2d.h"
+
+using namespace ::opengl::testing;
 
 namespace opengl{
     namespace{
@@ -23,11 +21,7 @@ namespace opengl{
         int dilation = 1;
         bool use_bias = true;
 
-        struct Conv2dParams{
-            int kernel_size;
-            int stride;
-            int padding;
-        };
+
 
         // some params
         constexpr int num_iters = 10;
@@ -84,75 +78,8 @@ namespace opengl{
             }
         }
 
-        void InitOGLContext(){
-            //TODO(breakpoint) how to init once for all test case
-            ::opengl::glfw_init();
-            ::opengl::glew_init();
-        }
 
-        int AddConstNode(Scope* scope, const std::string&  name, const std::vector<int>& shape){
-            auto node_ptr = scope->AddNode();
-            node_ptr->set_name(name);
-            node_ptr->set_type("Const");
-            int tensor_id = scope->AddTensor(name);
-            node_ptr->add_output_index(tensor_id);
-            dlxnet::TensorProto* dlcl_tensor = node_ptr->mutable_attr()
-                ->mutable_const_attr()->mutable_value();
 
-            int num_elements = 1;
-            for(auto dim: shape){
-                dlcl_tensor->add_dims(dim);
-                num_elements  *= dim;
-            }
-            for(int j=0;j<num_elements;++j){
-                dlcl_tensor->add_float_data(1.0*random()/RAND_MAX);
-            }
-            // set tensor
-            dlcl_tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
-            if(name=="weight"){
-                dlcl_tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
-            }else{
-                dlcl_tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
-            }
-            dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
-            return tensor_id;
-
-        }
-
-        // TODO(breakpoint) change id to NodeOut class to store shape info
-        // can use shape info do some things to validate
-        int AddConvNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
-                const Conv2dParams& conv2d_params){
-            auto dlcl_node = scope->AddNode();
-            // set node name with the name of the first output
-            dlcl_node->set_name(name);
-
-            dlcl_node->set_type("Conv");
-            dlxnet::Conv2dAttribute* dst_attr = dlcl_node->mutable_attr()->mutable_conv2d_attr();
-            for(int i=0;i<2;++i){
-                dst_attr->add_kernel_shape(conv2d_params.kernel_size);
-            }
-            for(int i=0;i<2;++i){
-                dst_attr->add_strides(conv2d_params.stride);
-            }
-            for(int i=0;i<4;++i){
-                dst_attr->add_pads(conv2d_params.padding);
-            }
-            for(auto tensor_id:input_ids){
-                dlcl_node->add_input_index(tensor_id);
-            }
-            // both node name and tensor name are the same
-            int tensor_id = scope->AddTensor(name);
-            dlcl_node->add_output_index(tensor_id);
-            return tensor_id;
-        }
-
-        int AddInputNode(Scope* scope, std::string name){
-            // add node
-            scope->AddInputName(name);
-            // add tensor
-            return scope->AddTensor(name);
-        }
 
         const ::dlxnet::ModelProto BuildGraph(){
             auto scope = std::unique_ptr<Scope>(new Scope());
@@ -162,11 +89,12 @@ namespace opengl{
 
             // weight
             int weight_id = AddConstNode(scope_ptr, "weight", {output_channels, input_channels,
-                    kernel_size,kernel_size});
+                    kernel_size,kernel_size}, dlxnet::TensorProto::HWN4C4);
             std::vector<int> input_ids({input_id, weight_id});
             if(use_bias){
                 // bias
-                int bias_id = AddConstNode(scope_ptr, "bias", {1, output_channels, 1, 1});
+                int bias_id = AddConstNode(scope_ptr, "bias",
+                        {1, output_channels, 1, 1}, dlxnet::TensorProto::NHWC4);
                 input_ids.emplace_back(bias_id);
             }
 
@@ -180,15 +108,10 @@ namespace opengl{
         }
 
 
-        // create a session for all test
-        FBOSession* InitSession(){
-            FBOSession* session = new FBOSession;
-            session->LoadGraph(BuildGraph());
-            return session;
-        }
-
         void SingleInference(){
             auto session = InitSession();
+
+            session->LoadGraph(BuildGraph());
 
             std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
             ::opengl::NamedTensorList inputs(1);

@@ -31,7 +31,7 @@ namespace opengl{
             void LoadGraph(std::string model_path);
 
             void GetOutputs(const TensorNameList& output_names,
-                   const StringList& output_dformats, TensorList* outputs);
+                    const StringList& output_dformats, TensorList* outputs);
 
             std::string DebugString()const;
             Context* context()const{
@@ -46,6 +46,9 @@ namespace opengl{
 
             // reorder all nodes in nodes_ topologically
             void TopologicalSort();
+
+            bool CheckKernelReady(const Kernel* kernel);
+            void UpdateKernelReady(const Kernel* kernel);
 
             Tensor* FindTensorByName(const std::string& name);
             // caller does not own it
@@ -72,6 +75,8 @@ namespace opengl{
 
             // output target in each kernel
             GLuint frame_buffer_;
+
+            std::vector<bool> ready_;
 
             friend class Kernel;
     };

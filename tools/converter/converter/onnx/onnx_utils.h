@@ -4,6 +4,7 @@
  * The Utils is to help to parse onnx proto model format
  */
 #include "onnx.pb.h"
+#include "dlcl.pb.h"
 #include <vector>
 #include <string>
 
@@ -12,6 +13,8 @@ void ParseAttrValueToString(const onnx::AttributeProto&,
 
 typedef google::protobuf::RepeatedPtrField<onnx::AttributeProto> AttributeProtoList;
 void ParseAttrListToString(const AttributeProtoList& attr_list, std::string* pieces);
+
+void MakeTensorFromProto(const onnx::TensorProto&, dlxnet::TensorProto*);
 
 
 #endif

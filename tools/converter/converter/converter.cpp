@@ -9,8 +9,13 @@
 int main(int argc,char** argv){
     // get converter_config from parser
     // here we just assign it manualy
+    if(argc<2){
+        std::cerr<<"argument is too few"<<std::endl;
+        return -1;
+    }
+
     ConverterConfig converter_config;
-    converter_config.src_model_path = "./demo.onnx";
+    converter_config.src_model_path = argv[1];
 
     // here use dlx as suffix, dlx refers to dlx framework
     converter_config.dst_model_path = "demo.dlx";

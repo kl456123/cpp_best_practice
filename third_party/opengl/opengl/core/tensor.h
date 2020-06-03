@@ -134,6 +134,7 @@ namespace opengl{
             MemoryType mem_type()const{
                 return mem_type_;
             }
+            const int dims_size()const{return shape_.dims_size();}
             const DataFormat dformat()const{return dformat_;}
             void set_host(void* data){
                 host_ = data;
@@ -154,6 +155,7 @@ namespace opengl{
             }
 
             const int channel()const{
+                CheckIsNotGeneralTensor();
                 const auto dims_size = shape_.dims_size();
                 if(dformat_==dlxnet::TensorProto::NHWC
                         ||dformat_==dlxnet::TensorProto::NHWC4){
@@ -165,6 +167,7 @@ namespace opengl{
                 return 1;
             }
             const int width()const{
+                CheckIsNotGeneralTensor();
                 const auto dims_size = shape_.dims_size();
                 if(dformat_==dlxnet::TensorProto::NHWC
                         ||dformat_==dlxnet::TensorProto::NHWC4){
@@ -177,6 +180,7 @@ namespace opengl{
             }
 
             const int height()const{
+                CheckIsNotGeneralTensor();
                 const auto dims_size = shape_.dims_size();
                 if(dformat_==dlxnet::TensorProto::NHWC
                         ||dformat_==dlxnet::TensorProto::NHWC4){
@@ -196,7 +200,13 @@ namespace opengl{
                 return 1;
             }
 
+            void CheckIsNotGeneralTensor()const{
+                CHECK_NE(dformat(), dlxnet::TensorProto::ANY);
+                CHECK_NE(dformat(), dlxnet::TensorProto::ANY4);
+            }
+
             const int num()const{
+                CheckIsNotGeneralTensor();
                 const auto dims_size = shape_.dims_size();
                 if(dims_size>=4){
                     return shape_[dims_size-4];
@@ -204,23 +214,6 @@ namespace opengl{
                 return 1;
 
             }
-
-            // void CheckShape(const TensorShape& shape){
-                // for(int i=0;i<shape.dims_size();++i){
-                    // CHECK_GT(shape[i], 0)<<"shape axis "<<i<<" is zero";
-                // }
-            // }
-
-            // void AmendShape(){
-                // // make sure the length of shape equals to 4
-                // CheckShape(shape_);
-                // int dims_size = shape_.dims_size();
-                // if(dims_size<4){
-                    // for(int i=0;i<4-dims_size;++i){
-                        // shape_.insert_dim(0, 1);
-                    // }
-                // }
-            // }
 
             std::string DebugString()const;
             std::string ShortDebugString()const;
@@ -280,6 +273,12 @@ namespace opengl{
                     // spatial dim is small in most common cases for filter tensor
                     image_height = width()*height()*UP_DIV(num(), 4);
                     image_width = UP_DIV(channel(), 4)*4;
+                }else if(dformat==dlxnet::TensorProto::ANY4){
+                    image_height = 1;
+                    const int dims = dims_size();
+                    const int src_last_dim = shape_[dims-1];
+                    const int dst_last_dim = UP_ROUND(src_last_dim, 4);
+                    image_width = num_elements / src_last_dim * UP_DIV(src_last_dim, 4);
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }

@@ -55,6 +55,40 @@ namespace opengl{
         }
     }
 
+    void Context::ConvertTensorFromStride4(void* src, Tensor* dst_tensor){
+        auto shape = dst_tensor->shape();
+        const int num_dims = shape.size();
+        const int dst_last_dim = shape[num_dims-1];
+        const int dst_num_elements = dst_tensor->num_elements();
+        const int src_last_dim = UP_ROUND(dst_last_dim, 4);
+        float* src_data = (float*)src;
+        float* dst_data = dst_tensor->host<float>();
+        for(int i=0; i < dst_num_elements; ++i){
+            const int src_index = i%dst_last_dim+i/dst_last_dim*src_last_dim;
+            dst_data[i] = src_data[src_index];
+        }
+    }
+
+    void Context::ConvertTensorToStride4(const Tensor* src_tensor, void** out){
+        auto shape = src_tensor->shape();
+        const int num_dims = shape.size();
+        const int src_last_dim = shape[num_dims-1];
+        const int dst_last_dim = UP_ROUND(src_last_dim, 4);
+        const int src_num_elements = src_tensor->num_elements();
+        const int dst_num_elements = src_num_elements / src_last_dim * dst_last_dim;
+
+        float* dst_data = new float[dst_num_elements];
+        const float* src_data = src_tensor->host<float>();
+        memset(dst_data, 0, sizeof(float)*dst_num_elements);
+        // only use data if it is in src
+        for(int i=0;i<src_num_elements;++i){
+            const int dst_index = i/src_last_dim*dst_last_dim+i%src_last_dim;
+            dst_data[dst_index] = src_data[i];
+        }
+
+        *out = dst_data;
+    }
+
     void Context::ConvertTensorNCHWToNHWC4(const Tensor* cpu_tensor, void** out){
 
         const int n = cpu_tensor->shape()[0];
@@ -108,15 +142,12 @@ namespace opengl{
         // insanity check first
         // the same data format, nhwc4
         void* data = nullptr;
-        // auto shapes = TensorShapeFromFormatv1(device_tensor->dformat(),
-                // cpu_tensor->shape(), cpu_tensor->dformat());
-        // // // allocate tmp host tensor
-        // Tensor host_tensor(device_tensor->dtype(), shapes, Tensor::HOST_MEMORY,
-                // device_tensor->dformat());
 
-        // data = host_tensor.host();
-
-        if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
+        if(cpu_tensor->dformat()==dlxnet::TensorProto::ANY
+                && device_tensor->dformat()==dlxnet::TensorProto::ANY4){
+            // for general tensor case
+            ConvertTensorToStride4(cpu_tensor, &data);
+        }else if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
                 // convert to nhwc4
                 ConvertTensorNHWCToNHWC4(cpu_tensor, &data);
@@ -217,6 +248,8 @@ namespace opengl{
     }
 
 
+
+
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
         float* data = new float[device_tensor->size()/sizeof(float)];
         auto texture = device_tensor->device<Texture>();
@@ -229,8 +262,10 @@ namespace opengl{
         GLenum type = texture->type();
         CopyTextureToHost(data, width, height, device_tensor->device<Texture>()->id(),
                 format, type);
-
-        if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
+        if(device_tensor->dformat()==dlxnet::TensorProto::ANY4
+                &&cpu_tensor->dformat()==dlxnet::TensorProto::ANY){
+            ConvertTensorFromStride4(data, cpu_tensor);
+        }else if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             // only one cpu dformat supported here
             // may be more target dformat will be supported in the future
             CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NHWC);

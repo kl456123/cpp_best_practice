@@ -22,6 +22,7 @@ namespace opengl{
         // for now just copy host memory data to device
         CHECK(inputs.size()==0)<<"Input should be empty in ConstKernel";
         DLOG(INFO)<<"Load Weights From CPU in Const Kernel: "<<kernel_name_;
+
         context_->CopyCPUTensorToDevice(tensor_, outputs[0]);
     }
 
@@ -34,7 +35,7 @@ namespace opengl{
 
         std::vector<int> output_shape;
         // check it is image shape first(dims size is 4)
-        if(tensor_->shape().size()!=4){
+        if(dformat==dlxnet::TensorProto::ANY4){
             output_shape=tensor_->shape();
         }else{
             // change shape according to target dformat

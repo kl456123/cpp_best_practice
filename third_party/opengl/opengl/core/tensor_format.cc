@@ -128,4 +128,31 @@ namespace opengl{
         }
         LOG(FATAL)<<"dformat: "<< dformat<<" is not correct";
     }
+
+    DataFormat StrToFormat(std::string dformat_str){
+        DataFormat dformat;
+        if(dformat_str=="NHWC"){
+            dformat = dlxnet::TensorProto::NHWC;
+        }else if(dformat_str=="NCHW"){
+            dformat = dlxnet::TensorProto::NCHW;
+        }else if(dformat_str=="ANY"){
+            dformat = dlxnet::TensorProto::ANY;
+        }else if(dformat_str=="NHWC4"){
+            dformat = dlxnet::TensorProto::NHWC4;
+        }else if(dformat_str=="HWN4C4"){
+            dformat = dlxnet::TensorProto::HWN4C4;
+        }else{
+            LOG(FATAL)<<"unsupported dformat_str: "<<dformat_str;
+        }
+        return dformat;
+    }
+
+
+    std::string FormatToStr(DataFormat dformat){
+        if(dformat==dlxnet::TensorProto::NHWC){
+            return "NHWC";
+        }else{
+            LOG(FATAL)<<"unsupported dformat: "<<dformat;
+        }
+    }
 }//namespace opengl

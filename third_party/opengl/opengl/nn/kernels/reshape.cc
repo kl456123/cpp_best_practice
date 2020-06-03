@@ -14,7 +14,7 @@ namespace opengl{
         }
 
     void ReshapeKernel::SetupAttr(const dlxnet::Attribute& attr){
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
     }
 
     void ReshapeKernel::Compute(TensorList& inputs, TensorList& outputs){
@@ -45,7 +45,7 @@ namespace opengl{
         auto shape_tensor = inputs[1];
 
         Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, shape_tensor->shape(),
-                Tensor::HOST_MEMORY, dlxnet::TensorProto::NHWC);
+                Tensor::HOST_MEMORY, dlxnet::TensorProto::ANY);
         session_->context()->CopyDeviceTensorToCPU(shape_tensor, cpu_tensor);
         for(int i=0;i<cpu_tensor->num_elements();++i){
             output_shapes[0].emplace_back(cpu_tensor->host<float>()[i]);

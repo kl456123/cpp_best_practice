@@ -47,7 +47,7 @@ namespace opengl{
             TensorShapeList& output_shapes){
         // set output dformat first, then we can according
         // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
 
         output_shapes.clear();
         output_shapes.resize(1);
