@@ -52,6 +52,10 @@ namespace opengl{
                 glUniform3i(GetLocation(name), x, y, z);
             }
 
+            void set_vec3i(const std::string& name, const std::vector<int>& list)const{
+                glUniform3i(GetLocation(name), list[0], list[1], list[2]);
+            }
+
             void set_buffer(GLuint SSBO, GLenum target){
                 glBindBufferBase(target, 1, SSBO);
             }

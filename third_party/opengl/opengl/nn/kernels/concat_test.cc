@@ -22,10 +22,9 @@ namespace opengl{
         }
         inline IntList OffsetToCoord(const int index, const IntList shape){
             auto stride = ShapeToStride(shape);
-            // return {index%stride};
             IntList coords;
-            for(auto s:stride){
-                coords.emplace_back(index%s);
+            for(int i=0;i<shape.size();++i){
+                coords.emplace_back((index/stride[i])%shape[i]);
             }
             return coords;
         }
@@ -53,9 +52,6 @@ namespace opengl{
                 // get its coords in output
                 auto coord = OffsetToCoord(i, output_shape);
                 const int index = coord[axis];
-                if(i==15){
-                    int a = 10;
-                }
                 float value;
                 if(index<input_shape1[axis]){
                     // use input1
@@ -70,7 +66,7 @@ namespace opengl{
         }
         const IntList shape1{1, 3, 5};
         const IntList shape2{1, 3, 5};
-        const int axis = 1;
+        const int axis = 2;
 
         const ::dlxnet::ModelProto BuildGraph(){
             auto scope = std::unique_ptr<Scope>(new Scope());

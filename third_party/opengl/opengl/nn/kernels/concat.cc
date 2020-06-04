@@ -7,6 +7,17 @@
 
 
 namespace opengl{
+    namespace{
+        IntList AmendShape(const IntList& shape){
+            CHECK_LE(shape.size(), 4);
+            const int remain_dims = 4-shape.size();
+            IntList amended_shape = shape;
+            for(int i=0;i<remain_dims;++i){
+                amended_shape.insert(amended_shape.begin(), 1);
+            }
+            return amended_shape;
+        }
+    }
     ConcatKernel::ConcatKernel(Context* context)
         :Kernel(context){
             kernel_fname_ = "../opengl/nn/glsl/concat.glsl";
@@ -25,7 +36,12 @@ namespace opengl{
 
         SetFrameBuffer(outputs);
         SetVertexShader();
-        program_->set_int("axis", axis_);
+        program_->set_int("axis", axis_+4-inputs[0]->shape().size());
+
+        // set shape arguments
+        program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
+        program_->set_vec4i("other_shape", AmendShape(inputs[1]->shape()));
+        program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
         // input
         {
