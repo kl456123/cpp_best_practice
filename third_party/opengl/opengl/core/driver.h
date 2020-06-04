@@ -17,6 +17,8 @@ namespace opengl{
 
     int GetNumOfChannels(GLenum format);
 
+    int GetMaxTextureSize();
+
     // create buffer object
     // there are many bo in opengl like
     // fbo(frame buffer object), pbo(pixel buffer object)

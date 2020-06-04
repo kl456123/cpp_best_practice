@@ -4,8 +4,8 @@
 namespace opengl{
     namespace testing{
         // create a session for all test
-        FBOSession* InitSession(){
-            FBOSession* session = new FBOSession;
+        std::unique_ptr<FBOSession> InitSession(){
+            auto session = std::unique_ptr<FBOSession>(new FBOSession);
             return session;
         }
 

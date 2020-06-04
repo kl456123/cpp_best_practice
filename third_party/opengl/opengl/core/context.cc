@@ -23,9 +23,7 @@ namespace opengl{
     Context::Context(Allocator* allocator)
         :allocator_(allocator){
             // max size allowed when using texture
-            int work_grp_inv;
-            OPENGL_CALL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &work_grp_inv));
-            LOG(INFO)<<"max group invacations: "<<work_grp_inv;
+            LOG(INFO)<<"max group invacations: "<<GetMaxTextureSize();
         }
 
     void Context::ConvertTensorHWN4C4ToNCHW(void* src, Tensor* tensor){

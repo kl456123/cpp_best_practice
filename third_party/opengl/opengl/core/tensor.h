@@ -15,6 +15,7 @@
 #include "opengl/core/buffer.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/dlxnet.pb.h"
+#include "opengl/core/ogl_allocator.h"
 #include <glog/logging.h>
 
 namespace opengl{
@@ -215,6 +216,8 @@ namespace opengl{
 
             }
 
+            const int last_stride()const{return shape_[shape_.dims_size()-1];}
+
             std::string DebugString()const;
             std::string ShortDebugString()const;
 
@@ -258,7 +261,12 @@ namespace opengl{
             // shape and type
             size_ = bytes;
             if(mem_type==HOST_MEMORY){
-                host_= new float[num_elements];
+                // if(dformat_==dlxnet::TensorProto::ANY4){
+                    // host_ = StrideAllocator::Allocate(ogl_texture_allocator(),
+                            // size_, last_stride(), AllocationAttributes());
+                // }else{
+                    host_= new float[num_elements];
+                // }
             }else if(mem_type==DEVICE_BUFFER){
                 device_ = new ShaderBuffer(bytes);
             }else if(mem_type==DEVICE_TEXTURE){
@@ -274,6 +282,12 @@ namespace opengl{
                     image_height = width()*height()*UP_DIV(num(), 4);
                     image_width = UP_DIV(channel(), 4)*4;
                 }else if(dformat==dlxnet::TensorProto::ANY4){
+                    // device_ = StrideAllocator::Allocate(ogl_texture_allocator(),
+                            // size_, last_stride(), AllocationAttributes());
+                    // image_height = device<Texture>()->height();
+                    // image_width = device<Texture>()->width();
+                    // initialized_=true;
+                    // return ;
                     image_height = 1;
                     const int dims = dims_size();
                     const int src_last_dim = shape_[dims-1];
@@ -282,10 +296,12 @@ namespace opengl{
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }
-                CHECK_GT(image_width, 0);
-                CHECK_GT(image_height, 0);
-                size_ = image_height*image_width*4*sizeof(float);
-                device_ = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+                if(!device_){
+                    CHECK_GT(image_width, 0);
+                    CHECK_GT(image_height, 0);
+                    size_ = image_height*image_width*4*sizeof(float);
+                    device_ = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+                }
             }else{
                 LOG(FATAL)<<"unsupported types!";
             }

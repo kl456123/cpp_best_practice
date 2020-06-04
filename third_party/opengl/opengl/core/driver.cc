@@ -195,4 +195,9 @@ namespace opengl{
         glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
         glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
     }
+    int GetMaxTextureSize(){
+        int work_grp_inv;
+        OPENGL_CALL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &work_grp_inv));
+        return work_grp_inv;
+    }
 }//namespace opengl

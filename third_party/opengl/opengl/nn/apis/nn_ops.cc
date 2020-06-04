@@ -3,7 +3,7 @@
 
 namespace opengl{
     int AddConstNode(Scope* scope, const std::string&  name,
-            const std::vector<int>& shape, DataFormat dformat){
+            const std::vector<int>& shape, DataFormat dformat, DataFormat src_dformat){
         auto node_ptr = scope->AddNode();
         node_ptr->set_name(name);
         node_ptr->set_type("Const");
@@ -23,7 +23,7 @@ namespace opengl{
         // set tensor
         dlcl_tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
         dlcl_tensor->set_target_data_format(dformat);
-        dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
+        dlcl_tensor->set_data_format(src_dformat);
         return tensor_id;
 
     }
@@ -72,6 +72,22 @@ namespace opengl{
             dlcl_node->add_input_index(tensor_id);
         }
         dlcl_node->add_output_index(tensor_id);
+        return tensor_id;
+    }
+
+    int AddConcatNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
+            const ConcatParams& concat_params){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Concat");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+        auto concat_attr = dlcl_node->mutable_attr()
+            ->mutable_concat_attr();
+        concat_attr->set_axis(concat_params.axis);
         return tensor_id;
     }
 }//namespace opengl

@@ -12,14 +12,22 @@ namespace opengl{
         int stride;
         int padding;
     };
+
+    struct ConcatParams{
+        int axis;
+    };
     int AddConstNode(Scope* scope, const std::string&  name,
-            const std::vector<int>& shape, DataFormat dformat);
+            const std::vector<int>& shape, DataFormat dst_dformat,
+            DataFormat src_dformat);
 
     int AddConvNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
             const Conv2dParams& conv2d_params);
     int AddInputNode(Scope* scope, std::string name);
 
     int AddShapeNode(Scope* scope, std::string name, std::vector<int> input_ids);
+
+    int AddConcatNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
+            const ConcatParams& concat_params);
 }// namespace opengl
 
 

@@ -39,13 +39,15 @@ set(CORE_SRC_NAMES
     driver.cc
     tensor.cc
     allocator.cc
+    ogl_allocator.cc
     buffer_base.cc
+    cpu_allocator_impl.cc
 
     # some protos
     dlxnet.pb.cc
     )
 
-set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env_time.cc)
+set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env_time.cc port.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})

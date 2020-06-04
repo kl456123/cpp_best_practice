@@ -8,7 +8,7 @@
 
 namespace opengl{
     namespace testing{
-        FBOSession* InitSession();
+        std::unique_ptr<FBOSession> InitSession();
         void InitOGLContext();
     }//namespace testing
 }//namespace opengl

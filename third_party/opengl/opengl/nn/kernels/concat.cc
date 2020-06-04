@@ -21,6 +21,7 @@ namespace opengl{
         DLOG(INFO)<<"ConcatKernel Inputs: "<<inputs.size();
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
+        auto other_image = inputs[1]->device<Texture>();
 
         SetFrameBuffer(outputs);
         SetVertexShader();
@@ -29,6 +30,11 @@ namespace opengl{
         // input
         {
             program_->set_image2D("input_image", input_image->id(),  0);
+            OPENGL_CHECK_ERROR;
+        }
+
+        {
+            program_->set_image2D("other_image", other_image->id(),  1);
             OPENGL_CHECK_ERROR;
         }
 

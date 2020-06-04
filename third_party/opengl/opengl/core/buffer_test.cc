@@ -60,9 +60,11 @@ namespace opengl{
 
     TEST(Buffer, Correctness){
         init_buffer();
+        upload();
+        download();
         // check the same between cpu1 and cpu2
         for(int i=0;i<num;++i){
-            EXPECT_TRUE(buffer_cpu1[i]==buffer_cpu2[i]);
+            EXPECT_EQ(buffer_cpu1[i], buffer_cpu2[i]);
         }
     }
 }//namespace opengl

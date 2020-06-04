@@ -8,6 +8,7 @@
  */
 #include <vector>
 #include <string>
+#include <functional>
 #include "opengl/core/opengl.h"
 
 namespace opengl{
@@ -19,14 +20,31 @@ namespace opengl{
 
     class Allocator{
         public:
-            virtual std::string Name()=0;
-            virtual ~Allocator();
-            virtual void* AllocateRaw(size_t num_bytes)=0;
-            virtual void* AllocateRaw(size_t num_bytes,
-                    const AllocationAttributes& allocation_attr){
-                return AllocateRaw(num_bytes);
+            // Return a string identifying this allocator
+            virtual std::string Name() = 0;
+
+            // Return an uninitialized block of memory that is "num_bytes" bytes
+            // in size.  The returned pointer is guaranteed to be aligned to a
+            // multiple of "alignment" bytes.
+            // REQUIRES: "alignment" is a power of 2.
+            virtual void* AllocateRaw(size_t alignment, size_t num_bytes) = 0;
+
+            // Return an uninitialized block of memory that is "num_bytes" bytes
+            // in size with specified allocation attributes.  The returned pointer is
+            // guaranteed to be aligned to a multiple of "alignment" bytes.
+            // REQUIRES: "alignment" is a power of 2.
+            virtual void* AllocateRaw(size_t alignment, size_t num_bytes,
+                    const AllocationAttributes& allocation_attr) {
+                // The default behavior is to use the implementation without any allocation
+                // attributes.
+                return AllocateRaw(alignment, num_bytes);
             }
-            virtual void DeAllocateRaw(void* ptr)=0;
+
+            // Deallocate a block of memory pointer to by "ptr"
+            // REQUIRES: "ptr" was previously returned by a call to AllocateRaw
+            virtual void DeallocateRaw(void* ptr) = 0;
+
+            virtual ~Allocator();
 
             // check if it is opaque or not(note that device memory is refers to opaque memory)
             virtual bool AllocatesOpaqueHandle()const{return false;}
@@ -34,13 +52,37 @@ namespace opengl{
             virtual int AllocationId()const{return 0;}
     };
 
+    // some common allocators
+    Allocator* ogl_texture_allocator();
+    Allocator* cpu_allocator();
+
     // high level api of allocator, used to construct PoolAllocator and BFCAllocator
     class SubAllocator{
         public:
-            SubAllocator();
-            virtual ~SubAllocator(){}
-            virtual void* Alloc(size_t num_bytes)=0;
-            virtual void Free(void* ptr)=0;
+            // Visitor gets called with a pointer to a memory area and its
+            // size in bytes.  The index value will be numa_node for a CPU
+            // allocator and GPU id for a GPU allocator.
+            typedef std::function<void(void*, int index, size_t)> Visitor;
+
+            SubAllocator(const std::vector<Visitor>& alloc_visitors,
+                    const std::vector<Visitor>& free_visitors);
+
+            virtual ~SubAllocator() {}
+            virtual void* Alloc(size_t alignment, size_t num_bytes) = 0;
+            virtual void Free(void* ptr, size_t num_bytes) = 0;
+
+        protected:
+            // Implementation of Alloc() method must call this on newly allocated
+            // value.
+            void VisitAlloc(void* ptr, int index, size_t num_bytes);
+
+            // Implementation of Free() method must call this on value to be
+            // freed immediately before deallocation.
+            void VisitFree(void* ptr, int index, size_t num_bytes);
+
+            const std::vector<Visitor> alloc_visitors_;
+            const std::vector<Visitor> free_visitors_;
+
     };
 
 }//namespace opengl

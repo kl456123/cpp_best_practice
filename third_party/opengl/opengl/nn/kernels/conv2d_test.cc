@@ -89,12 +89,12 @@ namespace opengl{
 
             // weight
             int weight_id = AddConstNode(scope_ptr, "weight", {output_channels, input_channels,
-                    kernel_size,kernel_size}, dlxnet::TensorProto::HWN4C4);
+                    kernel_size,kernel_size}, dlxnet::TensorProto::HWN4C4, dlxnet::TensorProto::NCHW);
             std::vector<int> input_ids({input_id, weight_id});
             if(use_bias){
                 // bias
                 int bias_id = AddConstNode(scope_ptr, "bias",
-                        {1, output_channels, 1, 1}, dlxnet::TensorProto::NHWC4);
+                        {1, output_channels, 1, 1}, dlxnet::TensorProto::NHWC4, dlxnet::TensorProto::NCHW);
                 input_ids.emplace_back(bias_id);
             }
 
