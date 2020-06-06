@@ -166,4 +166,14 @@ namespace opengl{
         }
         LOG(FATAL)<<"unsupported dformat: "<<dformat;
     }
+
+    DataFormat FormatFromStride4(DataFormat dformat){
+        if(dformat==dlxnet::TensorProto::NHWC4){
+            return dlxnet::TensorProto::NHWC;
+        }
+        if(dformat==dlxnet::TensorProto::ANY4){
+            return dlxnet::TensorProto::ANY;
+        }
+        LOG(FATAL)<<"unsupported dformat: "<<dformat;
+    }
 }//namespace opengl

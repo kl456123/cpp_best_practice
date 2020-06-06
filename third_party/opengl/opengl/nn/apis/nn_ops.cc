@@ -1,7 +1,21 @@
 #include "opengl/nn/apis/nn_ops.h"
+#include "opengl/core/tensor.h"
 
 
 namespace opengl{
+    int AddConstNode(Scope* scope, const std::string&  name, const Tensor* cpu_tensor){
+        auto node_ptr = scope->AddNode();
+        node_ptr->set_name(name);
+        node_ptr->set_type("Const");
+        int tensor_id = scope->AddTensor(name);
+        node_ptr->add_output_index(tensor_id);
+        dlxnet::TensorProto* tensor_proto = node_ptr->mutable_attr()
+            ->mutable_const_attr()->mutable_value();
+
+        cpu_tensor->AsProto(tensor_proto);
+
+        return tensor_id;
+    }
     int AddConstNode(Scope* scope, const std::string&  name,
             const std::vector<int>& shape, DataFormat dformat, DataFormat src_dformat){
         auto node_ptr = scope->AddNode();

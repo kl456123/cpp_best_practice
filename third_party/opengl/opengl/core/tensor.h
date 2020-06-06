@@ -221,6 +221,8 @@ namespace opengl{
             std::string DebugString()const;
             std::string ShortDebugString()const;
 
+            void AsProto(dlxnet::TensorProto* proto)const;
+
         private:
             // inner data pointer
             void* device_=nullptr;

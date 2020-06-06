@@ -145,4 +145,25 @@ namespace opengl{
         }
         return ss.str();
     }
+
+    void Tensor::AsProto(dlxnet::TensorProto* proto)const{
+        CHECK(is_host())<<"AsProto Only used in CPU Tensoor";
+        // set shape
+        for(auto dim: shape()){
+            proto->add_dims(dim);
+        }
+
+        // set type
+        proto->set_data_type(dlxnet::TensorProto::FLOAT32);
+        proto->set_target_data_format(dlxnet::TensorProto::ANY4);
+        proto->set_data_format(dformat());
+
+        // set value
+        const int num_elements_value = num_elements();
+        proto->clear_float_data();
+        const float* host_data = host<float>();
+        for(int j=0;j<num_elements_value;++j){
+            proto->add_float_data(host_data[j]);
+        }
+}
 }//namespace opengl

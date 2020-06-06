@@ -16,6 +16,7 @@ namespace opengl{
     struct ConcatParams{
         int axis;
     };
+    int AddConstNode(Scope* scope, const std::string&  name, const Tensor* cpu_tensor);
     int AddConstNode(Scope* scope, const std::string&  name,
             const std::vector<int>& shape, DataFormat dst_dformat,
             DataFormat src_dformat);

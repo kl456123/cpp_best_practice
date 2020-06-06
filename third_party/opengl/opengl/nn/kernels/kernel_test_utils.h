@@ -8,8 +8,12 @@
 
 namespace opengl{
     namespace testing{
+        // initialize environment
         std::unique_ptr<FBOSession> InitSession();
         void InitOGLContext();
+
+        // check utils
+        void CheckSameTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2);
     }//namespace testing
 }//namespace opengl
 

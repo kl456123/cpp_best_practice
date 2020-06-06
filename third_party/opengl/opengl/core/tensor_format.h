@@ -40,6 +40,7 @@ namespace opengl{
     std::string FormatToStr(DataFormat);
     DataFormat StrToFormat(std::string format_str);
     DataFormat FormatToStride4(DataFormat);
+    DataFormat FormatFromStride4(DataFormat dformat);
 }//namespace
 
 

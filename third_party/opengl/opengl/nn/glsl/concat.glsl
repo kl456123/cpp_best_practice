@@ -27,21 +27,24 @@ void main(){
 
     if(axis==0){
         if(out_n_i<input_shape.x){
-            color = texelFetch(input_image, pos, 0);
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color = texelFetch(input_image, ivec2(offset, 0), 0);
         }else{
             int offset = (((out_n_i-input_shape.x)*other_shape.y+out_h_i)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+out_c_i;
             color = texelFetch(other_image, ivec2(offset, 0), 0);
         }
     }else if(axis==1){
         if(out_h_i<input_shape.y){
-            color = texelFetch(input_image, pos, 0);
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color = texelFetch(input_image, ivec2(offset, 0), 0);
         }else{
             int offset = ((out_n_i*other_shape.y+out_h_i-input_shape.y)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+out_c_i;
             color = texelFetch(other_image, ivec2(offset, 0), 0);
         }
     }else if(axis==2){
         if(out_w_i<input_shape.z){
-            color = texelFetch(input_image, pos, 0);
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color = texelFetch(input_image, ivec2(offset, 0), 0);
         }else{
             int offset = ((out_n_i*other_shape.y+out_h_i)*other_shape.z+out_w_i-input_shape.z)*UP_DIV(other_shape.w, 4)+out_c_i;
             color = texelFetch(other_image, ivec2(offset, 0), 0);
@@ -49,15 +52,16 @@ void main(){
     }else{
         // assign seperately
         if(out_c_i*4+0<input_shape.w){
-            color.x = texelFetch(input_image, pos, 0).x;
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color.x = texelFetch(input_image, ivec2(offset, 0), 0).x;
         }else{
             int in_c_i = out_c_i*4+0-input_shape.w;
             int offset = (((out_n_i*other_shape.y+out_h_i)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+in_c_i/4);
-            if(in_c_i%4==1){
+            if(in_c_i%4==0){
                 color.x = texelFetch(other_image, ivec2(offset, 0), 0).x;
-            }else if(in_c_i%4==2){
+            }else if(in_c_i%4==1){
                 color.x = texelFetch(other_image, ivec2(offset, 0), 0).y;
-            }else if(in_c_i%4==3){
+            }else if(in_c_i%4==2){
                 color.x = texelFetch(other_image, ivec2(offset, 0), 0).z;
             }else {
                 color.x = texelFetch(other_image, ivec2(offset, 0), 0).w;
@@ -65,15 +69,16 @@ void main(){
         }
 
         if(out_c_i*4+1<input_shape.w){
-            color.y = texelFetch(input_image, pos, 0).y;
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color.y = texelFetch(input_image, ivec2(offset, 0), 0).y;
         }else{
             int in_c_i = out_c_i*4+1-input_shape.w;
             int offset = (((out_n_i*other_shape.y+out_h_i)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+in_c_i/4);
-            if(in_c_i%4==1){
+            if(in_c_i%4==0){
                 color.y = texelFetch(other_image, ivec2(offset, 0), 0).x;
-            }else if(in_c_i%4==2){
+            }else if(in_c_i%4==1){
                 color.y = texelFetch(other_image, ivec2(offset, 0), 0).y;
-            }else if(in_c_i%4==3){
+            }else if(in_c_i%4==2){
                 color.y = texelFetch(other_image, ivec2(offset, 0), 0).z;
             }else {
                 color.y = texelFetch(other_image, ivec2(offset, 0), 0).w;
@@ -81,15 +86,16 @@ void main(){
         }
 
         if(out_c_i*4+2<input_shape.w){
-            color.z = texelFetch(input_image, pos, 0).z;
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color.z = texelFetch(input_image, ivec2(offset, 0), 0).z;
         }else{
             int in_c_i = out_c_i*4+2-input_shape.w;
             int offset = (((out_n_i*other_shape.y+out_h_i)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+in_c_i/4);
-            if(in_c_i%4==1){
+            if(in_c_i%4==0){
                 color.z = texelFetch(other_image, ivec2(offset, 0), 0).x;
-            }else if(in_c_i%4==2){
+            }else if(in_c_i%4==1){
                 color.z = texelFetch(other_image, ivec2(offset, 0), 0).y;
-            }else if(in_c_i%4==3){
+            }else if(in_c_i%4==2){
                 color.z = texelFetch(other_image, ivec2(offset, 0), 0).z;
             }else {
                 color.z = texelFetch(other_image, ivec2(offset, 0), 0).w;
@@ -97,15 +103,16 @@ void main(){
         }
 
         if(out_c_i*4+3<input_shape.w){
-            color.w = texelFetch(input_image, pos, 0).w;
+            int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
+            color.w = texelFetch(input_image, ivec2(offset, 0), 0).w;
         }else{
             int in_c_i = out_c_i*4+3-input_shape.w;
             int offset = (((out_n_i*other_shape.y+out_h_i)*other_shape.z+out_w_i)*UP_DIV(other_shape.w, 4)+in_c_i/4);
-            if(in_c_i%4==1){
+            if(in_c_i%4==0){
                 color.w = texelFetch(other_image, ivec2(offset, 0), 0).x;
-            }else if(in_c_i%4==2){
+            }else if(in_c_i%4==1){
                 color.w = texelFetch(other_image, ivec2(offset, 0), 0).y;
-            }else if(in_c_i%4==3){
+            }else if(in_c_i%4==2){
                 color.w = texelFetch(other_image, ivec2(offset, 0), 0).z;
             }else {
                 color.w = texelFetch(other_image, ivec2(offset, 0), 0).w;
