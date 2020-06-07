@@ -33,10 +33,10 @@ int main(int argc, char** argv){
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
     // conv2d params
-    const int input_width = 224;
-    const int input_height = 224;
-    const int input_channels = 3;
-    const int num_inputs = 1;
+    // const int input_width = 10;
+    // const int input_height = 10;
+    // const int input_channels = 3;
+    // const int num_inputs = 1;
 
     // some params
     std::string model_path = "./demo.dlx";
@@ -46,7 +46,8 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::TensorNameList output_names({"output"});
-    ::opengl::StringList dformats({"NHWC"});
+    ::opengl::StringList dformats({"ANY"});
+    ::opengl::IntList input_shape({1, 2, 4, 4});
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
@@ -57,15 +58,12 @@ int main(int argc, char** argv){
     for(int i=0;i<3;++i){
         // init graph according to inputs
         session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    {num_inputs, input_height, input_width, input_channels})}});
+                    input_shape, ::dlxnet::TensorProto::ANY)}});
         // do computation for the graph
         session->Run();
 
         // get cpu outputs from device
         session->GetOutputs(output_names, dformats, &outputs_cpu);
-
-        // print output
-        // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
 
     }
     auto env_time = EnvTime::Default();
@@ -73,7 +71,7 @@ int main(int argc, char** argv){
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
         session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    {num_inputs, input_height, input_width, input_channels})}});
+                    input_shape, ::dlxnet::TensorProto::ANY)}});
         // do computation for the graph
         session->Run();
 

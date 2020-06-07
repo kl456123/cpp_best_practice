@@ -18,6 +18,8 @@ namespace opengl{
                     TensorShapeList& output_shapes)override;
                 virtual void SetupAttr(const dlxnet::Attribute& attr)override;
                 virtual ~ReshapeKernel();
+            private:
+                IntList target_shape_;
 
         };
 }//namespace opengl

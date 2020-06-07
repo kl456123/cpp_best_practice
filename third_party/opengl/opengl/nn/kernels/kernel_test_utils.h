@@ -14,6 +14,8 @@ namespace opengl{
 
         // check utils
         void CheckSameTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2);
+        void CheckSameValueTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2);
+        void CleanupTensorList(::opengl::TensorList* outputs_tensor);
     }//namespace testing
 }//namespace opengl
 

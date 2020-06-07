@@ -16,6 +16,7 @@ namespace opengl{
                         TensorShapeList& outputs);
                 virtual void SetupAttr(const dlxnet::Attribute& attr);
                 virtual ~ShapeKernel();
+                virtual bool ForceReady()const override{return true;}
             private:
                 Tensor* tensor_;
 

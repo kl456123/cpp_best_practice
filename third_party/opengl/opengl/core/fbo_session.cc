@@ -234,7 +234,7 @@ namespace opengl{
             kernel->input_tensors_.clear();
             kernel->output_tensors_.clear();
             LOG(INFO)<<"name: " << kernel->kernel_name()
-                <<"type: "<<kernel->kernel_type();
+                <<" type: "<<kernel->kernel_type();
             TensorShapeList output_shapes;
             for(int j=0; j<kernel->input_tensor_indexes_.size(); ++j){
                 Tensor* input_tensor = total_tensors_[kernel->input_tensor_indexes_[j]].get();
@@ -251,10 +251,6 @@ namespace opengl{
 
             // allocate memory for each output tensors according to their shapes
             for(int j=0;j<output_shapes.size();++j){
-                CHECK_GT(output_shapes[j].size(), 0);
-                for(auto dim: output_shapes[j]){
-                    CHECK_GT(dim, 0);
-                }
                 auto dformat = kernel->GetOutputDFormat(j);
                 auto output_tensor = new Tensor(Tensor::DT_FLOAT, output_shapes[j],
                         Tensor::DEVICE_TEXTURE, dformat);
@@ -278,6 +274,11 @@ namespace opengl{
     }
 
     bool FBOSession::CheckKernelReady(const Kernel* kernel){
+        // if some kernel is so special, e.g, shape kernel,
+        // force it to execute
+        if(kernel->ForceReady()){
+            return true;
+        }
         // find all precondition
         for(auto tensor_id: kernel->input_tensor_indexes_){
             if(not ready_[tensor_id]){

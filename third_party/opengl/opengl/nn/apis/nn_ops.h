@@ -29,6 +29,8 @@ namespace opengl{
 
     int AddConcatNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
             const ConcatParams& concat_params);
+
+    int AddReshapeNode(Scope* scope, const std::string&  name, std::vector<int> input_ids);
 }// namespace opengl
 
 

@@ -37,5 +37,26 @@ namespace opengl{
             CHECK_EQ(cpu_tensor1->dtype(), cpu_tensor2->dtype());
             CHECK_EQ(cpu_tensor1->mem_type(), cpu_tensor2->mem_type());
         }
+
+        void CheckSameValueTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2){
+            const float* output_data1 = cpu_tensor1->host<float>();
+            const float* output_data2 = cpu_tensor2->host<float>();
+            CHECK_EQ(cpu_tensor1->num_elements(), cpu_tensor2->num_elements());
+            const int output_num_elements = cpu_tensor1->num_elements();
+            for(int i=0;i<output_num_elements;++i){
+                EXPECT_EQ(output_data1[i], output_data2[i])<<"When index: "<<i;
+            }
+            // check dtype and dformat
+            CHECK_EQ(cpu_tensor1->dformat(), cpu_tensor2->dformat());
+            CHECK_EQ(cpu_tensor1->dtype(), cpu_tensor2->dtype());
+            CHECK_EQ(cpu_tensor1->mem_type(), cpu_tensor2->mem_type());
+        }
+
+
+        void CleanupTensorList(::opengl::TensorList* outputs_tensor){
+            for(auto& tensor: *outputs_tensor){
+                delete tensor;
+            }
+        }
     }//namespace testing
 }//namespace opengl

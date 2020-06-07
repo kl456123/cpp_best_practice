@@ -20,6 +20,7 @@ namespace opengl{
         Tensor::Tensor(DataType dtype, IntList shape, float* data, DataFormat dformat)
         :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY), dformat_(dformat){
             // AmendShape();
+            CheckShapeAndDFormat();
 
             size_ = shape_.num_elements()*sizeof(float);
             host_ = data;
@@ -65,6 +66,7 @@ namespace opengl{
         initialized_=true;
         mem_type_ = HOST_MEMORY;
         dformat_=tensor_proto.data_format();
+            CheckShapeAndDFormat();
     }
 
     // here we just allocate memory in host memory in hard code
@@ -111,23 +113,6 @@ namespace opengl{
         std::stringstream ss;
         ss<<"\n";
         auto&output_shape = shape();
-        for(int r=0;r<output_shape[0];++r){
-            for(int k=0;k<output_shape[1];++k){
-                for(int j=0;j<output_shape[2];++j){
-                    for(int i=0; i<output_shape[3]; ++i){
-                        const int offset = ((r*output_shape[1]+k)*output_shape[2]+j)*
-                            output_shape[3]+i;
-                        ss<<host<float>()[offset]<<", ";
-                        if(i&&i%5==0){
-                            ss<<"\n";
-                        }
-                    }
-                    ss<<"\n";
-                }
-                ss<<"\n";
-            }
-            ss<<"\n";
-        }
         return ss.str();
     }
 

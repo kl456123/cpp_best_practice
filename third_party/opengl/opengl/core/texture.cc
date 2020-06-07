@@ -1,5 +1,6 @@
 #include "opengl/core/texture.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/driver.h"
 
 namespace opengl{
     Texture::Texture(std::vector<int> dims, GLenum internal_format,
@@ -20,15 +21,14 @@ namespace opengl{
 
 
 
-            auto dims_start = dims.begin();
-            // allocate storage of 3D
-            // (TODO which storage to use is better)
-            // glTexStorage3D(target, 1, format_, dims_start[0], dims_start[1], dims_start[2]/4);
-            //
-            // GLenum internal_format = GL_RGBA32F;
             GLenum format = GL_RGBA;
 
             type_ = GL_FLOAT;
+            CHECK_EQ(dims.size(), 2);
+            CHECK_LE(dims[0], GetMaxTextureSize());
+            CHECK_LE(dims[1], GetMaxTextureSize());
+            CHECK_GT(dims[0], 0);
+            CHECK_GT(dims[1], 0);
 
             OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dims[0], dims[1],
                     0, format, type_, image_data));

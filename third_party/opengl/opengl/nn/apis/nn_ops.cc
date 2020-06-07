@@ -104,4 +104,16 @@ namespace opengl{
         concat_attr->set_axis(concat_params.axis);
         return tensor_id;
     }
+
+    int AddReshapeNode(Scope* scope, const std::string&  name, std::vector<int> input_ids){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Reshape");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+        return tensor_id;
+    }
 }//namespace opengl

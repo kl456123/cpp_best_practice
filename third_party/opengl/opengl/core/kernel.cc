@@ -79,7 +79,7 @@ namespace opengl{
             for(int k=0;k<input_shapes[j].size();++k){
                 ss<<input_shapes[j][k]<<" ";
             }
-            ss<<"), ";
+            ss<<")"<<"["<<input_tensor_indexes_[j]<<"]"<< ", ";
         }
         ss<<"->";
         for(int j=0;j<output_tensor_indexes_.size();++j){
@@ -88,7 +88,7 @@ namespace opengl{
             for(int k=0;k<output_shapes[j].size();++k){
                 ss<<output_shapes[j][k]<<" ";
             }
-            ss<<")";
+            ss<<")"<<"["<<output_tensor_indexes_[j]<<"]";
         }
         return ss.str();
     }

@@ -82,21 +82,14 @@ namespace opengl{
         }
 
         void SingleInference(const IntList& shape1, const IntList& shape2, const int axis){
-
-
             auto session = InitSession();
-            const Tensor* const1 = Tensor::Random(Tensor::DT_FLOAT, shape1,
-                    dlxnet::TensorProto::ANY);
-            const Tensor* const2 = Tensor::Random(Tensor::DT_FLOAT, shape2,
-                    dlxnet::TensorProto::ANY);
-            session->LoadGraph(BuildGraph(const1, const2, axis));
+            const auto const1 = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape1,
+                    dlxnet::TensorProto::ANY));
+            const auto const2 = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape2,
+                    dlxnet::TensorProto::ANY));
+            session->LoadGraph(BuildGraph(const1.get(), const2.get(), axis));
 
-            // std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
-            // ::opengl::NamedTensorList inputs(1);
             ::opengl::TensorList outputs_cpu;
-            // inputs[0].first = "input";
-            // inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape, dlxnet::TensorProto::ANY);
-
             session->Setup({});
 
             // do computation for the graph
@@ -108,8 +101,8 @@ namespace opengl{
             // get cpu outputs from device
             session->GetOutputs(output_names, dformats, &outputs_cpu);
             // check const
-            CheckSameTensor(outputs_cpu[1], const1);
-            CheckSameTensor(outputs_cpu[2], const2);
+            CheckSameTensor(outputs_cpu[1], const1.get());
+            CheckSameTensor(outputs_cpu[2], const2.get());
 
             // check the result
             // check the shape first
@@ -132,6 +125,8 @@ namespace opengl{
             for(int i=0;i<output_num_elements;++i){
                 EXPECT_EQ(ogl_output_data[i], cpu_output_data[i]);
             }
+
+            CleanupTensorList(&outputs_cpu);
         }
     }// namespace
 

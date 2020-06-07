@@ -54,7 +54,7 @@ def generate_onnx(saved_path):
     """
     # build graph first
     pretrained = True
-    inputs = torch.ones(1, 3, 224, 224)
+    inputs = torch.ones(1, 2, 4, 4)
 
     # model construction
     model = Model()

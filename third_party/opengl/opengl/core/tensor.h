@@ -223,6 +223,14 @@ namespace opengl{
 
             void AsProto(dlxnet::TensorProto* proto)const;
 
+            void CheckShapeAndDFormat(){
+                // self-check
+                if(shape_.dims_size()!=4){
+                    CHECK(dformat()==::dlxnet::TensorProto::ANY
+                            ||dformat()==::dlxnet::TensorProto::ANY4);
+                }
+            }
+
         private:
             // inner data pointer
             void* device_=nullptr;
@@ -250,7 +258,7 @@ namespace opengl{
     inline Tensor::Tensor(DataType dtype, IntList shapes, MemoryType mem_type, DataFormat dformat)
         :shape_(shapes), dtype_(dtype),mem_type_(mem_type), dformat_(dformat){
             // AmendShape();
-
+            CheckShapeAndDFormat();
             size_t num_elements, bytes;
             num_elements = shape_.num_elements();
 

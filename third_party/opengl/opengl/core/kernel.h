@@ -62,6 +62,8 @@ namespace opengl{
             FBOSession* session()const{
                 return session_;
             }
+
+            virtual bool ForceReady()const{return false;}
         protected:
             // attach output tensor to the target(fbo)
             // used in compute function of subclass
