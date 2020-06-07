@@ -32,12 +32,6 @@ int main(int argc, char** argv){
     glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
     LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
 
-    // conv2d params
-    // const int input_width = 10;
-    // const int input_height = 10;
-    // const int input_channels = 3;
-    // const int num_inputs = 1;
-
     // some params
     std::string model_path = "./demo.dlx";
     const int num_iters = 1;
@@ -46,8 +40,11 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::TensorNameList output_names({"output"});
+    ::opengl::IntList input_shape({1, 10, 10, 3});
+    // ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
+    // ::opengl::StringList dformats({"NHWC"});
+    ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::ANY;
     ::opengl::StringList dformats({"ANY"});
-    ::opengl::IntList input_shape({1, 2, 4, 4});
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
@@ -58,7 +55,7 @@ int main(int argc, char** argv){
     for(int i=0;i<3;++i){
         // init graph according to inputs
         session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    input_shape, ::dlxnet::TensorProto::ANY)}});
+                    input_shape, input_dformat)}});
         // do computation for the graph
         session->Run();
 
@@ -71,7 +68,7 @@ int main(int argc, char** argv){
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
         session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    input_shape, ::dlxnet::TensorProto::ANY)}});
+                    input_shape, input_dformat)}});
         // do computation for the graph
         session->Run();
 

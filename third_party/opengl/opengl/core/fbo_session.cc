@@ -92,10 +92,10 @@ namespace opengl{
             kernel->set_kernel_type(node.type());
             kernel->set_session(this);
 
+            kernel->SetupAttr(node.attr());
+
             // setup program for each kernel here
             kernel->SetupProgram(vertex_shader_);
-
-            kernel->SetupAttr(node.attr());
             // fill inputs and outputs
             for(int i=0; i<node.input_index_size(); ++i){
                 kernel->input_tensor_indexes_.emplace_back(node.input_index(i));
@@ -207,7 +207,7 @@ namespace opengl{
 
             auto iter = tensor_name_index_.find(tensor_name);
             if(iter==tensor_name_index_.end()){
-                LOG(FATAL)<<"tensor_name: "<<tensor_name<<"Cannot Find";
+                LOG(FATAL)<<"tensor_name: "<<tensor_name<<" Cannot Find";
             }
             const int input_index = iter->second;
 

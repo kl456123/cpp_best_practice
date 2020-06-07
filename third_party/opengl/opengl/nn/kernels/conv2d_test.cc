@@ -20,12 +20,28 @@ namespace opengl{
         int groups = 1;
         int dilation = 1;
         bool use_bias = true;
+        const std::string weight_name = "conv2d1.weight";
+        const std::string bias_name = "conv2d1.bias";
 
 
 
         // some params
         constexpr int num_iters = 10;
         constexpr float precision = 1e-4;
+
+        void Reset(){
+            input_width = 3;
+            input_height = 3;
+            input_channels = 3;
+            output_channels = 1;
+            num_inputs = 1;
+            kernel_size = 3;
+            stride = 1;
+            padding = 1;
+            groups = 1;
+            dilation = 1;
+            use_bias = true;
+        }
 
         // cpu version of conv2d used for check the correctness
         void Conv2DCPU(const float* input_data,
@@ -46,33 +62,42 @@ namespace opengl{
             // input_data: (N, H, W, C)
             // output_data: (N, H, W, C)
             // filter_data: (N_out, N_in, H, W)
-            for(int oc=0;oc<output_channels;++oc){
-                const int filter_base = oc*kernel_size*kernel_size*input_channels;
-                for(int i=0;i<output_height;++i){
-                    for(int j=0;j<output_width;++j){
-                        int output_index = i*output_width+j;
-                        float sum = bias_data==nullptr? 0:bias_data[oc];
-                        for(int r=0;r<kernel_size;++r){
-                            for(int s=0;s<kernel_size;++s){
-                                int input_index_x = j*stride-padding+s*dilation;
-                                int input_index_y = i*stride-padding+r*dilation;
-                                int input_index = input_index_y*input_width+input_index_x;
-                                if(input_index_x<0||input_index_x>=input_width){
-                                    continue;
-                                }
+            const int in_channel_per_group = input_channels/groups;
+            const int out_channel_per_group = output_channels/groups;
+            CHECK_EQ(input_channels%groups, 0);
+            CHECK_EQ(output_channels%groups, 0);
 
-                                if(input_index_y<0||input_index_y>=input_height){
-                                    continue;
-                                }
-                                int filter_index=r*kernel_size+s;
-                                for(int c=0;c<input_channels;++c){
-                                    float a = input_data[input_index*input_channels+c];
-                                    float b = filter_data[filter_base+c*kernel_size*kernel_size+filter_index];
-                                    sum+=a*b;
+            for(int grp_ind=0;grp_ind<groups;++grp_ind){
+                for(int oc_=0;oc_<out_channel_per_group;++oc_){
+                    const int oc = oc_+out_channel_per_group*grp_ind;
+                    const int filter_base = oc*kernel_size*kernel_size*input_channels/groups;
+                    for(int i=0;i<output_height;++i){
+                        for(int j=0;j<output_width;++j){
+                            int output_index = i*output_width+j;
+                            float sum = bias_data==nullptr? 0:bias_data[oc];
+                            for(int r=0;r<kernel_size;++r){
+                                for(int s=0;s<kernel_size;++s){
+                                    int input_index_x = j*stride-padding+s*dilation;
+                                    int input_index_y = i*stride-padding+r*dilation;
+                                    int input_index = input_index_y*input_width+input_index_x;
+                                    if(input_index_x<0||input_index_x>=input_width){
+                                        continue;
+                                    }
+
+                                    if(input_index_y<0||input_index_y>=input_height){
+                                        continue;
+                                    }
+                                    int filter_index=r*kernel_size+s;
+                                    for(int c_=0; c_<in_channel_per_group; ++c_){
+                                        int c = c_+grp_ind*in_channel_per_group;
+                                        float a = input_data[input_index*input_channels+c];
+                                        float b = filter_data[filter_base+c_*kernel_size*kernel_size+filter_index];
+                                        sum+=a*b;
+                                    }
                                 }
                             }
+                            output_data[output_index*output_channels+oc] = sum;
                         }
-                        output_data[output_index*output_channels+oc] = sum;
                     }
                 }
             }
@@ -88,19 +113,19 @@ namespace opengl{
             int input_id = AddInputNode(scope_ptr, "input");
 
             // weight
-            int weight_id = AddConstNode(scope_ptr, "weight", {output_channels, input_channels,
+            int weight_id = AddConstNode(scope_ptr, weight_name, {output_channels, input_channels/groups,
                     kernel_size,kernel_size}, dlxnet::TensorProto::HWN4C4, dlxnet::TensorProto::NCHW);
             std::vector<int> input_ids({input_id, weight_id});
             if(use_bias){
                 // bias
-                int bias_id = AddConstNode(scope_ptr, "bias",
+                int bias_id = AddConstNode(scope_ptr, bias_name,
                         {1, output_channels, 1, 1}, dlxnet::TensorProto::NHWC4, dlxnet::TensorProto::NCHW);
                 input_ids.emplace_back(bias_id);
             }
 
             // add conv node
             AddConvNode(scope_ptr, "output", input_ids,
-                    {kernel_size, stride, padding});
+                    {kernel_size, stride, padding, dilation, groups});
 
             // add meta data
             scope->AddOutputName("output");
@@ -108,21 +133,25 @@ namespace opengl{
         }
 
 
-        void SingleInference(){
+        void SingleInference(std::string model_name=""){
             auto session = InitSession();
 
-            session->LoadGraph(BuildGraph());
+            if(model_name.empty()){
+                session->LoadGraph(BuildGraph());
+            }else{
+                session->LoadGraph(model_name);
+            }
 
             std::vector<int> image_shape = {num_inputs, input_height, input_width, input_channels};
             ::opengl::NamedTensorList inputs(1);
             ::opengl::TensorList outputs_cpu;
             inputs[0].first = "input";
-            inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape);
+            inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape);
 
-            ::opengl::TensorNameList output_names({"output", "weight"});
+            ::opengl::TensorNameList output_names({"output", weight_name});
             ::opengl::StringList dformats({"NHWC", "NCHW"});
             if(use_bias){
-                output_names.emplace_back("bias");
+                output_names.emplace_back(bias_name);
                 dformats.emplace_back("NHWC");
             }
             session->Setup(inputs);
@@ -169,8 +198,7 @@ namespace opengl{
     }//namespace
 
     TEST(Conv2dTest, DifferentInputShape){
-        InitOGLContext();
-
+        Reset();
         // loop input shape
         for(int size=1;size<=256;size*=2){
             for(int channel=1;channel<=20;channel++){
@@ -187,8 +215,7 @@ namespace opengl{
     }
 
     TEST(Conv2dTest, WithoutBias){
-        InitOGLContext();
-
+        Reset();
         // loop input shape
         for(int size=1;size<=256;size*=2){
             // set conv2d params first
@@ -203,21 +230,57 @@ namespace opengl{
     }
 
     TEST(Conv2dTest, DifferentKernelShape){
-        InitOGLContext();
-
-        // loop input shape
-        // for(int size=1;size<=256;size*=2){
-        // set conv2d params first
-        // const int size = 2;
+        Reset();
         input_channels = 10;
         output_channels = 5;
         const int size = 3;
-        LOG(INFO)<<"size: "<<size;
         input_height = size;
         input_width = size;
         use_bias = false;
 
         SingleInference();
-        // }
+    }
+
+    TEST(Conv2dTest, DifferentDilationTest){
+        Reset();
+        input_channels = 1;
+        output_channels = 1;
+        const int size = 4;
+        input_height = size;
+        input_width = size;
+        dilation = 2;
+        kernel_size = 3;
+        use_bias = true;
+
+        SingleInference();
+    }
+
+    TEST(Conv2dTest, SimpleGroupTest){
+        Reset();
+        input_channels = 3;
+        output_channels = 6;
+        const int size = 1;
+        input_height = size;
+        input_width = size;
+        use_bias = true;
+        groups=3;
+
+        SingleInference();
+    }
+
+    TEST(Conv2dTest, DifferentGroupTest){
+        // loop input shape
+        for(int size=1; size<=256; size*=2){
+            for(int channel=1;channel<=20;channel++){
+                input_channels = channel;
+                input_height = size;
+                input_width = size;
+                use_bias = false;
+                groups=channel;
+                output_channels = channel*2;
+
+                SingleInference();
+            }
+        }
     }
 }//namespace

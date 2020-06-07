@@ -64,6 +64,12 @@ namespace opengl{
         for(auto tensor_id:input_ids){
             dlcl_node->add_input_index(tensor_id);
         }
+
+        // set groups and dilations
+        dst_attr->set_group(conv2d_params.groups);
+        CHECK_GT(conv2d_params.dilation, 0);
+        dst_attr->add_dilations(conv2d_params.dilation);
+
         // both node name and tensor name are the same
         int tensor_id = scope->AddTensor(name);
         dlcl_node->add_output_index(tensor_id);

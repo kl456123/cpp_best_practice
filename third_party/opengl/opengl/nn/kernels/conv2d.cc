@@ -14,7 +14,6 @@ namespace opengl{
             for(int i=0;i<3;i++){
                 work_sizes_[i] = 1;
             }
-            kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
         }
 
     void Conv2DKernel::SetupAttr(const dlxnet::Attribute& attr){
@@ -49,11 +48,20 @@ namespace opengl{
             CHECK_EQ(conv2d_params.dilations(0), conv2d_params.dilations(1));
             dilation_=conv2d_params.dilations(0);
         }else{
-            // set default
-            dilation_ = 1;
+            if(conv2d_params.dilations_size()== 1){
+                dilation_ = conv2d_params.dilations(0);
+            }else{
+                // set default
+                dilation_ = 1;
+            }
         }
 
-
+        if(group_size_!=1){
+            // more general conv2d case, commonly used by depthwise conv2d
+            kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+        }else{
+            kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+        }
 
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }
@@ -128,8 +136,9 @@ namespace opengl{
         // channel should be the same with input image
         CHECK_EQ(filter_shape[1]*group_size_, image_shape[3]);
 
-        const int output_height = (image_shape[1]-kernel_size_*dilation_+2*padding_)/stride_+1;
-        const int output_width = (image_shape[2]-kernel_size_*dilation_+2*padding_)/stride_+1;
+        const int kernel_size = kernel_size_ *dilation_-dilation_+1;
+        const int output_height = (image_shape[1]-kernel_size+2*padding_)/stride_+1;
+        const int output_width = (image_shape[2]-kernel_size+2*padding_)/stride_+1;
         output_shapes[0] = {image_shape[0], output_height, output_width, filter_shape[0]};
     }
 

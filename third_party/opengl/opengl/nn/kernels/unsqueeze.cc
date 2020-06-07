@@ -53,6 +53,8 @@ namespace opengl{
         output_shapes.resize(1);
         CHECK_EQ(input_shapes.size(), 1);
         output_shapes[0] = input_shapes[0];
+        // That appending to the end is not supported
+        CHECK_NE(axes_[0], input_shapes.size());
         output_shapes[0].insert(output_shapes[0].begin()+axes_[0], 1);
     }
 

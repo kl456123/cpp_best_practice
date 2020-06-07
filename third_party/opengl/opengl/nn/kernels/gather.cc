@@ -53,6 +53,9 @@ namespace opengl{
         output_shapes.resize(1);
         CHECK_EQ(input_shapes.size(), 2);
         // output shape equals to input index
+        // only single number is supported
+        CHECK_EQ(input_shapes[1].size(), 1);
+        CHECK_EQ(input_shapes[1][0], 1);
         output_shapes[0] = input_shapes[1];
     }
 

@@ -11,6 +11,8 @@ namespace opengl{
         int kernel_size;
         int stride;
         int padding;
+        int dilation;
+        int groups;
     };
 
     struct ConcatParams{
