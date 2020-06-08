@@ -5,6 +5,13 @@ using namespace ::opengl::testing;
 
 namespace opengl{
     namespace{
+        IntList RandomPerm(const int dim_size){
+            IntList perm;
+            for(int i=dim_size-1;i>=0;--i){
+                perm.emplace_back(i);
+            }
+            return perm;
+        }
         IntList TransposeShape(const IntList& shape, const IntList& perms){
             IntList dst_shape;
             // permute dims in perms
@@ -18,6 +25,20 @@ namespace opengl{
             return dst_shape;
         }
 
+        IntList TransposeOutputCoord(const IntList& coord, const IntList& perms){
+            CHECK_EQ(coord.size(), perms.size());
+            IntList input_coord(4);
+            // permute dims in perms
+            for(int i=0;i<perms.size();++i){
+                input_coord[perms[i]] = coord[i];
+            }
+            // append the remain dims
+            for(int i=perms.size();i<coord.size();++i){
+                input_coord.emplace_back(coord[i]);
+            }
+            return input_coord;
+        }
+
         void TransposeCPU(const float* src_data, float* dst_data,
                 const IntList& input_shape, const IntList& output_shape, const IntList& perm){
             // get total num first
@@ -29,7 +50,7 @@ namespace opengl{
             for(int i=0;i<output_num_elements;++i){
                 // get its coords in output
                 auto coord = OffsetToCoord(i, output_shape);
-                const auto input_coord = TransposeShape(coord, perm);
+                const auto input_coord = TransposeOutputCoord(coord, perm);
                 const auto input_offset = CoordToOffset(input_coord, input_shape);
                 dst_data[i] = src_data[input_offset];
             }
@@ -87,8 +108,24 @@ namespace opengl{
         }
     }// namespace
     TEST(TransposeTest, SimpleTest){
-        const IntList shape{1, 2, 3, 5};
-        const IntList perm{0, 3, 2, 1};
+        const IntList shape{2, 3, 5};
+        const IntList perm{0, 2, 1};
         SingleInference(shape, perm);
+    }
+
+    TEST(TransposeTest, DimAndShapeTest){
+        // nhwc
+        const int max_dims = 10;
+        const int max_dims_size = 4;
+        for(int dims_size=1; dims_size<=max_dims_size;++dims_size){
+            IntList shape;
+            // generate random shape
+            for(int i=1;i<=dims_size;++i){
+                shape.emplace_back(random()%max_dims+1);
+            }
+            // generate random perms
+            IntList perm = RandomPerm(dims_size);
+            SingleInference(shape, perm);
+        }
     }
 }//namespace opengl

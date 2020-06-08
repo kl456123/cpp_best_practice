@@ -7,6 +7,27 @@
 
 
 namespace opengl{
+    namespace{
+        IntList AmendPerm(const IntList& perms){
+            IntList amended_perms;
+            for(int i=0;i<4-perms.size();++i){
+                amended_perms.emplace_back(i);
+            }
+            for(auto perm:perms){
+                amended_perms.emplace_back(perm+4-perms.size());
+            }
+            return amended_perms;
+        }
+        IntList AmendShape(const IntList& shape){
+            CHECK_LE(shape.size(), 4);
+            const int remain_dims = 4-shape.size();
+            IntList amended_shape = shape;
+            for(int i=0;i<remain_dims;++i){
+                amended_shape.insert(amended_shape.begin(), 1);
+            }
+            return amended_shape;
+        }
+    }
     TransposeKernel::TransposeKernel(Context* context)
         :Kernel(context){
             kernel_fname_ = "../opengl/nn/glsl/transpose.glsl";
@@ -17,6 +38,7 @@ namespace opengl{
         for(auto item: transpose_params.perm()){
             perm_.emplace_back(item);
         }
+        CHECK_LE(perm_.size(), 4);
     }
 
     void TransposeKernel::Compute(TensorList& inputs, TensorList& outputs){
@@ -26,7 +48,9 @@ namespace opengl{
 
         SetFrameBuffer(outputs);
         SetVertexShader();
-        program_->set_vec4i("perm", perm_);
+        program_->set_vec4i("perm", AmendPerm(perm_));
+        program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
+        program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
         // input
         {
