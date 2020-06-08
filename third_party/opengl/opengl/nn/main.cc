@@ -39,12 +39,12 @@ int main(int argc, char** argv){
 
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
-    ::opengl::TensorNameList output_names({"output"});
-    ::opengl::IntList input_shape({1, 224, 224, 3});
+    ::opengl::TensorNameList output_names({"cls_and_bbox"});
+    ::opengl::IntList input_shape({1, 320, 320, 3});
     ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
-    ::opengl::StringList dformats({"NHWC"});
+    // ::opengl::StringList dformats({"NHWC"});
     // ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::ANY;
-    // ::opengl::StringList dformats({"ANY"});
+    ::opengl::StringList dformats({"ANY"});
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
