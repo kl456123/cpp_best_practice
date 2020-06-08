@@ -8,20 +8,20 @@
 namespace opengl{
     class Context;
 
-        class ReshapeKernel: public Kernel{
-            public:
-                ReshapeKernel(Context* context);
-                virtual void Compute(TensorList& inputs, TensorList& outputs)override;
-                virtual void InferOutputShape(TensorShapeList& inputs,
-                        TensorShapeList& outputs)override{}
-                virtual void InferOutputShape(const TensorList& inputs,
+    class ReshapeKernel: public Kernel{
+        public:
+            ReshapeKernel(Context* context);
+            virtual void Compute(TensorList& inputs, TensorList& outputs)override;
+            virtual void InferOutputShape(TensorShapeList& inputs,
+                    TensorShapeList& outputs)override{}
+            virtual void InferOutputShape(const TensorList& inputs,
                     TensorShapeList& output_shapes)override;
-                virtual void SetupAttr(const dlxnet::Attribute& attr)override;
-                virtual ~ReshapeKernel();
-            private:
-                IntList target_shape_;
+            virtual void SetupAttr(const dlxnet::Attribute& attr)override;
+            virtual ~ReshapeKernel();
+        private:
+            IntList target_shape_;
 
-        };
+    };
 }//namespace opengl
 
 #endif

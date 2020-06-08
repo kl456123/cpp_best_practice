@@ -18,21 +18,28 @@ namespace opengl{
     struct ConcatParams{
         int axis;
     };
-    int AddConstNode(Scope* scope, const std::string&  name, const Tensor* cpu_tensor);
-    int AddConstNode(Scope* scope, const std::string&  name,
+
+    struct TransposeParams{
+        IntList perm;
+    };
+
+    int AddConstNode(Scope* scope, const std::string& name, const Tensor* cpu_tensor);
+    int AddConstNode(Scope* scope, const std::string& name,
             const std::vector<int>& shape, DataFormat dst_dformat,
             DataFormat src_dformat);
 
-    int AddConvNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
+    int AddConvNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
             const Conv2dParams& conv2d_params);
     int AddInputNode(Scope* scope, std::string name);
 
     int AddShapeNode(Scope* scope, std::string name, std::vector<int> input_ids);
 
-    int AddConcatNode(Scope* scope, const std::string&  name, std::vector<int> input_ids,
+    int AddConcatNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
             const ConcatParams& concat_params);
 
-    int AddReshapeNode(Scope* scope, const std::string&  name, std::vector<int> input_ids);
+    int AddReshapeNode(Scope* scope, const std::string& name, std::vector<int> input_ids);
+    int AddTransposeNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const TransposeParams& trans_params);
 }// namespace opengl
 
 

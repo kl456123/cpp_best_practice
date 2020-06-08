@@ -1,5 +1,7 @@
 uniform sampler2D input_image;
-uniform vec4 perm;
+uniform ivec4 perm;
+
+uniform ivec3 input_shape;
 
 out vec4 color;
 void main(){

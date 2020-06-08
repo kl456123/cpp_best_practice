@@ -6,39 +6,6 @@ using namespace ::opengl::testing;
 
 namespace opengl{
     namespace{
-        inline IntList ShapeToStride(IntList shape){
-            IntList stride;
-            int num_elements = 1;
-            for(auto item:shape){
-                num_elements*=item;
-            }
-
-            int temp = num_elements;
-            for(auto item:shape){
-                temp/=item;
-                stride.emplace_back(temp);
-            }
-            return stride;
-        }
-        inline IntList OffsetToCoord(const int index, const IntList shape){
-            auto stride = ShapeToStride(shape);
-            IntList coords;
-            for(int i=0;i<shape.size();++i){
-                coords.emplace_back((index/stride[i])%shape[i]);
-            }
-            return coords;
-        }
-
-        inline int CoordToOffset(const IntList coords, const IntList shape){
-            auto stride = ShapeToStride(shape);
-            int offset = 0;
-            // return {index%stride};
-            for(int i=0;i<stride.size();++i){
-                offset+=stride[i]*coords[i];
-            }
-            return offset;
-        }
-
         void ConcatCPU(const float* input1, const float* input2,
                 const int axis, const IntList& input_shape1, const IntList& input_shape2,
                 const IntList& output_shape, float* output){
@@ -123,7 +90,7 @@ namespace opengl{
             ConcatCPU(ogl_const1_data, ogl_const2_data, axis, outputs_cpu[1]->shape(),
                     outputs_cpu[2]->shape(), outputs_cpu[0]->shape(), cpu_output_data);
             for(int i=0;i<output_num_elements;++i){
-                EXPECT_EQ(ogl_output_data[i], cpu_output_data[i]);
+                EXPECT_EQ(ogl_output_data[i], cpu_output_data[i])<<"When index: "<<i;
             }
 
             CleanupTensorList(&outputs_cpu);

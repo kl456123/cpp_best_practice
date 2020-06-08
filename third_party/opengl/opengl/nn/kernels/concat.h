@@ -8,18 +8,20 @@
 namespace opengl{
     class Context;
 
-        class ConcatKernel: public Kernel{
-            public:
-                ConcatKernel(Context* context);
-                virtual void Compute(TensorList& inputs, TensorList& outputs);
-                virtual void InferOutputShape(TensorShapeList& inputs,
-                        TensorShapeList& outputs);
-                virtual void SetupAttr(const dlxnet::Attribute& attr);
-                virtual ~ConcatKernel();
-            private:
-                int axis_;
+    class ConcatKernel: public Kernel{
+        public:
+            ConcatKernel(Context* context);
+            virtual void Compute(TensorList& inputs, TensorList& outputs);
+            virtual void InferOutputShape(const TensorList& inputs,
+                    TensorShapeList& outputs)override;
+            virtual void InferOutputShape(TensorShapeList& inputs,
+                    TensorShapeList& outputs)override{}
+            virtual void SetupAttr(const dlxnet::Attribute& attr);
+            virtual ~ConcatKernel();
+        private:
+            int axis_;
 
-        };
+    };
 }//namespace opengl
 
 #endif

@@ -38,6 +38,10 @@ namespace opengl{
                 return context_;
             }
 
+            bool IsONNX()const{
+                return model_->producer_name()=="ONNX";
+            }
+
         private:
             void CreateVertexShader();
             GLuint CreateShader(GLenum shader_kind, const char *shader_src);

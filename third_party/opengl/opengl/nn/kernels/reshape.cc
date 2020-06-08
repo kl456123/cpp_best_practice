@@ -94,8 +94,8 @@ namespace opengl{
         }
         bool flag = true;
         for(int i=0;i<output_shape.size();++i){
-            CHECK(flag);
             if(output_shape[i]==-1){
+                CHECK(flag);
                 output_shape[i] = num_elements/remain_elements;
                 flag=false;
             }

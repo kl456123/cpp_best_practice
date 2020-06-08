@@ -43,12 +43,22 @@ namespace opengl{
             TensorShapeList& output_shapes){
         // set output dformat first, then we can according
         // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
 
         output_shapes.clear();
         output_shapes.resize(1);
         CHECK_EQ(input_shapes.size(), 1);
-        output_shapes[0] = input_shapes[0];
+        const auto input_shape = input_shapes[0];
+
+        IntList& dst_shape=output_shapes[0];
+        // permute dims in perms
+        for(auto perm: perm_){
+            dst_shape.emplace_back(input_shape[perm]);
+        }
+        // append the remain dims
+        for(int i=perm_.size();i<input_shape.size();++i){
+            dst_shape.emplace_back(input_shape[i]);
+        }
     }
 
     TransposeKernel::~TransposeKernel(){}

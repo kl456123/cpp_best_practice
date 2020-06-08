@@ -122,4 +122,23 @@ namespace opengl{
         dlcl_node->add_output_index(tensor_id);
         return tensor_id;
     }
+
+    int AddTransposeNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const TransposeParams& trans_params){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Transpose");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+
+        auto trans_attr = dlcl_node->mutable_attr()
+            ->mutable_transpose_attr();
+        for(auto perm:trans_params.perm){
+            trans_attr->add_perm(perm);
+        }
+        return tensor_id;
+    }
 }//namespace opengl
