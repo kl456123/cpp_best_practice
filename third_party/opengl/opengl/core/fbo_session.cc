@@ -155,7 +155,7 @@ namespace opengl{
         CHECK(finalized_)<<"Please Setup Session First";
         for(int i=0;i<kernels_.size();++i){
             auto& kernel = kernels_[i];
-            if(kernel->kernel_type()=="Const"){
+            if(CheckKernelReady(kernel.get())){
                 continue;
             }
             kernel->Compute();
