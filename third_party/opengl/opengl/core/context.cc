@@ -13,6 +13,28 @@ namespace opengl{
         const GLenum kDataType=GL_FLOAT;
         GLenum kInternalFormat = GL_RGBA32F;
         GLenum kFormat = GL_RGBA;
+        // Don't need to change this.
+        // We want to draw 2 giant triangles that cover the whole screen.
+        struct Vertex {
+            float x, y;
+        };
+
+        static constexpr size_t kNumVertices = 6;
+
+        const char *vertex_shader_text = "#version 300 es\n"
+            "in vec2 point; // input to vertex shader\n"
+            "void main() {\n"
+            "  gl_Position = vec4(point, 0.0, 1.0);\n"
+            "}\n";
+
+        const Vertex vertices[kNumVertices] = {
+            {-1.f, -1.f},
+            {1.0f, -1.f},
+            {1.0f, 1.0f},
+            {-1.f, -1.f},
+            {-1.f, 1.0f},
+            {1.0f, 1.0f},
+        };
     }
 
     void Context::Compute(std::initializer_list<size_t> dim_sizes){
@@ -24,6 +46,10 @@ namespace opengl{
         :allocator_(allocator){
             // max size allowed when using texture
             LOG(INFO)<<"max group invacations: "<<GetMaxTextureSize();
+            // prepare framebuffer and vertex shader first
+            // as for fragment shader, it is used as compute kernel
+            frame_buffer_ = CreateFrameBuffer();
+            CreateVertexShader();
         }
 
     void Context::ConvertTensorHWN4C4ToNCHW(void* src, Tensor* tensor){
@@ -359,6 +385,46 @@ namespace opengl{
         ::memcpy(buffer_cpu, ptr, buffer->size());
         buffer->UnMap();
     }
+
+    void Context::CreateVertexShader(){
+        // We always render the same vertices and triangles.
+        GLuint vertex_buffer;
+        OPENGL_CALL(glGenBuffers(1, &vertex_buffer));
+        OPENGL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer));
+        OPENGL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
+                    GL_STATIC_DRAW));
+
+        GLuint vertex_array;
+        OPENGL_CALL(glGenVertexArrays(1, &vertex_array));
+        OPENGL_CALL(glBindVertexArray(vertex_array));
+        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+
+        // We always use the same vertex shader.
+        vertex_shader_ = CreateShader(GL_VERTEX_SHADER, vertex_shader_text);
+    }
+
+    Context::~Context(){
+        OPENGL_CALL(glDeleteFramebuffers(1, &frame_buffer_));
+    }
+
+    Program* Context::CreateProgram(const std::string& kernel_fname){
+        if(kernel_fname.empty()){
+            // no kernel program needed for this op, like const op
+            return nullptr;
+        }
+        // set program
+        // program_ .reset(new Program);
+        auto program = new Program;
+        (*program).AttachFile(kernel_fname, GL_FRAGMENT_SHADER)
+            .AttachShader(vertex_shader_);
+        program->Link();
+        program->Activate();
+        // set vertex shader first
+        // then you can set fragment shader to do actually computation
+        program->SetVertexShader();
+        return program;
+    }
+
 
     Context* GetContext(){
         static Context* context = new Context;

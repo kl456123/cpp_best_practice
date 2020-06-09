@@ -30,6 +30,9 @@ namespace opengl{
     void DeleteBuffer(GLuint buffer);
     void DeleteFrameBuffer(GLuint frame_buffer);
 
+    void AttachTextureToFrameBuffer(GLuint texture, GLint width, GLint height);
+    GLuint CreateShader(GLenum shader_kind, const char *shader_src);
+
 
     void CopyHostToTexture(const void* data, GLint width, GLint height, GLuint texture,
             GLenum format=GL_RGBA, GLenum dtype=GL_FLOAT);

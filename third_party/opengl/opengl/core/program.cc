@@ -1,10 +1,17 @@
 #include "opengl/core/program.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/tensor.h"
+#include "opengl/core/driver.h"
 #include <fstream>
 #include <sstream>
 #include <glog/logging.h>
 
 namespace opengl{
+    namespace{
+        struct Vertex {
+            float x, y;
+        };
+    }
     Program::~Program(){
         OPENGL_CALL(glDeleteProgram(program_id_));
     }
@@ -92,5 +99,30 @@ namespace opengl{
         }
         glUseProgram(program_id_);
         return status_;
+    }
+
+    void Program::SetRetVal(const TensorList& outputs){
+        CHECK_EQ(outputs.size(), 1);
+        CHECK_EQ(outputs[0]->mem_type(), Tensor::DEVICE_TEXTURE);
+
+        const int width = outputs[0]->device<Texture>()->shape()[0];
+        const int height = outputs[0]->device<Texture>()->shape()[1];
+        auto output_texture = outputs[0]->device<Texture>()->id();
+
+        AttachTextureToFrameBuffer(output_texture, width, height);
+    }
+
+    void Program::Run(){
+        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
+        glFinish();
+    }
+
+    void Program::SetVertexShader(){
+        // set input arguments for vertex shader
+        auto point_attrib = GLuint(glGetAttribLocation(program_id(), "point"));
+        OPENGL_CALL(glEnableVertexAttribArray(point_attrib));
+        OPENGL_CALL(glVertexAttribPointer(point_attrib, 2, GL_FLOAT, GL_FALSE,
+                    sizeof(Vertex), nullptr));
     }
 }//namespace opengl

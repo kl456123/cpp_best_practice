@@ -269,6 +269,7 @@ namespace opengl{
     }
 
     TEST(Conv2dTest, DifferentGroupTest){
+        Reset();
         // loop input shape
         for(int size=1; size<=256; size*=2){
             for(int channel=1;channel<=20;channel++){
@@ -282,5 +283,20 @@ namespace opengl{
                 SingleInference();
             }
         }
+    }
+
+    TEST(Conv2dTest, SimpleStrideTest){
+        Reset();
+        input_channels = 3;
+        output_channels = 32;
+        const int size = 320;
+        input_height = size;
+        input_width = size;
+        kernel_size = 3;
+        padding=1;
+        stride=2;
+        use_bias = false;
+        groups=1;
+        SingleInference();
     }
 }//namespace

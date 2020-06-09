@@ -7,36 +7,11 @@
 #include "opengl/utils/protobuf.h"
 #include "opengl/core/tensor.h"
 #include "opengl/core/tensor_format.h"
+#include "opengl/core/driver.h"
 
 
 namespace opengl{
-    namespace{
-        // Don't need to change this.
-        // We want to draw 2 giant triangles that cover the whole screen.
-        struct Vertex {
-            float x, y;
-        };
-
-        static constexpr size_t kNumVertices = 6;
-
-        const char *vertex_shader_text = "#version 300 es\n"
-            "in vec2 point; // input to vertex shader\n"
-            "void main() {\n"
-            "  gl_Position = vec4(point, 0.0, 1.0);\n"
-            "}\n";
-
-        const Vertex vertices[kNumVertices] = {
-            {-1.f, -1.f},
-            {1.0f, -1.f},
-            {1.0f, 1.0f},
-            {-1.f, -1.f},
-            {-1.f, 1.0f},
-            {1.0f, 1.0f},
-        };
-    }//namespace
-
     FBOSession::~FBOSession(){
-        OPENGL_CALL(glDeleteFramebuffers(1, &frame_buffer_));
         // delete all tensors
     }
 
@@ -95,7 +70,7 @@ namespace opengl{
             kernel->SetupAttr(node.attr());
 
             // setup program for each kernel here
-            kernel->SetupProgram(vertex_shader_);
+            kernel->SetupProgram(context_->CreateProgram(kernel->kernel_fname()));
             // fill inputs and outputs
             for(int i=0; i<node.input_index_size(); ++i){
                 kernel->input_tensor_indexes_.emplace_back(node.input_index(i));
@@ -110,46 +85,7 @@ namespace opengl{
         OPENGL_CHECK_ERROR;
     }
 
-    void FBOSession::CreateVertexShader(){
-        // We always render the same vertices and triangles.
-        GLuint vertex_buffer;
-        OPENGL_CALL(glGenBuffers(1, &vertex_buffer));
-        OPENGL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer));
-        OPENGL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-                    GL_STATIC_DRAW));
 
-        GLuint vertex_array;
-        OPENGL_CALL(glGenVertexArrays(1, &vertex_array));
-        OPENGL_CALL(glBindVertexArray(vertex_array));
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-
-        // We always use the same vertex shader.
-        vertex_shader_ = CreateShader(GL_VERTEX_SHADER, vertex_shader_text);
-    }
-
-    GLuint FBOSession::CreateShader(GLenum shader_kind, const char *shader_src) {
-        // Create the shader.
-        GLuint shader = glCreateShader(shader_kind);
-        glShaderSource(shader, 1, &shader_src, nullptr);
-        glCompileShader(shader);
-
-        // Check compile errors.
-        GLint err;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &err);
-
-        GLint info_log_len;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
-
-        if (info_log_len > 0) {
-            std::unique_ptr<char[]> err_msg(new char[info_log_len + 1]);
-            glGetShaderInfoLog(shader, info_log_len, nullptr, err_msg.get());
-            LOG(FATAL) << err_msg.get();
-        }
-
-        OPENGL_CHECK_ERROR;
-
-        return shader;
-    }
 
     void FBOSession::Run(){
         CHECK(finalized_)<<"Please Setup Session First";
@@ -167,19 +103,7 @@ namespace opengl{
     FBOSession::FBOSession(Context* context)
         :context_(context){
             // create vertex shader first
-            CreateVertexShader();
-
             model_ = new dlxnet::ModelProto;
-
-            // set up global framebuffer, all nodes are only needed to
-            // attach output texture to the global frame buffer
-            // only need to create it once
-            OPENGL_CALL(glGenFramebuffers(1, &frame_buffer_));
-            OPENGL_CALL(glBindFramebuffer(GL_FRAMEBUFFER, frame_buffer_));
-            // Set the list of draw buffers.
-            GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-            // "1" is the size of DrawBuffers.
-            OPENGL_CALL(glDrawBuffers(1, DrawBuffers));
         }
 
     void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){

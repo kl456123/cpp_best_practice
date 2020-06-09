@@ -43,8 +43,6 @@ namespace opengl{
             }
 
         private:
-            void CreateVertexShader();
-            GLuint CreateShader(GLenum shader_kind, const char *shader_src);
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
 
@@ -58,7 +56,6 @@ namespace opengl{
             // caller does not own it
             Tensor* FindTensorById(const int id);
 
-            GLuint vertex_shader_;
             Context* context_;
             OwnedKernelList kernels_;
 
@@ -76,9 +73,6 @@ namespace opengl{
 
             // map from tensor name to index in total_tensors_
             NamedIndex tensor_name_index_;
-
-            // output target in each kernel
-            GLuint frame_buffer_;
 
             std::vector<bool> ready_;
 

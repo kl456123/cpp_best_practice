@@ -3,6 +3,7 @@
 #include "opengl/core/program.h"
 #include "opengl/core/context.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/functor.h"
 #include "opengl/core/kernel_registry.h"
 
 
@@ -31,6 +32,10 @@ namespace opengl{
     TransposeKernel::TransposeKernel(Context* context)
         :Kernel(context){
             kernel_fname_ = "../opengl/nn/glsl/transpose.glsl";
+
+            request_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+
+            output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
         }
 
     void TransposeKernel::SetupAttr(const dlxnet::Attribute& attr){
@@ -43,32 +48,35 @@ namespace opengl{
 
     void TransposeKernel::Compute(TensorList& inputs, TensorList& outputs){
         DLOG(INFO)<<"TransposeKernel Inputs: "<<inputs.size();
+        Tensor* any4_tensor = nullptr;
+        auto input_tensor = inputs[0];
+        if(input_tensor->dformat(), dlxnet::TensorProto::NHWC4){
+            VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
+            any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
+        }else{
+            any4_tensor = inputs[0];
+        }
+        CHECK_EQ(any4_tensor->dformat(), dlxnet::TensorProto::ANY4);
         program_->Activate();
-        auto input_image = inputs[0]->device<Texture>();
+        auto input_image = any4_tensor->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
+        // set params
         program_->set_vec4i("perm", AmendPerm(perm_));
-        program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
+        program_->set_vec4i("input_shape", AmendShape(any4_tensor->shape()));
         program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
-        // input
+        // set args
         {
-            program_->set_image2D("input_image", input_image->id(),  0);
-            OPENGL_CHECK_ERROR;
+            OPENGL_CALL(program_->set_image2D("input_image", input_image->id(),  0));
         }
-
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void TransposeKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
-        // set output dformat first, then we can according
-        // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
-
         output_shapes.clear();
         output_shapes.resize(1);
         CHECK_EQ(input_shapes.size(), 1);

@@ -6,6 +6,7 @@
 
 #include "opengl/core/opengl.h"
 #include "opengl/utils/status.h"
+#include "opengl/core/types.h"
 
 namespace opengl{
 
@@ -91,6 +92,11 @@ namespace opengl{
                 glActiveTexture(GL_TEXTURE0+tex_id);
                 glBindTexture(GL_TEXTURE_2D, id);
             }
+
+            // runtime api
+            void SetRetVal(const TensorList& outputs);
+            void SetVertexShader();
+            void Run();
 
         private:
             GLint GetLocation(const std::string& name)const{

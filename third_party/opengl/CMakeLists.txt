@@ -40,6 +40,7 @@ set(CORE_SRC_NAMES
     tensor.cc
     allocator.cc
     ogl_allocator.cc
+    functor.cc
     buffer_base.cc
     cpu_allocator_impl.cc
 

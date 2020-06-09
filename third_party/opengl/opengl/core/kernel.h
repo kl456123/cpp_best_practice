@@ -17,7 +17,7 @@ namespace opengl{
             Kernel(Context* context);
             virtual ~Kernel();
 
-            virtual void SetupProgram(GLuint vertex_shader);
+            virtual void SetupProgram(Program* program);
             /*!
              * Run Kernel, do computation actually
              */
@@ -30,6 +30,7 @@ namespace opengl{
             }
 
             DataFormat GetOutputDFormat(int i)const;
+            DataFormat GetRequestInputDFormat(int i)const;
 
             std::string DebugString()const;
 
@@ -64,12 +65,15 @@ namespace opengl{
             }
 
             virtual bool ForceReady()const{return false;}
+            const std::string kernel_fname()const{return kernel_fname_;}
         protected:
             // attach output tensor to the target(fbo)
             // used in compute function of subclass
-            void SetFrameBuffer(TensorList& outputs);
+            // TODO(breakpoint) remove it
+            void SetFrameBuffer(const TensorList& outputs);
 
-            void SetVertexShader();
+            // TODO(breakpoint) remove it
+            void SetVertexShader(){}
 
             // kernel program(opencl) or shader(opengl)
             std::unique_ptr<Program> program_;
@@ -92,6 +96,11 @@ namespace opengl{
             std::vector<int> input_tensor_indexes_;
             std::vector<int> output_tensor_indexes_;
 
+            // set internal dformats for each kernel, it cannot be changed due to
+            // imutable attributes for allowed input dformats and possible output dformats
+            // if input tensors' dformat is not consistent with requested dformats, dformats
+            // conversion will happened
+            std::vector<DataFormat> request_tensor_dformats_;
             std::vector<DataFormat> output_tensor_dformats_;
 
             // make it can fill input and output tensors

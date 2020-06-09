@@ -1,5 +1,6 @@
 #include <string.h>
 #include <glog/logging.h>
+#include <memory>
 
 #include "opengl/core/driver.h"
 
@@ -199,5 +200,41 @@ namespace opengl{
         int work_grp_inv;
         OPENGL_CALL(glGetIntegerv(GL_MAX_TEXTURE_SIZE, &work_grp_inv));
         return work_grp_inv;
+    }
+
+    void AttachTextureToFrameBuffer(GLuint texture, GLint width, GLint height){
+        OPENGL_CALL(glViewport(0, 0, width, height));
+        // Set "renderedTexture" as our colour attachement #0
+        OPENGL_CALL(glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                    texture , 0));
+
+        // Always check that our framebuffer is ok
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            LOG(FATAL) << "Framebuffer not complete.";
+        }
+    }
+
+    GLuint CreateShader(GLenum shader_kind, const char *shader_src) {
+        // Create the shader.
+        GLuint shader = glCreateShader(shader_kind);
+        glShaderSource(shader, 1, &shader_src, nullptr);
+        glCompileShader(shader);
+
+        // Check compile errors.
+        GLint err;
+        glGetShaderiv(shader, GL_COMPILE_STATUS, &err);
+
+        GLint info_log_len;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
+
+        if (info_log_len > 0) {
+            std::unique_ptr<char[]> err_msg(new char[info_log_len + 1]);
+            glGetShaderInfoLog(shader, info_log_len, nullptr, err_msg.get());
+            LOG(FATAL) << err_msg.get();
+        }
+
+        OPENGL_CHECK_ERROR;
+
+        return shader;
     }
 }//namespace opengl
