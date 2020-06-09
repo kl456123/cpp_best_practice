@@ -397,7 +397,7 @@ namespace opengl{
         GLuint vertex_array;
         OPENGL_CALL(glGenVertexArrays(1, &vertex_array));
         OPENGL_CALL(glBindVertexArray(vertex_array));
-        glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+        OPENGL_CALL(glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer));
 
         // We always use the same vertex shader.
         vertex_shader_ = CreateShader(GL_VERTEX_SHADER, vertex_shader_text);

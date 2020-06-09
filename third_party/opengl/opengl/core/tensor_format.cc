@@ -164,6 +164,12 @@ namespace opengl{
         if(dformat==dlxnet::TensorProto::ANY){
             return dlxnet::TensorProto::ANY4;
         }
+
+        if(dformat==dlxnet::TensorProto::NCHW){
+            // only used for filter
+            return dlxnet::TensorProto::HWN4C4;
+        }
+
         LOG(FATAL)<<"unsupported dformat: "<<dformat;
     }
 
@@ -173,6 +179,11 @@ namespace opengl{
         }
         if(dformat==dlxnet::TensorProto::ANY4){
             return dlxnet::TensorProto::ANY;
+        }
+
+        if(dformat==dlxnet::TensorProto::HWN4C4){
+            // only used for filter
+            return dlxnet::TensorProto::NCHW;
         }
         LOG(FATAL)<<"unsupported dformat: "<<dformat;
     }

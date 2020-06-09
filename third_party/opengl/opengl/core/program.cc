@@ -20,15 +20,15 @@ namespace opengl{
         OGLStatus status;
         int shader_id = glCreateShader(type);
         const char* content = source.c_str();
-        glShaderSource(shader_id, 1, &content, nullptr);
-        glCompileShader(shader_id);
-        glGetShaderiv(shader_id, GL_COMPILE_STATUS, &status);
+        OPENGL_CALL(glShaderSource(shader_id, 1, &content, nullptr));
+        OPENGL_CALL(glCompileShader(shader_id));
+        OPENGL_CALL(glGetShaderiv(shader_id, GL_COMPILE_STATUS, &status));
         *out = shader_id;
         return status;
     }
 
     Program& Program::AttachShader(const GLuint shader_id){
-        glAttachShader(program_id_, shader_id);
+        OPENGL_CALL(glAttachShader(program_id_, shader_id));
         return *this;
     }
 
@@ -43,8 +43,8 @@ namespace opengl{
             LOG(FATAL)<< "ERROR::SHADER::COMPILATION_FAILED\n" << infoLog;
         }
         // Attach the Shader and Free Allocated Memory
-        glAttachShader(program_id_, shader_id);
-        glDeleteShader(shader_id);
+        OPENGL_CALL(glAttachShader(program_id_, shader_id));
+        OPENGL_CALL(glDeleteShader(shader_id));
         return *this;
     }
 
@@ -65,11 +65,11 @@ namespace opengl{
     }
 
     OGLStatus Program::Link(){
-        glLinkProgram(program_id_);
-        glGetProgramiv(program_id_, GL_LINK_STATUS, &status_);
+        OPENGL_CALL(glLinkProgram(program_id_));
+        OPENGL_CALL(glGetProgramiv(program_id_, GL_LINK_STATUS, &status_));
         if(status_==false){
             char infoLog[512];
-            glGetProgramInfoLog(program_id_, 512, NULL, infoLog);
+            OPENGL_CALL(glGetProgramInfoLog(program_id_, 512, NULL, infoLog));
             LOG(FATAL)<< "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"<<infoLog;
         }
         return status_;
@@ -94,10 +94,10 @@ namespace opengl{
 
     OGLStatus Program::Activate(){
         if(program_id_==0){
-            LOG(ERROR)<<"It cannot be activated when program id is zero";
+            LOG(FATAL)<<"It cannot be activated when program id is zero";
             return false;
         }
-        glUseProgram(program_id_);
+        OPENGL_CALL(glUseProgram(program_id_));
         return status_;
     }
 
@@ -115,12 +115,13 @@ namespace opengl{
     void Program::Run(){
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        OPENGL_CALL(glFinish());
     }
 
     void Program::SetVertexShader(){
         // set input arguments for vertex shader
         auto point_attrib = GLuint(glGetAttribLocation(program_id(), "point"));
+        OPENGL_CHECK_ERROR;
         OPENGL_CALL(glEnableVertexAttribArray(point_attrib));
         OPENGL_CALL(glVertexAttribPointer(point_attrib, 2, GL_FLOAT, GL_FALSE,
                     sizeof(Vertex), nullptr));

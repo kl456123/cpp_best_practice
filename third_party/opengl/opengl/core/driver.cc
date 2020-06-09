@@ -217,23 +217,21 @@ namespace opengl{
     GLuint CreateShader(GLenum shader_kind, const char *shader_src) {
         // Create the shader.
         GLuint shader = glCreateShader(shader_kind);
-        glShaderSource(shader, 1, &shader_src, nullptr);
-        glCompileShader(shader);
+        OPENGL_CALL(glShaderSource(shader, 1, &shader_src, nullptr));
+        OPENGL_CALL(glCompileShader(shader));
 
         // Check compile errors.
         GLint err;
-        glGetShaderiv(shader, GL_COMPILE_STATUS, &err);
+        OPENGL_CALL(glGetShaderiv(shader, GL_COMPILE_STATUS, &err));
 
         GLint info_log_len;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len);
+        OPENGL_CALL(glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_log_len));
 
         if (info_log_len > 0) {
             std::unique_ptr<char[]> err_msg(new char[info_log_len + 1]);
-            glGetShaderInfoLog(shader, info_log_len, nullptr, err_msg.get());
+            OPENGL_CALL(glGetShaderInfoLog(shader, info_log_len, nullptr, err_msg.get()));
             LOG(FATAL) << err_msg.get();
         }
-
-        OPENGL_CHECK_ERROR;
 
         return shader;
     }

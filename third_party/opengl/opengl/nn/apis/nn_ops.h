@@ -22,6 +22,10 @@ namespace opengl{
     struct TransposeParams{
         IntList perm;
     };
+    struct ClipParams{
+        float min;
+        float max;
+    };
 
     int AddConstNode(Scope* scope, const std::string& name, const Tensor* cpu_tensor);
     int AddConstNode(Scope* scope, const std::string& name,
@@ -40,6 +44,9 @@ namespace opengl{
     int AddReshapeNode(Scope* scope, const std::string& name, std::vector<int> input_ids);
     int AddTransposeNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
             const TransposeParams& trans_params);
+
+    int AddClipNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const ClipParams& clip_params);
 }// namespace opengl
 
 

@@ -141,4 +141,22 @@ namespace opengl{
         }
         return tensor_id;
     }
+
+    int AddClipNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const ClipParams& clip_params){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Clip");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+
+        auto clip_attr = dlcl_node->mutable_attr()
+            ->mutable_clip_attr();
+        clip_attr->set_min(clip_params.min);
+        clip_attr->set_max(clip_params.max);
+        return tensor_id;
+    }
 }//namespace opengl

@@ -1,6 +1,7 @@
 #include <random>
 #include <cmath>
 #include "opengl/core/tensor.h"
+#include "opengl/core/tensor_format.h"
 
 
 namespace opengl{
@@ -140,7 +141,7 @@ namespace opengl{
 
         // set type
         proto->set_data_type(dlxnet::TensorProto::FLOAT32);
-        proto->set_target_data_format(dlxnet::TensorProto::ANY4);
+        proto->set_target_data_format(FormatToStride4(dformat()));
         proto->set_data_format(dformat());
 
         // set value
