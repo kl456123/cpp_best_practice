@@ -57,10 +57,8 @@ namespace opengl{
             session->LoadGraph(BuildGraph(const1.get(), const2.get(), axis));
 
             ::opengl::TensorList outputs_cpu;
-            session->Setup({});
-
             // do computation for the graph
-            session->Run();
+            session->Run({});
 
             ::opengl::TensorNameList output_names({"output", "const1", "const2"});
             ::opengl::StringList dformats({"ANY", "ANY", "ANY"});

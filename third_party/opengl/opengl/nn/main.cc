@@ -14,6 +14,8 @@
 #include "opengl/core/fbo_session.h"
 #include "opengl/utils/env_time.h"
 #include "opengl/core/lib/monitor/collection_registry.h"
+#include "opengl/nn/profiler/profiler.h"
+#include "opengl/core/step_stats.pb.h"
 
 // only tensor is visible in nn module
 using opengl::Tensor;
@@ -22,6 +24,7 @@ using opengl::Session;
 using opengl::FBOSession;
 using opengl::monitoring::CollectionRegistry;
 using opengl::monitoring::CollectedMetrics;
+using opengl::Profiler;
 
 namespace{
     void ProfileProgram(){
@@ -71,6 +74,7 @@ int main(int argc, char** argv){
     ::opengl::TensorNameList output_names({"cls_and_bbox"});
     ::opengl::IntList input_shape({1, 320, 320, 3});
     ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
+    auto profiler = std::unique_ptr<Profiler>(new Profiler);
     // ::opengl::StringList dformats({"NHWC"});
     // ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::ANY;
     ::opengl::StringList dformats({"ANY"});
@@ -83,10 +87,9 @@ int main(int argc, char** argv){
     // warming up
     for(int i=0;i<3;++i){
         // init graph according to inputs
-        session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
+        // and then do computation for the graph
+        session->Run({{"input", Tensor::Ones(Tensor::DT_FLOAT,
                     input_shape, input_dformat)}});
-        // do computation for the graph
-        session->Run();
 
         // get cpu outputs from device
         session->GetOutputs(output_names, dformats, &outputs_cpu);
@@ -96,13 +99,16 @@ int main(int argc, char** argv){
     auto start_time = env_time->NowMicros();
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
-        session->Setup({{"input", Tensor::Ones(Tensor::DT_FLOAT,
-                    input_shape, input_dformat)}});
         // do computation for the graph
-        session->Run();
+        ::opengl::StepStats step_stats;
+        session->Run({{"input", Tensor::Ones(Tensor::DT_FLOAT,
+                    input_shape, input_dformat)}}, &step_stats);
 
         // get cpu outputs from device
         session->GetOutputs(output_names, dformats, &outputs_cpu);
+
+        // collect data for profilling
+        profiler->CollectData(&step_stats);
 
         // print output
         LOG(INFO)<<outputs_cpu[0]->ShortDebugString();

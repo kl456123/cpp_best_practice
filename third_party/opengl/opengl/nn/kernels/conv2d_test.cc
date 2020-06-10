@@ -154,10 +154,8 @@ namespace opengl{
                 output_names.emplace_back(bias_name);
                 dformats.emplace_back("NHWC");
             }
-            session->Setup(inputs);
-
             // do computation for the graph
-            session->Run();
+            session->Run(inputs);
 
             // get cpu outputs from device
             session->GetOutputs(output_names, dformats, &outputs_cpu);

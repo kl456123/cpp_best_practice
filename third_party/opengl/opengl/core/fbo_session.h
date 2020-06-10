@@ -7,6 +7,9 @@
 
 namespace opengl{
     class Env;
+    class StepStats;
+    class StepStatsCollector;
+
     class FBOSession{
         public:
             FBOSession(Context* context);
@@ -16,12 +19,15 @@ namespace opengl{
             /*! use inputs to allocate tensor, prepare all memory
              * to run late
              */
-            void Setup(const NamedTensorList& inputs_cpu);
+            void Setup(const NamedTensorList& inputs_cpu,
+                    StepStatsCollector* step_collector);
 
             /*!
              * Draw texture to framebuffer, then
              */
-            void Run();
+            void Run(const NamedTensorList& inputs_cpu);
+            void Run(const NamedTensorList& inputs_cpu,
+                    StepStats* step_stats);
 
             // load graph from literal in memory
             void LoadGraph(const ::dlxnet::ModelProto& model_proto);

@@ -10,9 +10,45 @@
 #include "opengl/core/tensor_format.h"
 #include "opengl/core/driver.h"
 #include "opengl/core/metric.h"
+#include "opengl/core/step_stats_collector.h"
+#include "opengl/core/step_stats.pb.h"
+#include "opengl/utils/env.h"
 
 
 namespace opengl{
+    namespace nodestats{
+        inline int64 NowInNsec() { return EnvTime::Default()->NowNanos(); }
+
+        void SetScheduled(NodeExecStatsInterface* stats, int64 micros) {
+            if (!stats) return;
+            stats->SetScheduled(micros * EnvTime::kMicrosToNanos);
+        }
+
+        void SetAllStart(NodeExecStatsInterface* stats) {
+            if (!stats) return;
+            stats->RecordExecutorStarted();
+        }
+
+        void SetOpStart(NodeExecStatsInterface* stats) {
+            if (!stats) return;
+            stats->RecordComputeStarted();
+        }
+
+        void SetOpEnd(NodeExecStatsInterface* stats) {
+            if (!stats) return;
+            stats->RecordComputeEnded();
+        }
+
+        void SetAllEnd(NodeExecStatsInterface* stats) {
+            if (!stats) return;
+            stats->RecordExecutorEnded();
+        }
+
+        void SetOutput(NodeExecStatsInterface* stats, int slot, const Tensor* v) {
+            if (!stats) return;
+            stats->SetOutput(slot, v);
+        }
+    }//namespace nodestats
     FBOSession::~FBOSession(){
         // delete all tensors
     }
@@ -90,16 +126,46 @@ namespace opengl{
 
 
 
-    void FBOSession::Run(){
+    void FBOSession::Run(const NamedTensorList& inputs_cpu){
+        StepStats step_stats;
+        Run(inputs_cpu, &step_stats);
+    }
+
+    void FBOSession::Run(const NamedTensorList& inputs_cpu,
+            StepStats* step_stats){
+        auto step_collector = std::unique_ptr<StepStatsCollector>(
+                new StepStatsCollector(step_stats));
+
+        // session set up
+        {
+            // const uint64 start_time_usecs = env_->NowMicros();
+            Setup(inputs_cpu, step_collector.get());
+            // metrics::UpdateGraphSetupTime(env_->NowMicros() - start_time_usecs);
+        }
+
         CHECK(finalized_)<<"Please Setup Session First";
         const uint64 start_time_usecs = env_->NowMicros();
+        NodeExecStatsInterface* stats = nullptr;
+
         for(int i=0;i<kernels_.size();++i){
-            auto& kernel = kernels_[i];
-            if(CheckKernelReady(kernel.get())){
+            auto kernel = kernels_[i].get();
+            if(step_collector){
+                stats = step_collector->CreateNodeExecStats(kernel);
+                auto scheduled_nsec = nodestats::NowInNsec();
+                nodestats::SetScheduled(stats, scheduled_nsec);
+                nodestats::SetAllStart(stats);
+            }
+            if(CheckKernelReady(kernel)){
                 continue;
             }
+            nodestats::SetOpStart(stats);
             kernel->Compute();
-            OPENGL_CHECK_ERROR;
+
+            for(int i=0;i<kernel->output_tensors_.size();++i){
+                nodestats::SetOutput(stats, i, kernel->output_tensors_[i]);
+            }
+            nodestats::SetOpEnd(stats);
+            nodestats::SetAllEnd(stats);
         }
         metrics::UpdateGraphExecTime(env_->NowMicros() - start_time_usecs);
     }
@@ -123,7 +189,8 @@ namespace opengl{
         }
     }
 
-    void FBOSession::Setup(const NamedTensorList& inputs_cpu){
+    void FBOSession::Setup(const NamedTensorList& inputs_cpu,
+            StepStatsCollector* step_collector){
         CHECK(graph_created_)<<"No Graph Loaded!";
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
@@ -131,7 +198,7 @@ namespace opengl{
 
         // allocate memory for input tensor(device_tensor) first
         // TODO(breakpoint) add input-typed kernel
-        for(auto input_iter=inputs_cpu.begin();input_iter!=inputs_cpu.end();++input_iter){
+        for(auto input_iter=inputs_cpu.begin(); input_iter!=inputs_cpu.end(); ++input_iter){
             const Tensor* input_cpu = input_iter->second;
             const auto& tensor_name = input_iter->first;
 
@@ -150,9 +217,7 @@ namespace opengl{
             // upload data, initialize input tensor
             context_->CopyCPUTensorToDevice(input_cpu, total_tensors_[input_index].get());
         }
-        if(finalized_){
-            return;
-        }
+        if(finalized_){return;}
 
         ready_.clear();
         ready_.resize(total_tensors_.size());

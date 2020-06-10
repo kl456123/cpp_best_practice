@@ -39,10 +39,8 @@ namespace opengl{
             inputs[0].first = "input";
             inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape, dlxnet::TensorProto::ANY);
 
-            session->Setup(inputs);
-
             // do computation for the graph
-            session->Run();
+            session->Run(inputs);
 
             ::opengl::TensorNameList output_names({"output"});
             ::opengl::StringList dformats({"ANY"});

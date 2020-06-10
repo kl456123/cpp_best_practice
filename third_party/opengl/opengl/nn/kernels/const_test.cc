@@ -23,10 +23,8 @@ namespace opengl{
             auto session = InitSession();
             session->LoadGraph(BuildGraph(cpu_tensor.get()));
 
-            session->Setup({});
-
             // do computation for the graph
-            session->Run();
+            session->Run({});
 
             ::opengl::TensorNameList output_names({"output"});
             ::opengl::StringList dformats({"ANY"});

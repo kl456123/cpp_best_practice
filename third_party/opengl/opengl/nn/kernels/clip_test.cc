@@ -37,10 +37,9 @@ namespace opengl{
             session->LoadGraph(BuildGraph(const_tensor.get(), min, max));
 
             ::opengl::TensorList outputs_cpu;
-            session->Setup({});
 
             // do computation for the graph
-            session->Run();
+            session->Run({});
 
             ::opengl::TensorNameList output_names({"output"});
             ::opengl::StringList dformats({"NHWC"});

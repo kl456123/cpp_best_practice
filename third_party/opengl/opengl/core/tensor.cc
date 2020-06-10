@@ -2,6 +2,7 @@
 #include <cmath>
 #include "opengl/core/tensor.h"
 #include "opengl/core/tensor_format.h"
+#include "opengl/core/tensor_description.pb.h"
 
 
 namespace opengl{
@@ -67,7 +68,7 @@ namespace opengl{
         initialized_=true;
         mem_type_ = HOST_MEMORY;
         dformat_=tensor_proto.data_format();
-            CheckShapeAndDFormat();
+        CheckShapeAndDFormat();
     }
 
     // here we just allocate memory in host memory in hard code
@@ -151,5 +152,13 @@ namespace opengl{
         for(int j=0;j<num_elements_value;++j){
             proto->add_float_data(host_data[j]);
         }
-}
+    }
+
+    void Tensor::FillDescription(TensorDescription* description)const{
+        description->set_data_type(dlxnet::TensorProto::FLOAT32);
+        description->set_data_format(dformat());
+        for(auto dim: shape()){
+            description->add_dims(dim);
+        }
+    }
 }//namespace opengl

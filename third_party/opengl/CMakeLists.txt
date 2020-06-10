@@ -48,9 +48,12 @@ set(CORE_SRC_NAMES
     buffer_base.cc
     cpu_allocator_impl.cc
     metric.cc
+    step_stats_collector.cc
 
     # some protos
     dlxnet.pb.cc
+    tensor_description.pb.cc
+    step_stats.pb.cc
     )
 
 set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc port.cc)

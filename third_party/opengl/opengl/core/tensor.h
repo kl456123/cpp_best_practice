@@ -18,7 +18,11 @@
 #include "opengl/core/ogl_allocator.h"
 #include <glog/logging.h>
 
+namespace dlxnet{
+    class TensorDescription;
+}
 namespace opengl{
+    using dlxnet::TensorDescription;
     //TODO(breakpoint) put all tensor attributes in a struct
     // enum Tensor::DataType;
     // enum Tensor::MemoryType;
@@ -230,6 +234,7 @@ namespace opengl{
                             ||dformat()==::dlxnet::TensorProto::ANY4);
                 }
             }
+            void FillDescription(TensorDescription* description)const;
 
         private:
             // inner data pointer

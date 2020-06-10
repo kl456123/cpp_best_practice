@@ -73,10 +73,8 @@ int main(int argc, char** argv){
     inputs[0].second = image_ptr;
 
     // Run Session with input
-    session->Setup(inputs);
-
     // do computation for the graph
-    session->Run();
+    session->Run(inputs);
 
     // get cpu outputs from device
     session->GetOutputs({"output"}, {"NHWC"}, &outputs_cpu);

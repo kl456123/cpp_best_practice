@@ -37,8 +37,7 @@ namespace opengl{
             session->LoadGraph(BuildGraph(const_tensor.get(), shape_tensor.get()));
 
             ::opengl::TensorList outputs_cpu;
-            session->Setup({});
-            session->Run();
+            session->Run({});
             ::opengl::TensorNameList output_names({"output"});
             ::opengl::StringList dformats({"ANY"});
 
