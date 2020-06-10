@@ -23,6 +23,32 @@ using opengl::FBOSession;
 using opengl::monitoring::CollectionRegistry;
 using opengl::monitoring::CollectedMetrics;
 
+namespace{
+    void ProfileProgram(){
+        // collect stats of graph runtime
+        auto* collection_registry = CollectionRegistry::Default();
+        const std::unique_ptr<CollectedMetrics> collected_metrics =
+            collection_registry->CollectMetrics({});
+        CHECK_GT(collected_metrics->metric_descriptor_map.size(), 0);
+        CHECK_GT(collected_metrics->point_set_map.size(), 0);
+
+        // execution time
+        auto loop_times = collected_metrics->point_set_map[
+            "/tensorflow/core/graph_runs"]->points[0]->int64_value;
+        auto graph_run_time_usecs = collected_metrics->point_set_map[
+            "/tensorflow/core/graph_run_time_usecs"]->points[0]->int64_value;
+        std::cout<<"ExecTimePerRound: "<<graph_run_time_usecs / loop_times/1e3<<" ms"<<std::endl;
+
+        // build time
+        //
+        auto build_times = collected_metrics->point_set_map[
+            "/tensorflow/core/graph_build_calls"]->points[0]->int64_value;
+        auto graph_build_time_usecs = collected_metrics->point_set_map[
+            "/tensorflow/core/graph_build_time_usecs"]->points[0]->int64_value;
+        std::cout<<"BuildTimePerRound: "<<graph_build_time_usecs/build_times/1e3<<" ms"<<std::endl;
+    }
+}
+
 
 int main(int argc, char** argv){
     // Initialize Google's logging library.
@@ -80,19 +106,13 @@ int main(int argc, char** argv){
 
         // print output
         LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
-
     }
     auto duration_time = env_time->NowMicros()-start_time;
     auto second_per_round = duration_time*1e-6/num_iters;
     // force to display
     std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
 
-    // collect stats of graph runtime
-    auto* collection_registry = CollectionRegistry::Default();
-    const std::unique_ptr<CollectedMetrics> collected_metrics =
-        collection_registry->CollectMetrics({});
-    CHECK_GT(collected_metrics->metric_descriptor_map.size(), 0);
-    CHECK_GT(collected_metrics->point_set_map.size(), 0);
+    ProfileProgram();
 
     LOG(INFO)<<"BiasAdd Success";
 

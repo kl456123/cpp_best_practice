@@ -32,6 +32,7 @@ namespace opengl{
 
 
     void FBOSession::LoadGraph(const ::dlxnet::ModelProto& model_proto){
+        const uint64 start_time_usecs = env_->NowMicros();
         *model_=model_proto;
         // clear kernels first
         kernels_.clear();
@@ -84,7 +85,7 @@ namespace opengl{
         }
         finalized_ = false;
         graph_created_ = true;
-        OPENGL_CHECK_ERROR;
+        metrics::UpdateGraphBuildTime(env_->NowMicros() - start_time_usecs);
     }
 
 
