@@ -24,6 +24,10 @@ find_package(Protobuf REQUIRED)
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
 
+# lib/monitor
+set(CORE_LIB_MONITOR_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core/lib/monitor)
+set(CORE_LIB_MONITOR_SRC_FILES collection_registry.cc)
+
 set(CORE_SRC_NAMES
     program.cc
     context.cc
@@ -43,12 +47,13 @@ set(CORE_SRC_NAMES
     functor.cc
     buffer_base.cc
     cpu_allocator_impl.cc
+    metric.cc
 
     # some protos
     dlxnet.pb.cc
     )
 
-set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env_time.cc port.cc)
+set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc port.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})
@@ -56,6 +61,11 @@ endforeach()
 
 foreach(fname ${UTIL_SRC_NAMES})
     set(UTIL_SRC_FILES ${UTIL_SRC_FILES} ${UTIL_SRC_DIR}/${fname})
+endforeach()
+
+# lib/monitor
+foreach(fname ${CORE_LIB_MONITOR_SRC_FILES})
+    set(LIB_SRC_FILES ${LIB_SRC_FILES} ${CORE_LIB_MONITOR_SRC_DIR}/${fname})
 endforeach()
 
 # root directory
@@ -71,7 +81,7 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES})
+add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES} ${LIB_SRC_FILES})
 # use both in case anyone of them not found
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
     ${PROTOBUF_LIBRARY})

@@ -2,12 +2,14 @@
 
 #include "opengl/core/fbo_session.h"
 #include "opengl/utils/macros.h"
+#include "opengl/utils/env.h"
 #include "opengl/core/kernel.h"
 #include "opengl/core/kernel_registry.h"
 #include "opengl/utils/protobuf.h"
 #include "opengl/core/tensor.h"
 #include "opengl/core/tensor_format.h"
 #include "opengl/core/driver.h"
+#include "opengl/core/metric.h"
 
 
 namespace opengl{
@@ -89,6 +91,7 @@ namespace opengl{
 
     void FBOSession::Run(){
         CHECK(finalized_)<<"Please Setup Session First";
+        const uint64 start_time_usecs = env_->NowMicros();
         for(int i=0;i<kernels_.size();++i){
             auto& kernel = kernels_[i];
             if(CheckKernelReady(kernel.get())){
@@ -97,6 +100,7 @@ namespace opengl{
             kernel->Compute();
             OPENGL_CHECK_ERROR;
         }
+        metrics::UpdateGraphExecTime(env_->NowMicros() - start_time_usecs);
     }
 
 
@@ -104,6 +108,7 @@ namespace opengl{
         :context_(context){
             // create vertex shader first
             model_ = new dlxnet::ModelProto;
+            env_ = Env::Default();
         }
 
     void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){

@@ -56,12 +56,12 @@ namespace opengl{
             }
         }
 
-        // if(group_size_!=1){
+        if(group_size_!=1){
             // more general conv2d case, commonly used by depthwise conv2d
             kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
-        // }else{
-            // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
-        // }
+        }else{
+            kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+        }
 
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }

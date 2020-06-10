@@ -13,12 +13,15 @@
 #include "opengl/core/session.h"
 #include "opengl/core/fbo_session.h"
 #include "opengl/utils/env_time.h"
+#include "opengl/core/lib/monitor/collection_registry.h"
 
 // only tensor is visible in nn module
 using opengl::Tensor;
 using opengl::TensorList;
 using opengl::Session;
 using opengl::FBOSession;
+using opengl::monitoring::CollectionRegistry;
+using opengl::monitoring::CollectedMetrics;
 
 
 int main(int argc, char** argv){
@@ -83,6 +86,13 @@ int main(int argc, char** argv){
     auto second_per_round = duration_time*1e-6/num_iters;
     // force to display
     std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
+
+    // collect stats of graph runtime
+    auto* collection_registry = CollectionRegistry::Default();
+    const std::unique_ptr<CollectedMetrics> collected_metrics =
+        collection_registry->CollectMetrics({});
+    CHECK_GT(collected_metrics->metric_descriptor_map.size(), 0);
+    CHECK_GT(collected_metrics->point_set_map.size(), 0);
 
     LOG(INFO)<<"BiasAdd Success";
 

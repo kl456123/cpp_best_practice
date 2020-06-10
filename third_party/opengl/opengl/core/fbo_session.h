@@ -6,6 +6,7 @@
 #include "opengl/core/dlxnet.pb.h"
 
 namespace opengl{
+    class Env;
     class FBOSession{
         public:
             FBOSession(Context* context);
@@ -77,6 +78,7 @@ namespace opengl{
             std::vector<bool> ready_;
 
             friend class Kernel;
+            Env* env_;
     };
 }//namespace opengl
 
