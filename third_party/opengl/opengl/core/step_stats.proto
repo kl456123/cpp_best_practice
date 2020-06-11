@@ -75,4 +75,6 @@ message DeviceStepStats {
 
 message StepStats {
     repeated DeviceStepStats dev_stats = 1;
+    int64 all_setup_time_micros = 2;
+    int64 output_time_micros=3;
 };

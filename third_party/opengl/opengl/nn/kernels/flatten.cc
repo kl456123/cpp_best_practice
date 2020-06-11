@@ -24,8 +24,7 @@ namespace opengl{
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
         program_->set_vec3i("input_shape", inputs[0]->height(),
                 inputs[0]->width(), inputs[0]->channel());
         program_->set_vec3i("output_shape", outputs[0]->height(),
@@ -37,9 +36,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void FlattenKernel::InferOutputShape(TensorShapeList& input_shapes,

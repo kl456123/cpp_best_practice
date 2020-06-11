@@ -42,14 +42,18 @@ namespace opengl{
         glDispatchCompute(ptr[0], ptr[1], ptr[2]);
     }
 
+    void Context::Reset(){
+        frame_buffer_ = CreateFrameBuffer();
+        CreateVertexShader();
+    }
+
     Context::Context(Allocator* allocator)
         :allocator_(allocator){
             // max size allowed when using texture
             LOG(INFO)<<"max group invacations: "<<GetMaxTextureSize();
             // prepare framebuffer and vertex shader first
             // as for fragment shader, it is used as compute kernel
-            frame_buffer_ = CreateFrameBuffer();
-            CreateVertexShader();
+            Reset();
         }
 
     void Context::ConvertTensorHWN4C4ToNCHW(void* src, Tensor* tensor){

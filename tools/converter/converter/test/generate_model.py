@@ -4,26 +4,28 @@ import os
 import time
 import torch
 from torchvision.models import resnet
+from torchvision.models import mobilenet
 
 
 class Model(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        in_channels = 10
-        out_channels = 5
+        in_channels = 32
+        out_channels = 32
         self.conv2d1 = torch.nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, stride=1, padding=1)
+            in_channels, out_channels, kernel_size=3, stride=1, padding=1, groups=32, bias=False)
         self.batchnorm = torch.nn.BatchNorm2d(out_channels)
         self.relu = torch.nn.ReLU()
         self.maxpool = torch.nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         self.avgpool = torch.nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = torch.nn.Flatten(1)
-        self.model = resnet.resnet50()
+        #  self.model = resnet.resnet50()
+        self.model = mobilenet.mobilenet_v2(pretrained=True)
         # self.model.eval()
-        self.fc = torch.nn.Linear(10, 5);
+        self.fc = torch.nn.Linear(10, 5)
 
     def forward(self, x):
-        x = x.reshape(x.shape[0], -1)
+        # x = x.reshape(x.shape[0], -1)
         # x = self.model.conv1(x)
         # x = self.model.bn1(x)
         # x = self.model.relu(x)
@@ -35,7 +37,11 @@ class Model(torch.nn.Module):
         # x = self.model.avgpool(x)
         # x = torch.flatten(x, 1)
         # x = self.model.fc(x)
-        # x = self.conv2d1(x)
+        #  x = self.conv2d1(x)
+        x = self.model.features(x)
+        x = self.avgpool(x)
+        #  x = x.mean([2, 3])
+        #  x = self.classifier(x)
         # x = self.batchnorm(x)
         # x = self.avgpool(x)
         # x = self.relu(x)
@@ -54,11 +60,12 @@ def generate_onnx(saved_path):
     """
     # build graph first
     pretrained = True
-    inputs = torch.ones(1, 2, 4, 4)
+    inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
     model = Model()
-    # model = resnet.resnet18(pretrained=pretrained)
+    #  model = resnet.resnet50(pretrained=pretrained)
+    #  model = mobilenet.mobilenet_v2(pretrained=pretrained)
     # inferece works
     model.eval()
     pth_path = '{}.pth'.format(os.path.splitext(saved_path)[0])

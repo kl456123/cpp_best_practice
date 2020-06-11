@@ -4,6 +4,7 @@
 #include "opengl/core/tensor.h"
 #include "opengl/utils/logging.h"
 #include "opengl/utils/env.h"
+#include "opengl/utils/strings.h"
 
 namespace opengl{
     NodeExecStatsWrapper::NodeExecStatsWrapper(
@@ -21,6 +22,12 @@ namespace opengl{
         step_stats_collector_(step_stats_collector) {}
 
     void NodeExecStatsWrapper::Done(const string& device) {
+        DCHECK(node_);
+        string memory;
+
+        auto text = strings::StrCat(memory, node_->kernel_name(), " = ", node_->kernel_type());
+        stats_->set_timeline_label(text);
+        step_stats_collector_->Save(device, this);
     }
 
     void NodeExecStatsWrapper::RecordExecutorStarted() {
@@ -70,29 +77,29 @@ namespace opengl{
     }
 
     // void NodeExecStatsWrapper::AddAllocation(
-            // Allocator* allocator, TrackingAllocator* tracking_allocator) {
-        // AllocatorMemoryUsed* memory = stats_->add_memory();
-        // memory->set_allocator_name(allocator->Name());
-        // auto sizes = tracking_allocator->GetSizes();
-        // memory->set_total_bytes(std::get<0>(sizes));
-        // memory->set_peak_bytes(std::get<1>(sizes));
-        // memory->set_live_bytes(std::get<2>(sizes));
+    // Allocator* allocator, TrackingAllocator* tracking_allocator) {
+    // AllocatorMemoryUsed* memory = stats_->add_memory();
+    // memory->set_allocator_name(allocator->Name());
+    // auto sizes = tracking_allocator->GetSizes();
+    // memory->set_total_bytes(std::get<0>(sizes));
+    // memory->set_peak_bytes(std::get<1>(sizes));
+    // memory->set_live_bytes(std::get<2>(sizes));
 
-        // absl::optional<AllocatorStats> stats = allocator->GetStats();
-        // if (stats) {
-            // memory->set_allocator_bytes_in_use(stats->bytes_in_use);
-        // }
-        // allocations_.push_back(std::make_pair(memory, tracking_allocator));
+    // absl::optional<AllocatorStats> stats = allocator->GetStats();
+    // if (stats) {
+    // memory->set_allocator_bytes_in_use(stats->bytes_in_use);
+    // }
+    // allocations_.push_back(std::make_pair(memory, tracking_allocator));
     // }
 
     void NodeExecStatsWrapper::Finalize() {
         // for (auto& alloc : allocations_) {
-            // AllocatorMemoryUsed* memory = alloc.first;
-            // for (auto& record : alloc.second->GetRecordsAndUnRef()) {
-                // auto* r = memory->add_allocation_records();
-                // r->set_alloc_bytes(record.alloc_bytes);
-                // r->set_alloc_micros(record.alloc_micros);
-            // }
+        // AllocatorMemoryUsed* memory = alloc.first;
+        // for (auto& record : alloc.second->GetRecordsAndUnRef()) {
+        // auto* r = memory->add_allocation_records();
+        // r->set_alloc_bytes(record.alloc_bytes);
+        // r->set_alloc_micros(record.alloc_micros);
+        // }
         // }
         // allocations_.clear();
     }

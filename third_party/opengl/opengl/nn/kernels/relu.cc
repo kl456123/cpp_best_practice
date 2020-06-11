@@ -20,8 +20,7 @@ namespace opengl{
     void ReluKernel::Compute(TensorList& inputs, TensorList& outputs){
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
 
         // input
         {
@@ -29,9 +28,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void ReluKernel::InferOutputShape(TensorShapeList& input_shapes,

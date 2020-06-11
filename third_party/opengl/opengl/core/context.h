@@ -16,6 +16,9 @@ namespace opengl{
             Context():Context(nullptr){}
             virtual ~Context();
 
+            // call it before use session
+            void Reset();
+
             void Compute(std::initializer_list<size_t> dim_sizes);
 
             void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);

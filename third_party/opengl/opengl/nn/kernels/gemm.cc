@@ -32,9 +32,7 @@ namespace opengl{
         auto input_image = inputs[0]->device<Texture>();
         auto input_filter = inputs[1]->device<Texture>();
         bool use_bias = inputs.size()>2;
-        SetFrameBuffer(outputs);
-        SetVertexShader();
-
+        program_->SetRetVal(outputs);
 
         auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
@@ -65,9 +63,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void GemmKernel::InferOutputShape(const TensorList& input_tensors,

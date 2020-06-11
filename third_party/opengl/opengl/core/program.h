@@ -96,7 +96,9 @@ namespace opengl{
             // runtime api
             void SetRetVal(const TensorList& outputs);
             void SetVertexShader();
-            void Run();
+
+            // allow to wait util program is completed
+            void Run(bool sync=false);
 
         private:
             GLint GetLocation(const std::string& name)const{

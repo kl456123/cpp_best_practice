@@ -48,8 +48,7 @@ namespace opengl{
         auto input_image = inputs[0]->device<Texture>();
         auto shape_image = inputs[1]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
         program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
         program_->set_vec4i("output_shape", AmendShape(target_shape_));
 
@@ -59,9 +58,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void ReshapeKernel::InferOutputShape(const TensorList& inputs,

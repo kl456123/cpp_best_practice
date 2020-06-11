@@ -112,10 +112,12 @@ namespace opengl{
         AttachTextureToFrameBuffer(output_texture, width, height);
     }
 
-    void Program::Run(){
+    void Program::Run(bool sync){
         OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        OPENGL_CALL(glFinish());
+        if(sync){
+            OPENGL_CALL(glFinish());
+        }
     }
 
     void Program::SetVertexShader(){

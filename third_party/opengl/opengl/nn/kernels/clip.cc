@@ -23,8 +23,7 @@ namespace opengl{
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
         program_->set_float("min_value", min_);
         program_->set_float("max_value", max_);
 
@@ -34,9 +33,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void ClipKernel::InferOutputShape(TensorShapeList& input_shapes,

@@ -56,7 +56,8 @@ set(CORE_SRC_NAMES
     step_stats.pb.cc
     )
 
-set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc port.cc)
+set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc
+    port.cc strings.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})

@@ -86,6 +86,8 @@ namespace opengl{
             friend class Kernel;
             Env* env_;
     };
+
+    void SetTrackingStats(bool flag);
 }//namespace opengl
 
 

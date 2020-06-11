@@ -44,9 +44,7 @@ namespace opengl{
         void PoolKernel<pool_type>::Compute(TensorList& inputs, TensorList& outputs){
             program_->Activate();
             auto input_image = inputs[0]->device<Texture>();
-            SetFrameBuffer(outputs);
-            SetVertexShader();
-
+            program_->SetRetVal(outputs);
 
             auto input_shape = inputs[0]->shape();
             auto output_shape = outputs[0]->shape();
@@ -65,9 +63,7 @@ namespace opengl{
                 OPENGL_CHECK_ERROR;
             }
 
-            OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-            OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-            glFinish();
+            program_->Run();
         }
     template<PoolType pool_type>
         void PoolKernel<pool_type>::InferOutputShape(TensorShapeList& input_shapes,

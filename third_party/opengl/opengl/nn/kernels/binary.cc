@@ -24,8 +24,7 @@ namespace opengl{
         program_->Activate();
         auto input0 = inputs[0]->device<Texture>();
         auto input1 = inputs[1]->device<Texture>();
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
 
 
         auto input_shape = inputs[0]->shape();
@@ -45,9 +44,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void BinaryKernel::InferOutputShape(const TensorList& input_tensors,

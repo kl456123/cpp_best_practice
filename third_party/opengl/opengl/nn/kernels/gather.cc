@@ -23,8 +23,7 @@ namespace opengl{
         auto input_image = inputs[0]->device<Texture>();
         auto input_index = inputs[1]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
         program_->set_int("axis", axis_);
 
         // input
@@ -38,9 +37,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void GatherKernel::InferOutputShape(TensorShapeList& input_shapes,

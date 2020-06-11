@@ -28,9 +28,7 @@ namespace opengl{
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
-        // program_->set_vec2i("axis", axis_[0], axis_[1]);
+        program_->SetRetVal(outputs);
 
         // input
         {
@@ -38,9 +36,8 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+
+        program_->Run();
     }
 
     void UnsqueezeKernel::InferOutputShape(TensorShapeList& input_shapes,

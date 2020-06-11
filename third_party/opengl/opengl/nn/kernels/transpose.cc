@@ -50,7 +50,7 @@ namespace opengl{
         DLOG(INFO)<<"TransposeKernel Inputs: "<<inputs.size();
         Tensor* any4_tensor = nullptr;
         auto input_tensor = inputs[0];
-        if(input_tensor->dformat(), dlxnet::TensorProto::NHWC4){
+        if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
             VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
             any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
                     Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);

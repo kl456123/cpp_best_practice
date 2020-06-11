@@ -30,8 +30,7 @@ namespace opengl{
         auto mean = inputs[3]->device<Texture>();
         auto var = inputs[4]->device<Texture>();
 
-        SetFrameBuffer(outputs);
-        SetVertexShader();
+        program_->SetRetVal(outputs);
         program_->set_float("eps", eps_);
         program_->set_float("momentum", momentum_);
         program_->set_vec3i("output_shape", outputs[0]->height(),
@@ -67,9 +66,7 @@ namespace opengl{
             OPENGL_CHECK_ERROR;
         }
 
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-        OPENGL_CALL(glDrawArrays(GL_TRIANGLES, 0, 6));
-        glFinish();
+        program_->Run();
     }
 
     void BatchNormKernel::InferOutputShape(TensorShapeList& input_shapes,
