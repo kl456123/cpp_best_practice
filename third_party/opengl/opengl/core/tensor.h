@@ -97,6 +97,9 @@ namespace opengl{
             // loading graph proto model
             Tensor(const dlxnet::TensorProto& tensor_proto);
 
+            Tensor(Allocator* a, DataType dtype, IntList shape,
+                    DataFormat dformat);
+
             // to help test or debug, no need to allocate data by user
             // some helper funcs zeros, ones, empty, random
             // note that callee dont own it.
@@ -122,6 +125,10 @@ namespace opengl{
                 }
             template<typename T>
                 T* host()const{
+                    return reinterpret_cast<T*>(host_);
+                }
+            template<typename T>
+                T* host(){
                     return reinterpret_cast<T*>(host_);
                 }
 
@@ -236,6 +243,9 @@ namespace opengl{
             }
             void FillDescription(TensorDescription* description)const;
 
+            uint64 AllocatedSize()const{return allocated_size_;}
+            uint64 RequestedSize() const{return requested_size_;}
+
         private:
             // inner data pointer
             void* device_=nullptr;
@@ -246,6 +256,9 @@ namespace opengl{
 
             //TODO(breakpoint) change it to bytes, more readable
             int size_;
+
+            uint64 allocated_size_;
+            uint64 requested_size_;
 
             // common attributes for tensor, like data type, shape and mem type
             DataType dtype_;
@@ -269,21 +282,24 @@ namespace opengl{
 
             if(dtype==DT_FLOAT){
                 bytes = sizeof(float)* num_elements;
+                allocated_size_ = sizeof(float)* num_elements/last_stride()
+                    *UP_ROUND(last_stride(), 4);
             }else{
                 bytes = sizeof(int)*num_elements;
+                allocated_size_ = sizeof(int)* num_elements/last_stride()
+                    *UP_ROUND(last_stride(), 4);
             }
 
             // shape and type
             size_ = bytes;
+
+            requested_size_ = size_;
+
             if(mem_type==HOST_MEMORY){
-                // if(dformat_==dlxnet::TensorProto::ANY4){
-                    // host_ = StrideAllocator::Allocate(ogl_texture_allocator(),
-                            // size_, last_stride(), AllocationAttributes());
-                // }else{
-                    host_= new float[num_elements];
-                // }
+                host_ = StrideAllocator::Allocate(cpu_allocator(),
+                        size_, last_stride(), AllocationAttributes());
             }else if(mem_type==DEVICE_BUFFER){
-                device_ = new ShaderBuffer(bytes);
+                device_ = new ShaderBuffer(allocated_size_);
             }else if(mem_type==DEVICE_TEXTURE){
                 int image_height, image_width ;
                 if(dformat_==dlxnet::TensorProto::NHWC4){
@@ -297,17 +313,18 @@ namespace opengl{
                     image_height = width()*height()*UP_DIV(num(), 4);
                     image_width = UP_DIV(channel(), 4)*4;
                 }else if(dformat==dlxnet::TensorProto::ANY4){
-                    // device_ = StrideAllocator::Allocate(ogl_texture_allocator(),
-                            // size_, last_stride(), AllocationAttributes());
-                    // image_height = device<Texture>()->height();
-                    // image_width = device<Texture>()->width();
-                    // initialized_=true;
-                    // return ;
-                    image_height = 1;
+                    device_ = StrideAllocator::Allocate(ogl_texture_allocator(),
+                    size_, last_stride(), AllocationAttributes());
+                    image_height = device<Texture>()->height();
+                    image_width = device<Texture>()->width();
+                    initialized_=true;
+                    CHECK_EQ(image_height, 1);
                     const int dims = dims_size();
                     const int src_last_dim = shape_[dims-1];
                     const int dst_last_dim = UP_ROUND(src_last_dim, 4);
-                    image_width = num_elements / src_last_dim * UP_DIV(src_last_dim, 4);
+                    CHECK_EQ(image_width, num_elements / src_last_dim * UP_DIV(src_last_dim, 4));
+                    size_= image_height*image_width*4*sizeof(float);
+                    return ;
                 }else{
                     LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
                 }

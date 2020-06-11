@@ -6,10 +6,33 @@
 #include "opengl/utils/macros.h"
 #include "opengl/core/driver.h"
 #include "opengl/core/tensor_format.h"
+#include "opengl/core/functor.h"
 
 
 namespace opengl{
+    namespace internal{
+        void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
+            CHECK_EQ(cpu_tensor->dformat(), ::dlxnet::TensorProto::ANY);
+            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY4);
+
+            CHECK(cpu_tensor->is_host());
+            CHECK(!device_tensor->is_host());
+
+            // check same bytes
+            CHECK_EQ(cpu_tensor->AllocatedSize(), device_tensor->AllocatedSize());
+
+            auto texture = device_tensor->device<Texture>();
+            const int width = texture->width();
+            const int height = texture->height();
+            GLenum format = texture->format();
+            GLenum type = texture->type();
+            // TODO(breakpoint) why DMA is slower than non DMA
+            CopyHostToTexture(cpu_tensor->host(), width, height, device_tensor->device<Texture>()->id(),
+                    format, type);
+        }
+    }
     namespace{
+
         const GLenum kDataType=GL_FLOAT;
         GLenum kInternalFormat = GL_RGBA32F;
         GLenum kFormat = GL_RGBA;
@@ -174,7 +197,14 @@ namespace opengl{
         if(cpu_tensor->dformat()==dlxnet::TensorProto::ANY
                 && device_tensor->dformat()==dlxnet::TensorProto::ANY4){
             // for general tensor case
-            ConvertTensorToStride4(cpu_tensor, &data);
+            // ConvertTensorToStride4(cpu_tensor, &data);
+            auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
+                        cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+            Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+            internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
+            // any to any4 (device->device)
+            functor::ConvertTensorANYToANY4()(this, src_gpu_tensor, device_tensor);
+            return;
         }else if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
                 // convert to nhwc4

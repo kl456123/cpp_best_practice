@@ -35,13 +35,16 @@ namespace opengl{
         output_shapes[0] = {dims_size};
 
         // create cpu tensor first
-        float* data = new float[dims_size];
-        for(int i=0;i<dims_size;++i){
-            data[i] = input_shapes[0][i];
-        }
+        // void* data = StrideAllocator::Allocate(cpu_allocator(),
+                        // sizeof(float)*dims_size, dims_size, AllocationAttributes());
+        // float* typed_data = static_cast<float*>(data);
+
         // tensor own data
-        tensor_ = new Tensor(Tensor::DT_FLOAT, output_shapes[0],
-                data, dlxnet::TensorProto::ANY);
+        tensor_ = new Tensor(cpu_allocator(), Tensor::DT_FLOAT, output_shapes[0],
+                dlxnet::TensorProto::ANY);
+        for(int i=0;i<dims_size;++i){
+            tensor_->host<float>()[i] = input_shapes[0][i];
+        }
     }
 
     ShapeKernel::~ShapeKernel(){

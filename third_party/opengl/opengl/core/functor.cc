@@ -5,14 +5,19 @@
 #include <glog/logging.h>
 
 namespace opengl{
-    namespace functor{
-        void ConvertTensorNHWC4ToANY4::operator()(Context* ctx,
-                const Tensor* src_tensor, Tensor* dst_tensor){
-            // copying in device is supported now
-            CHECK(!src_tensor->is_host());
-            CHECK(!dst_tensor->is_host());
+    namespace internal{
+        IntList AmendShape(const IntList& shape){
+            CHECK_LE(shape.size(), 4);
+            const int remain_dims = 4-shape.size();
+            IntList amended_shape = shape;
+            for(int i=0;i<remain_dims;++i){
+                amended_shape.insert(amended_shape.begin(), 1);
+            }
+            return amended_shape;
+        }
 
-            const std::string kernel_fname = "../opengl/nn/glsl/nhwc4_to_any4.glsl";
+        void RunOpenGLProgram(const std::string& kernel_fname, Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
             auto program = std::unique_ptr<Program>(ctx->CreateProgram(kernel_fname));
             // activate it before use
             program->Activate();
@@ -21,13 +26,47 @@ namespace opengl{
 
             // set input
             auto src_texture = src_tensor->device<Texture>();
-            program->set_vec4i("output_shape", dst_tensor->shape());
+            program->set_vec4i("output_shape", AmendShape(dst_tensor->shape()));
             // input
             {
                 program->set_image2D("input_image", src_texture->id(),  0);
                 OPENGL_CHECK_ERROR;
             }
             program->Run();
+        }
+    }//namespace internal
+    namespace functor{
+        void ConvertTensorNHWC4ToANY4::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            // copying in device is supported now
+            CHECK(!src_tensor->is_host());
+            CHECK(!dst_tensor->is_host());
+
+            const std::string kernel_fname = "../opengl/nn/glsl/nhwc4_to_any4.glsl";
+            internal::RunOpenGLProgram(kernel_fname, ctx, src_tensor, dst_tensor);
+        }
+
+        void ConvertTensorANYToANY4::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            // common used for copy from host to device
+            CHECK(!src_tensor->is_host());
+            CHECK(!dst_tensor->is_host());
+
+            const std::string kernel_fname = "../opengl/nn/glsl/any_to_any4.glsl";
+
+            internal::RunOpenGLProgram(kernel_fname, ctx, src_tensor, dst_tensor);
+
+        }
+
+        void ConvertTensorANY4ToANY::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            // common used for copy from host to device
+            CHECK(!src_tensor->is_host());
+            CHECK(!dst_tensor->is_host());
+
+            const std::string kernel_fname = "../opengl/nn/glsl/any4_to_any.glsl";
+
+            internal::RunOpenGLProgram(kernel_fname, ctx, src_tensor, dst_tensor);
         }
     }//namespace functor
 }//namespace opengl

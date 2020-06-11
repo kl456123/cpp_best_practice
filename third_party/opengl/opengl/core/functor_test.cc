@@ -1,11 +1,53 @@
 #include "opengl/nn/kernels/kernel_test_utils.h"
 #include "opengl/core/functor.h"
+#include "opengl/core/driver.h"
 
 
 using namespace ::opengl::testing;
+using ::opengl::CopyHostToTexture;
 
 namespace opengl{
     namespace{
+        void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
+            CHECK_EQ(cpu_tensor->dformat(), ::dlxnet::TensorProto::ANY);
+            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY4);
+
+            CHECK(cpu_tensor->is_host());
+            CHECK(!device_tensor->is_host());
+
+            // check same bytes
+            CHECK_EQ(cpu_tensor->AllocatedSize(), device_tensor->AllocatedSize());
+
+            auto texture = device_tensor->device<Texture>();
+            const int width = texture->width();
+            const int height = texture->height();
+            GLenum format = texture->format();
+            GLenum type = texture->type();
+            // TODO(breakpoint) why DMA is slower than non DMA
+            CopyHostToTexture(cpu_tensor->host(), width, height, device_tensor->device<Texture>()->id(),
+                    format, type);
+        }
+
+        void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
+            CHECK_EQ(cpu_tensor->dformat(), ::dlxnet::TensorProto::ANY);
+            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY4);
+
+            CHECK(cpu_tensor->is_host());
+            CHECK(!device_tensor->is_host());
+
+            // check same bytes
+            CHECK_EQ(cpu_tensor->AllocatedSize(), device_tensor->AllocatedSize());
+
+            auto texture = device_tensor->device<Texture>();
+            const int width = texture->width();
+            const int height = texture->height();
+            GLenum format = texture->format();
+            GLenum type = texture->type();
+            // TODO(breakpoint) why DMA is slower than non DMA
+            CopyTextureToHost(cpu_tensor->host(), width, height, device_tensor->device<Texture>()->id(),
+                    format, type);
+        }
+
         void NHWCToANYCPU(const Tensor* src_tensor, Tensor* dst_tensor){
             const float* src_data = src_tensor->host<float>();
             float* dst_data = dst_tensor->host<float>();
@@ -49,5 +91,82 @@ namespace opengl{
 
         CheckSameTensor(expect_cpu_tensor, actual_cpu_tensor);
 
+    }
+
+    TEST(FunctorTest, ANYToANY4Test){
+        auto ctx = GetContext();
+        const IntList shape{1, 2, 3, 7};
+        auto src_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+        auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto actual_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+
+        Tensor* actual_cpu_tensor = actual_cpu_tensor_ptr.get();
+        Tensor* src_cpu_tensor = src_cpu_tensor_ptr.get();
+        Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+        Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
+
+        CopyCPUTensorToDevice(src_cpu_tensor, src_gpu_tensor);
+        functor::ConvertTensorANYToANY4()(ctx, src_gpu_tensor, dst_gpu_tensor);
+        ctx->CopyDeviceTensorToCPU(dst_gpu_tensor, actual_cpu_tensor);
+
+        CheckSameTensor(src_cpu_tensor, actual_cpu_tensor);
+    }
+
+    TEST(FunctorTest, ANY4ToANYTest){
+        auto ctx = GetContext();
+        const IntList shape{1, 2, 3, 7};
+        auto src_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+        auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto actual_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+
+        Tensor* actual_cpu_tensor = actual_cpu_tensor_ptr.get();
+        Tensor* src_cpu_tensor = src_cpu_tensor_ptr.get();
+        Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+        Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
+
+        ctx->CopyCPUTensorToDevice(src_cpu_tensor, src_gpu_tensor);
+        functor::ConvertTensorANY4ToANY()(ctx, src_gpu_tensor, dst_gpu_tensor);
+        CopyDeviceTensorToCPU(dst_gpu_tensor, actual_cpu_tensor);
+
+        CheckSameTensor(src_cpu_tensor, actual_cpu_tensor);
+    }
+
+    TEST(FunctorTest, ANYToANY4ToANYTest){
+        auto ctx = GetContext();
+        const IntList shape{1, 2, 3, 7};
+        auto src_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+        auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+        auto actual_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY));
+
+        Tensor* actual_cpu_tensor = actual_cpu_tensor_ptr.get();
+        Tensor* src_cpu_tensor = src_cpu_tensor_ptr.get();
+        Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+        Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
+
+        // any to any (host->device)
+        CopyCPUTensorToDevice(src_cpu_tensor, src_gpu_tensor);
+        // any to any4 (device->device)
+        functor::ConvertTensorANYToANY4()(ctx, src_gpu_tensor, dst_gpu_tensor);
+        // any4 to any (device->device)
+        functor::ConvertTensorANY4ToANY()(ctx, dst_gpu_tensor, src_gpu_tensor);
+        // any to any (device->host)
+        CopyDeviceTensorToCPU(src_gpu_tensor, actual_cpu_tensor);
+
+        CheckSameTensor(src_cpu_tensor, actual_cpu_tensor);
     }
 }// namespace opengl

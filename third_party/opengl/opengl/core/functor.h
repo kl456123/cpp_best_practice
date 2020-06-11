@@ -11,6 +11,18 @@ namespace opengl{
         struct ConvertTensorNHWC4ToANY4{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
+
+        struct ConvertTensorNHWCToNHWC4{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        struct ConvertTensorANYToANY4{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        struct ConvertTensorANY4ToANY{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
     }//namespace functor
 }// namespace opengl
 

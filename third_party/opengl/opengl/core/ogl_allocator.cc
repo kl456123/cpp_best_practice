@@ -5,6 +5,7 @@
 
 namespace opengl{
     namespace{
+        // note that here alignment is refers to num_elements alignment
         const int kOGLAlignment = 4;
     }
     OGLTextureAllocator::OGLTextureAllocator()
@@ -12,9 +13,12 @@ namespace opengl{
 
     void* OGLTextureAllocator::AllocateRaw(size_t alignment, size_t num_bytes){
         CHECK_EQ(alignment, kOGLAlignment);
-        const size_t alloc_num_bytes = UP_ROUND(num_bytes, alignment);
-        const int image_height = UP_DIV(alloc_num_bytes, kMaxTextureSize_);
-        const int image_width = (image_height==1)? alloc_num_bytes: kMaxTextureSize_;
+        // only float type supported now
+        const size_t requested_num_elements = num_bytes / sizeof(float);
+
+        const size_t alloc_num_elements = UP_ROUND(requested_num_elements, alignment);
+        const int image_height = UP_DIV(alloc_num_elements/alignment, kMaxTextureSize_);
+        const int image_width = (image_height==1)? alloc_num_elements/alignment: kMaxTextureSize_;
 
         void* ptr = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
         return ptr;
