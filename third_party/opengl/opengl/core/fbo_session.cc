@@ -165,7 +165,7 @@ namespace opengl{
     void FBOSession::Run(const NamedTensorList& inputs_cpu,
             StepStats* step_stats){
         // auto step_collector = std::unique_ptr<StepStatsCollector>(
-                // new StepStatsCollector(step_stats));
+        // new StepStatsCollector(step_stats));
 
         // session set up
         {
@@ -180,11 +180,10 @@ namespace opengl{
         }
 
         CHECK(finalized_)<<"Please Setup Session First";
-        OPENGL_CALL(glFinish());
         const uint64 start_time_usecs = env_->NowMicros();
         NodeExecStatsInterface* stats = nullptr;
 
-            Start();
+        Start();
         for(int i=0;i<kernels_.size();++i){
             auto kernel = kernels_[i].get();
             if(CheckKernelReady(kernel)){

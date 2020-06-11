@@ -98,10 +98,9 @@ int main(int argc, char** argv){
         session->GetOutputs(output_names, dformats, &outputs_cpu);
 
     }
-    OPENGL_CALL(glFinish());
     auto env_time = EnvTime::Default();
     auto start_time1 = env_time->NowMicros();
-    ::opengl::SetTrackingStats(true);
+    // ::opengl::SetTrackingStats(true);
 
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
@@ -110,14 +109,8 @@ int main(int argc, char** argv){
         session->Run({{"input", input_tensor}}, &step_stats);
 
         {
-            OPENGL_CALL(glFinish());
-            auto start_time2 = env_time->NowMicros();
             // get cpu outputs from device
             session->GetOutputs(output_names, dformats, &outputs_cpu);
-            OPENGL_CALL(glFinish());
-            auto duration_time = env_time->NowMicros()-start_time2;
-            step_stats.set_output_time_micros(duration_time);
-            std::cout<<"Output Time: "<<duration_time*1e-3<<" ms\n";
         }
 
         // collect data for profilling
@@ -127,7 +120,7 @@ int main(int argc, char** argv){
         // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
     }
     auto duration_time = env_time->NowMicros()-start_time1;
-    std::cout<<"Total Time: "<<duration_time*1e-3<<" ms\n";
+    // std::cout<<"Total Time: "<<duration_time*1e-3<<" ms\n";
     auto second_per_round = duration_time*1e-6/num_iters;
     // force to display
     std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
