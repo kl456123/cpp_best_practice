@@ -40,7 +40,7 @@ namespace opengl{
             padding = 1;
             groups = 1;
             dilation = 1;
-            use_bias = true;
+            use_bias = false;
         }
 
         // cpu version of conv2d used for check the correctness
@@ -119,7 +119,7 @@ namespace opengl{
             if(use_bias){
                 // bias
                 int bias_id = AddConstNode(scope_ptr, bias_name,
-                        {1, output_channels, 1, 1}, dlxnet::TensorProto::NHWC4, dlxnet::TensorProto::NCHW);
+                        {output_channels}, dlxnet::TensorProto::ANY4, dlxnet::TensorProto::ANY);
                 input_ids.emplace_back(bias_id);
             }
 
@@ -152,7 +152,7 @@ namespace opengl{
             ::opengl::StringList dformats({"NHWC", "NCHW"});
             if(use_bias){
                 output_names.emplace_back(bias_name);
-                dformats.emplace_back("NHWC");
+                dformats.emplace_back("ANY");
             }
             // do computation for the graph
             session->Run(inputs);
@@ -194,16 +194,29 @@ namespace opengl{
             }
         }
     }//namespace
+    TEST(Conv2dTest, SpecialInputTest){
+        Reset();
+        for(int channel=1;channel<=7;++channel){
+            input_channels = channel;
+            const int size = 1;
+            input_height = size;
+            input_width = size;
 
+            SingleInference();
+        }
+
+    }
     TEST(Conv2dTest, DifferentInputShape){
         Reset();
+
         // loop input shape
         for(int size=1;size<=256;size*=2){
             for(int channel=1;channel<=20;channel++){
                 input_channels = channel;
                 // set conv2d params first
                 // const int size = 2;
-                LOG(INFO)<<"size: "<<size;
+                std::cout<<"size: "<<size;
+                std::cout<<" channel: "<<channel<<std::endl;
                 input_height = size;
                 input_width = size;
 
@@ -242,7 +255,7 @@ namespace opengl{
     TEST(Conv2dTest, DifferentDilationTest){
         Reset();
         input_channels = 1;
-        output_channels = 1;
+        output_channels = 5;
         const int size = 4;
         input_height = size;
         input_width = size;
@@ -274,7 +287,7 @@ namespace opengl{
                 input_channels = channel;
                 input_height = size;
                 input_width = size;
-                use_bias = false;
+                use_bias = true;
                 groups=channel;
                 output_channels = channel*2;
 
@@ -293,7 +306,7 @@ namespace opengl{
         kernel_size = 3;
         padding=1;
         stride=2;
-        use_bias = false;
+        use_bias = true;
         groups=1;
         SingleInference();
     }

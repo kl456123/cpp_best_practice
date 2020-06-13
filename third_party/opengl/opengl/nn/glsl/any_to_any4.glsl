@@ -17,17 +17,17 @@ void main(){
 
     float res[4];
     for(int i=0;i<4;++i){
-        int output_4_index = pos.x*4+i;
+        int output_4_index = (pos.x+pos.y*MAX_TEXTURE_SIZE)*4+i;
         int index = output_4_index/out_4_dim*output_shape.w+output_4_index%out_4_dim;
         int offset = index/4;
         if(index%4==0){
-            res[i] = texelFetch(input_image, ivec2(offset, 0), 0).x;
+            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
         }else if(index%4==1){
-            res[i] = texelFetch(input_image, ivec2(offset, 0), 0).y;
+            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
         }else if(index%4==2){
-            res[i] = texelFetch(input_image, ivec2(offset, 0), 0).z;
+            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
         }else if(index%4==3){
-            res[i] = texelFetch(input_image, ivec2(offset, 0), 0).w;
+            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
         }
     }
 

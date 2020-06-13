@@ -30,11 +30,13 @@ namespace opengl{
             initialized_=true;
         }
 
-    Tensor::Tensor(const dlxnet::TensorProto& tensor_proto){
+    Tensor::Tensor(const dlxnet::TensorProto& tensor_proto)
+    :dformat_(tensor_proto.data_format()), mem_type_(HOST_MEMORY){
         // get tensor shape
         for(auto& dim:tensor_proto.dims()){
             shape_.add_dim(dim);
         }
+        const auto last_stride = GetLastStride();
         // AmendShape();
         // get tensor data
         switch(tensor_proto.data_type()){
@@ -42,10 +44,10 @@ namespace opengl{
                 {
                     size_ = sizeof(float)*num_elements();
                     requested_size_ = size_;
-                    allocated_size_ = sizeof(float)* num_elements()/last_stride()
-                        *UP_ROUND(last_stride(), 4);
+                    allocated_size_ = sizeof(float)* num_elements()/last_stride
+                        *UP_ROUND(last_stride, 4);
                     host_ = StrideAllocator::Allocate(cpu_allocator(),
-                            size_, last_stride(), AllocationAttributes());
+                            size_, last_stride, AllocationAttributes());
                     float* target_data = static_cast<float*>(host_);
                     dtype_ = DT_FLOAT;
                     for(int i=0;i<num_elements();++i){
@@ -58,10 +60,10 @@ namespace opengl{
                 {
                     size_ = sizeof(int)*num_elements();
                     requested_size_ = size_;
-                    allocated_size_ = sizeof(int)* num_elements()/last_stride()
-                        *UP_ROUND(last_stride(), 4);
+                    allocated_size_ = sizeof(int)* num_elements()/last_stride
+                        *UP_ROUND(last_stride, 4);
                     host_ = StrideAllocator::Allocate(cpu_allocator(),
-                            size_, last_stride(), AllocationAttributes());
+                            size_, last_stride, AllocationAttributes());
                     float* target_data = static_cast<float*>(host_);
                     dtype_ = DT_INT;
                     for(int i=0;i<num_elements();++i){
@@ -74,8 +76,7 @@ namespace opengl{
                 LOG(FATAL)<<"unsupported const type: "<<tensor_proto.data_type();
         }
         initialized_=true;
-        mem_type_ = HOST_MEMORY;
-        dformat_=tensor_proto.data_format();
+
         CheckShapeAndDFormat();
     }
 
@@ -175,23 +176,19 @@ namespace opengl{
         :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY), dformat_(dformat){
             // TODO(breakpoint) how to handle it
             size_t num_elements, bytes;
+            const int last_stride = GetLastStride();
             num_elements = shape_.num_elements();
 
-            if(dtype==DT_FLOAT){
-                bytes = sizeof(float)* num_elements;
-                allocated_size_ = sizeof(float)* num_elements/last_stride()
-                    *UP_ROUND(last_stride(), 4);
-            }else{
-                bytes = sizeof(int)*num_elements;
-                allocated_size_ = sizeof(int)* num_elements/last_stride()
-                    *UP_ROUND(last_stride(), 4);
-            }
+            bytes = sizeof(float)* num_elements;
+            allocated_size_ = sizeof(float)* num_elements/last_stride
+                *UP_ROUND(last_stride, 4);
 
             // shape and type
             size_ = bytes;
 
             requested_size_ = size_;
             host_ = StrideAllocator::Allocate(a,
-                    size_, last_stride(), AllocationAttributes());
+                    size_, last_stride, AllocationAttributes());
+            CheckShapeAndDFormat();
         }
 }//namespace opengl

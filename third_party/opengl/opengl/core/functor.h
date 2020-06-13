@@ -12,15 +12,20 @@ namespace opengl{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
 
-        struct ConvertTensorNHWCToNHWC4{
-            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
-        };
-
         struct ConvertTensorANYToANY4{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
 
         struct ConvertTensorANY4ToANY{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        struct ConvertTensorANYToNHWC4{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        // only usd for filter
+        struct ConvertTensorNCHWToHWN4C4{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
     }//namespace functor

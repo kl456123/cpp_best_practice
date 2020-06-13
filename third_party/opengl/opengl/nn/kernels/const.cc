@@ -40,9 +40,11 @@ namespace opengl{
         }else{
             // change shape according to target dformat
             if(dformat==dlxnet::TensorProto::NHWC4){
+                LOG(FATAL)<<"Removed dformat: "
+                    << dformat << " in Const Kernel";
                 // nhwc
-                output_shape = {tensor_->num(), tensor_->height(),
-                    tensor_->width(), tensor_->channel()};
+                // output_shape = {tensor_->num(), tensor_->height(),
+                    // tensor_->width(), tensor_->channel()};
             }else if(dformat==dlxnet::TensorProto::HWN4C4){
                 // nchw
                 output_shape = {tensor_->num(), tensor_->channel(),

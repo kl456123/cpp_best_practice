@@ -32,7 +32,7 @@ namespace opengl{
         void SingleInference(const IntList& shape, float min, float max){
             auto session = InitSession();
             const auto const_tensor = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
-                        dlxnet::TensorProto::NHWC));
+                        dlxnet::TensorProto::ANY));
 
             session->LoadGraph(BuildGraph(const_tensor.get(), min, max));
 
@@ -42,7 +42,7 @@ namespace opengl{
             session->Run({});
 
             ::opengl::TensorNameList output_names({"output"});
-            ::opengl::StringList dformats({"NHWC"});
+            ::opengl::StringList dformats({"ANY"});
 
             // get cpu outputs from device
             session->GetOutputs(output_names, dformats, &outputs_cpu);

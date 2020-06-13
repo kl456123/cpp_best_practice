@@ -1,4 +1,4 @@
-// (1, nhwc/4, 4)
+// (1, (nhwc)/4, 4)
 uniform sampler2D input_image;
 
 // from any to any4
@@ -7,17 +7,21 @@ uniform ivec4 output_shape;
 
 #define UP_DIV(x, y) (((x)+(y)-1)/(y))
 
-// (1, (nhwc)/4, 4)
+// (nh, wc/4, 4)
 out vec4 color;
 
 void main(){
     ivec2 pos = ivec2(gl_FragCoord.xy);
 
+    int out_h_i = pos.y%output_shape.y;
+    int out_n_i = pos.y/output_shape.y;
+    int out_c_i = pos.x%UP_DIV(output_shape.w, 4);
+    int out_w_i = pos.x/UP_DIV(output_shape.w, 4);
+
     float res[4];
     for(int i=0;i<4;++i){
-        int output_index = (pos.x+pos.y*MAX_TEXTURE_SIZE)*4+i;
-        int index = output_index%output_shape.w;
-        int offset = output_index/output_shape.w*UP_DIV(output_shape.w, 4)+index/4;
+        int index = ((out_n_i*output_shape.y+out_h_i)*output_shape.z+out_w_i)*output_shape.w+out_c_i*4+i;
+        int offset = index/4;
         if(index%4==0){
             res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
         }else if(index%4==1){

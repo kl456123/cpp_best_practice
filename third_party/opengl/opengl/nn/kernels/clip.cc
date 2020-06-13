@@ -36,16 +36,16 @@ namespace opengl{
         program_->Run();
     }
 
-    void ClipKernel::InferOutputShape(TensorShapeList& input_shapes,
+    void ClipKernel::InferOutputShape(const TensorList& inputs,
             TensorShapeList& output_shapes){
-        // set output dformat first, then we can according
-        // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        CHECK_EQ(inputs.size(), 1);
+        // set dformat
+        output_tensor_dformats_.emplace_back(inputs[0]->dformat());
 
+        // set shape
         output_shapes.clear();
         output_shapes.resize(1);
-        CHECK_EQ(input_shapes.size(), 1);
-        output_shapes[0] = input_shapes[0];
+        output_shapes[0] = inputs[0]->shape();
     }
 
     ClipKernel::~ClipKernel(){}

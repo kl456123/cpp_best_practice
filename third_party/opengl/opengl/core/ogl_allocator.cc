@@ -31,13 +31,18 @@ namespace opengl{
 
     // stride allocator implementation
 
-    void* StrideAllocator::Allocate(Allocator* raw_allocator, size_t num_elements,
+    void* StrideAllocator::Allocate(Allocator* raw_allocator, size_t num_bytes,
             size_t stride, const AllocationAttributes& allocation_attr){
         // check stride is valid first
-        CHECK_EQ(num_elements%stride, 0);
+        int num_elements = num_bytes/sizeof(float);
+        // CHECK_EQ(num_elements%stride, 0);
+        if(num_elements%stride!=0){
+            num_elements = UP_ROUND(num_elements, stride);
+            num_bytes = num_elements*sizeof(float);
+        }
 
         const size_t aligned_stride = UP_ROUND(stride, kOGLAlignment);
-        const size_t requested_num_bytes = aligned_stride * num_elements /stride;
+        const size_t requested_num_bytes = aligned_stride * num_bytes /stride;
         void* ptr = raw_allocator->AllocateRaw(kOGLAlignment, requested_num_bytes);
         return ptr;
     }

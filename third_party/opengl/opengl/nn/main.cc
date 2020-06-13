@@ -117,7 +117,7 @@ int main(int argc, char** argv){
         // profiler->CollectData(&step_stats);
 
         // print output
-        // LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
+        LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
     }
     auto duration_time = env_time->NowMicros()-start_time1;
     // std::cout<<"Total Time: "<<duration_time*1e-3<<" ms\n";

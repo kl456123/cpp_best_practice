@@ -11,9 +11,16 @@
 
 namespace opengl{
     namespace internal{
+        bool IsCPUDFormat(DataFormat dformat){
+            if (dformat== ::dlxnet::TensorProto::ANY
+                    ||dformat== ::dlxnet::TensorProto::NHWC){
+                return true;
+            }
+            return false;
+        }
         void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
-            CHECK_EQ(cpu_tensor->dformat(), ::dlxnet::TensorProto::ANY);
-            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY4);
+            CHECK(IsCPUDFormat(cpu_tensor->dformat()));
+            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY);
 
             CHECK(cpu_tensor->is_host());
             CHECK(!device_tensor->is_host());
@@ -31,8 +38,8 @@ namespace opengl{
                     format, type);
         }
     }
-    namespace{
 
+    namespace{
         const GLenum kDataType=GL_FLOAT;
         GLenum kInternalFormat = GL_RGBA32F;
         GLenum kFormat = GL_RGBA;
@@ -91,7 +98,7 @@ namespace opengl{
         const int n4 = UP_DIV(n, 4);
         const int c4 = UP_DIV(c, 4);
 
-        for(int i=0;i<num_elements;++i){
+        for(int i=0; i<num_elements; ++i){
             int cur = i;
             const int w_i = cur%w;
             cur/=w;
@@ -199,7 +206,7 @@ namespace opengl{
             // for general tensor case
             // ConvertTensorToStride4(cpu_tensor, &data);
             auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
-                        cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+                        cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
             Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
             internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
             // any to any4 (device->device)
@@ -208,9 +215,21 @@ namespace opengl{
         }else if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             if(cpu_tensor->dformat()== dlxnet::TensorProto::NHWC){
                 // convert to nhwc4
-                ConvertTensorNHWCToNHWC4(cpu_tensor, &data);
+                // ConvertTensorNHWCToNHWC4(cpu_tensor, &data);
+                // TODO(breakpoint) image is too large for opengl device to use the following code
+                // try to fix it
+                auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
+                            cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
+                Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+                internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
+                // any to any4 (device->device)
+                // here use any -> nhwc4 is the same as nhwc -> nhwc4
+                // due to any and nhwc has the same layout in host memory
+                functor::ConvertTensorANYToNHWC4()(this, src_gpu_tensor, device_tensor);
+                return ;
             }else if(cpu_tensor->dformat()== dlxnet::TensorProto::NCHW){
-                ConvertTensorNCHWToNHWC4(cpu_tensor, &data);
+                LOG(FATAL)<<"Removed now";
+                // ConvertTensorNCHWToNHWC4(cpu_tensor, &data);
             }else{
                 LOG(FATAL)<<"Unsupported cpu_tensor dformat: "<<cpu_tensor->dformat();
             }
@@ -294,8 +313,8 @@ namespace opengl{
         float* nhwc_data = tensor->host<float>();
         float* nhwc4_data = (float*)out;
         const int num_elements = tensor->num_elements();
-        const int up_channel = UP_DIV(tensor->channel(), 4)*4;
-        const int channel = tensor->channel();
+        const int up_channel = UP_DIV(tensor->last_stride(), 4)*4;
+        const int channel = tensor->last_stride();
 
         // there is different in their base number in the last dim(one is channel,
         // the other is up_channel)
@@ -326,7 +345,7 @@ namespace opengl{
         }else if(device_tensor->dformat()==dlxnet::TensorProto::NHWC4){
             // only one cpu dformat supported here
             // may be more target dformat will be supported in the future
-            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NHWC);
+            CHECK(internal::IsCPUDFormat(cpu_tensor->dformat()));
             // copy data to cpu_tensor
             ConvertTensorNHWC4ToNHWC(data, cpu_tensor);
         }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){

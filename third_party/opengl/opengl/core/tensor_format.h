@@ -41,6 +41,8 @@ namespace opengl{
     DataFormat StrToFormat(std::string format_str);
     DataFormat FormatToStride4(DataFormat);
     DataFormat FormatFromStride4(DataFormat dformat);
+
+    uint64 CalcAllocatedNumForDformat(const IntList, DataFormat dformat);
 }//namespace
 
 

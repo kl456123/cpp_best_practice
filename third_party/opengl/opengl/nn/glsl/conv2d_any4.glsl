@@ -20,7 +20,7 @@ out vec4 color;
 // filter shape: (h*w* out_4, in_4*in4, out4)
 // image shape: (n*h, w*in_4, in4)
 // output shape: (n*h, w*out_4, out4)
-// bias shape: (n*1, 1*out_4, out4)
+// bias shape: (1, out_4, out4)
 // where in4=out4 = 4
 void main() {
     ivec2 pos = ivec2(gl_FragCoord.xy);
@@ -33,14 +33,14 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    int bias_pos_x = out_4_ind;
-    int bias_pos_y = batch_ind;
+    /* int bias_pos_x = out_4_ind; */
+    /* int bias_pos_y = batch_ind; */
 
     int out_group_size = output_shape.z/group;
     int in_group_size = input_shape.z/group;
 
     if(use_bias==1){
-        color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0);
+        color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE, out_4_ind/MAX_TEXTURE_SIZE), 0);
     }else{
         color = vec4(0.0);
     }

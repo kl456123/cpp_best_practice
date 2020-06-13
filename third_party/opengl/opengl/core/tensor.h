@@ -15,6 +15,7 @@
 #include "opengl/core/buffer.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/dlxnet.pb.h"
+#include "opengl/core/driver.h"
 #include "opengl/core/ogl_allocator.h"
 #include <glog/logging.h>
 
@@ -22,6 +23,9 @@ namespace dlxnet{
     class TensorDescription;
 }
 namespace opengl{
+    namespace{
+        const int kMaxChannelSize = 4;
+    }
     using dlxnet::TensorDescription;
     //TODO(breakpoint) put all tensor attributes in a struct
     // enum Tensor::DataType;
@@ -251,6 +255,22 @@ namespace opengl{
             void* device_=nullptr;
             void* host_=nullptr;
 
+            int GetLastStride()const{
+                if(mem_type()==HOST_MEMORY){
+                    // more compactative memory usage
+                    // due to limit of device, we cannot use
+                    // too large stride
+                    return std::min(GetMaxTextureSize()*kMaxChannelSize, int(num_elements()));
+                }
+                int last_stride;
+                if(this->dformat()==dlxnet::TensorProto::ANY){
+                    last_stride = std::min(GetMaxTextureSize()*kMaxChannelSize, int(num_elements()));
+                }else{
+                    last_stride = this->last_stride();
+                }
+                return last_stride;
+            }
+
             // help to tell if it is empty or not
             bool initialized_=false;
 
@@ -279,15 +299,16 @@ namespace opengl{
             CheckShapeAndDFormat();
             size_t num_elements, bytes;
             num_elements = shape_.num_elements();
+            const int last_stride=GetLastStride();
 
             if(dtype==DT_FLOAT){
                 bytes = sizeof(float)* num_elements;
-                allocated_size_ = sizeof(float)* num_elements/last_stride()
-                    *UP_ROUND(last_stride(), 4);
+                allocated_size_ = sizeof(float)* num_elements/last_stride
+                    *UP_ROUND(last_stride, 4);
             }else{
                 bytes = sizeof(int)*num_elements;
-                allocated_size_ = sizeof(int)* num_elements/last_stride()
-                    *UP_ROUND(last_stride(), 4);
+                allocated_size_ = sizeof(int)* num_elements/last_stride
+                    *UP_ROUND(last_stride, 4);
             }
 
             // shape and type
@@ -297,7 +318,7 @@ namespace opengl{
 
             if(mem_type==HOST_MEMORY){
                 host_ = StrideAllocator::Allocate(cpu_allocator(),
-                        size_, last_stride(), AllocationAttributes());
+                        size_, last_stride, AllocationAttributes());
             }else if(mem_type==DEVICE_BUFFER){
                 device_ = new ShaderBuffer(allocated_size_);
             }else if(mem_type==DEVICE_TEXTURE){
@@ -312,17 +333,12 @@ namespace opengl{
                     // spatial dim is small in most common cases for filter tensor
                     image_height = width()*height()*UP_DIV(num(), 4);
                     image_width = UP_DIV(channel(), 4)*4;
-                }else if(dformat==dlxnet::TensorProto::ANY4){
+                }else if(dformat==dlxnet::TensorProto::ANY4 || dformat==dlxnet::TensorProto::ANY){
                     device_ = StrideAllocator::Allocate(ogl_texture_allocator(),
-                    size_, last_stride(), AllocationAttributes());
+                    size_, last_stride, AllocationAttributes());
                     image_height = device<Texture>()->height();
                     image_width = device<Texture>()->width();
                     initialized_=true;
-                    CHECK_EQ(image_height, 1);
-                    const int dims = dims_size();
-                    const int src_last_dim = shape_[dims-1];
-                    const int dst_last_dim = UP_ROUND(src_last_dim, 4);
-                    CHECK_EQ(image_width, num_elements / src_last_dim * UP_DIV(src_last_dim, 4));
                     size_= image_height*image_width*4*sizeof(float);
                     return ;
                 }else{

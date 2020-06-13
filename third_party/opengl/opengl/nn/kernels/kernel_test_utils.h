@@ -53,5 +53,13 @@ namespace opengl{
     }//namespace testing
 }//namespace opengl
 
+#define DIFFERENT_SHAPE_LOOP_START                          \
+    for(int bz=0;bz<3;bz++){                                \
+        for(int size=1;size<=256;size*=2){                  \
+            for(int channel=1;channel<=20;channel++){       \
+                const IntList shape{1, size, size, channel};
+
+#define DIFFERENT_SHAPE_LOOP_END    }}}
+
 
 #endif

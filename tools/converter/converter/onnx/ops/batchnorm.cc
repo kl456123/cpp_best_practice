@@ -11,14 +11,14 @@ void BatchNormOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor,
         int tensor_index){
     // CHECK_EQ(tensor_index, 0);
     CHECK_EQ(dlcl_tensor->dims_size(), 1);
-    dlcl_tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
-    const int n_out = dlcl_tensor->dims(0);
-    dlcl_tensor->clear_dims();
-    dlcl_tensor->add_dims(1);
-    dlcl_tensor->add_dims(n_out);
-    dlcl_tensor->add_dims(1);
-    dlcl_tensor->add_dims(1);
-    dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
+    dlcl_tensor->set_target_data_format(dlxnet::TensorProto::ANY4);
+    // const int n_out = dlcl_tensor->dims(0);
+    // dlcl_tensor->clear_dims();
+    // dlcl_tensor->add_dims(1);
+    // dlcl_tensor->add_dims(n_out);
+    // dlcl_tensor->add_dims(1);
+    // dlcl_tensor->add_dims(1);
+    dlcl_tensor->set_data_format(dlxnet::TensorProto::ANY);
 }
 
 void BatchNormOpConverter::Run(dlxnet::NodeProto* dst_node, const void* src_node){

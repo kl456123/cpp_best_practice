@@ -13,7 +13,7 @@ out vec4 color;
 void main(){
     ivec2 pos = ivec2(gl_FragCoord.xy);
 
-    int index = pos.x;
+    int index = pos.x+pos.y*MAX_TEXTURE_SIZE;
     int out_c_i = index % UP_DIV(output_shape.w, 4);
     index = index/UP_DIV(output_shape.w, 4);
     int out_w_i = index%output_shape.z;

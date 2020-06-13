@@ -89,6 +89,7 @@ namespace opengl{
         headOs << "precision PRECISION float;\n";
         headOs<<"#define LOCAL_SIZE_X 1\n";
         headOs<<"#define LOCAL_SIZE_Y 1\n";
+        headOs<<"#define MAX_TEXTURE_SIZE "<< GetMaxTextureSize() <<"\n";
         return headOs.str();
     }
 
