@@ -196,7 +196,7 @@ namespace opengl{
     }//namespace
     TEST(Conv2dTest, SpecialInputTest){
         Reset();
-        for(int channel=1;channel<=7;++channel){
+        for(int channel=6;channel<=7;++channel){
             input_channels = channel;
             const int size = 1;
             input_height = size;
@@ -215,8 +215,6 @@ namespace opengl{
                 input_channels = channel;
                 // set conv2d params first
                 // const int size = 2;
-                std::cout<<"size: "<<size;
-                std::cout<<" channel: "<<channel<<std::endl;
                 input_height = size;
                 input_width = size;
 

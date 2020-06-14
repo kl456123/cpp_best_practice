@@ -9,6 +9,8 @@ namespace opengl{
             virtual ~OGLTextureAllocator()override{}
             std::string Name() override { return "ogl"; }
             void* AllocateRaw(size_t alignment, size_t num_bytes) override;
+            // void* AllocateRaw(const IntList& shape, DataFormat dformat,
+                    // Tensor::DataType dtype)override;
 
             void DeallocateRaw(void* ptr) override;
         private:

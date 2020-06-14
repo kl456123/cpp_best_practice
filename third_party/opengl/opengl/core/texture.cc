@@ -3,6 +3,9 @@
 #include "opengl/core/driver.h"
 
 namespace opengl{
+    namespace{
+        const int kMaxChannelSize = 4;
+    }
     Texture::Texture(std::vector<int> dims, GLenum internal_format,
             GLenum target, float* image_data)
         :dims_(dims){
@@ -31,10 +34,11 @@ namespace opengl{
             CHECK_GT(dims[1], 0);
 
             OPENGL_CALL(glTexImage2D(GL_TEXTURE_2D, 0, internal_format, dims[0], dims[1],
-                    0, format, type_, image_data));
+                        0, format, type_, image_data));
 
             // store internal format
             format_ = format;
+            bytes_ = dims[0]*dims[1]*kMaxChannelSize * sizeof(float);
         }
 
     Texture::~Texture(){

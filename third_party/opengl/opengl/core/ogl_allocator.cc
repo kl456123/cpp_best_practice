@@ -2,6 +2,7 @@
 #include "opengl/core/driver.h"
 #include "opengl/core/texture.h"
 #include "opengl/utils/macros.h"
+#include  "opengl/core/tensor_format.h"
 
 namespace opengl{
     namespace{
@@ -10,6 +11,13 @@ namespace opengl{
     }
     OGLTextureAllocator::OGLTextureAllocator()
         :kMaxTextureSize_(GetMaxTextureSize()){}
+
+    // void* OGLTextureAllocator::AllocateRaw(const IntList& shape, DataFormat dformat,
+            // Tensor::DataType dtype){
+        // // h, w
+        // const auto texture_shape = CalcAllocatedSize2D(shape, dformat);
+        // return new Texture({texture_shape[1], texture_shape[0]}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+    // }
 
     void* OGLTextureAllocator::AllocateRaw(size_t alignment, size_t num_bytes){
         CHECK_EQ(alignment, kOGLAlignment);
@@ -57,6 +65,4 @@ namespace opengl{
         static Allocator* a = new OGLTextureAllocator();
         return a;
     }
-
-
 }//namespace opengl

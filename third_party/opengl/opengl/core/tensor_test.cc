@@ -135,4 +135,29 @@ namespace opengl{
 
     TEST(TensorTest, FromHost){
     }
+
+    TEST(TensorTest, SizeTest){
+        // cpu tensor
+        IntList image_shape = {1, 3, 30, 30};
+        std::vector<DataFormat> tested_dformats = {
+            dlxnet::TensorProto::ANY,
+            dlxnet::TensorProto::ANY4,
+            // dlxnet::TensorProto::NHWC,
+            // dlxnet::TensorProto::NCHW,
+            dlxnet::TensorProto::NHWC4,
+            dlxnet::TensorProto::HWN4C4
+        };
+
+        for(auto dformat: tested_dformats){
+            auto gpu_tensor = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, image_shape,
+                        Tensor::DEVICE_TEXTURE, dformat));
+            auto cpu_tensor = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, image_shape,
+                        dformat));
+            EXPECT_EQ(gpu_tensor->AllocatedSize(), cpu_tensor->AllocatedSize());
+        }
+        // const int num_elements = tensor->num_elements();
+        // EXPECT_EQ(tensor->AllocatedSize(), num_elements );
+        // EXPECT_EQ(tensor->RequestedSize(), 1*3*224*224*sizeof(float));
+        // EXPECT_EQ(tensor->size(), 1*3*224*224*sizeof(float));
+    }
 }//namespace opengl

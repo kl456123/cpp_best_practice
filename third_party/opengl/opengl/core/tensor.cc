@@ -6,6 +6,9 @@
 
 
 namespace opengl{
+    namespace{
+        const int kMaxChannelSize = 4;
+    }
     Tensor::~Tensor(){
         if(mem_type()==HOST_MEMORY){
             // host memory
@@ -24,61 +27,59 @@ namespace opengl{
             // AmendShape();
             CheckShapeAndDFormat();
 
-            size_ = shape_.num_elements()*sizeof(float);
+            requested_size_ = CalcRequestSize();
             host_ = data;
 
             initialized_=true;
+            allocated_size_ = CalcAllocatedSize1D(shape, dformat)*sizeof(float);
         }
 
     Tensor::Tensor(const dlxnet::TensorProto& tensor_proto)
-    :dformat_(tensor_proto.data_format()), mem_type_(HOST_MEMORY){
-        // get tensor shape
-        for(auto& dim:tensor_proto.dims()){
-            shape_.add_dim(dim);
-        }
-        const auto last_stride = GetLastStride();
-        // AmendShape();
-        // get tensor data
-        switch(tensor_proto.data_type()){
-            case dlxnet::TensorProto::FLOAT32:
-                {
-                    size_ = sizeof(float)*num_elements();
-                    requested_size_ = size_;
-                    allocated_size_ = sizeof(float)* num_elements()/last_stride
-                        *UP_ROUND(last_stride, 4);
-                    host_ = StrideAllocator::Allocate(cpu_allocator(),
-                            size_, last_stride, AllocationAttributes());
-                    float* target_data = static_cast<float*>(host_);
-                    dtype_ = DT_FLOAT;
-                    for(int i=0;i<num_elements();++i){
-                        target_data[i] = tensor_proto.float_data(i);
+        :dformat_(tensor_proto.data_format()), mem_type_(HOST_MEMORY){
+            // get tensor shape
+            for(auto& dim:tensor_proto.dims()){
+                shape_.add_dim(dim);
+            }
+            const auto last_stride = GetLastStride();
+            const uint64 size = CalcAllocatedSize1D(shape(), dformat());
+            // AmendShape();
+            // get tensor data
+            switch(tensor_proto.data_type()){
+                case dlxnet::TensorProto::FLOAT32:
+                    {
+                        dtype_ = DT_FLOAT;
+                        requested_size_ = CalcRequestSize();
+                        host_ = cpu_allocator()->AllocateRaw(32, size*sizeof(float));
+                        allocated_size_= size*sizeof(float);
+                        // host_ = StrideAllocator::Allocate(cpu_allocator(),
+                        // requested_size_, last_stride, AllocationAttributes());
+                        float* target_data = static_cast<float*>(host_);
+                        for(int i=0;i<num_elements();++i){
+                            target_data[i] = tensor_proto.float_data(i);
+                        }
+                        break;
                     }
-                    break;
-                }
 
-            case dlxnet::TensorProto::INT32:
-                {
-                    size_ = sizeof(int)*num_elements();
-                    requested_size_ = size_;
-                    allocated_size_ = sizeof(int)* num_elements()/last_stride
-                        *UP_ROUND(last_stride, 4);
-                    host_ = StrideAllocator::Allocate(cpu_allocator(),
-                            size_, last_stride, AllocationAttributes());
-                    float* target_data = static_cast<float*>(host_);
-                    dtype_ = DT_INT;
-                    for(int i=0;i<num_elements();++i){
-                        target_data[i] = tensor_proto.int32_data(i);
+                case dlxnet::TensorProto::INT32:
+                    {
+                        dtype_ = DT_INT;
+                        requested_size_ = CalcRequestSize();
+                        host_ = cpu_allocator()->AllocateRaw(32, size*sizeof(int));
+                        allocated_size_= size*sizeof(int);
+                        float* target_data = static_cast<float*>(host_);
+                        for(int i=0;i<num_elements();++i){
+                            target_data[i] = tensor_proto.int32_data(i);
+                        }
+                        break;
                     }
-                    break;
-                }
 
-            default:
-                LOG(FATAL)<<"unsupported const type: "<<tensor_proto.data_type();
+                default:
+                    LOG(FATAL)<<"unsupported const type: "<<tensor_proto.data_type();
+            }
+            initialized_=true;
+
+            CheckShapeAndDFormat();
         }
-        initialized_=true;
-
-        CheckShapeAndDFormat();
-    }
 
     // here we just allocate memory in host memory in hard code
     // TODO(breakpoint) add customs allocator input to allow
@@ -176,19 +177,60 @@ namespace opengl{
         :shape_(shape),dtype_(dtype),mem_type_(HOST_MEMORY), dformat_(dformat){
             // TODO(breakpoint) how to handle it
             size_t num_elements, bytes;
-            const int last_stride = GetLastStride();
             num_elements = shape_.num_elements();
 
-            bytes = sizeof(float)* num_elements;
-            allocated_size_ = sizeof(float)* num_elements/last_stride
-                *UP_ROUND(last_stride, 4);
+            requested_size_ = CalcRequestSize();
+            allocated_size_ = CalcAllocatedSize1D(shape, dformat)*sizeof(float);
 
-            // shape and type
-            size_ = bytes;
+            host_ = cpu_allocator()->AllocateRaw(32, allocated_size_);
 
-            requested_size_ = size_;
-            host_ = StrideAllocator::Allocate(a,
-                    size_, last_stride, AllocationAttributes());
             CheckShapeAndDFormat();
+            initialized_=true;
         }
+
+    int Tensor::GetLastStride()const{
+        int last_stride;
+        if(IsStrideDFormat(this->dformat())){
+            last_stride = this->last_stride();
+        }else{
+            last_stride = num_elements();
+        }
+        return std::min(GetMaxTextureSize()*kMaxChannelSize, last_stride);
+    }
+
+    Tensor::Tensor(DataType dtype, IntList shapes, MemoryType mem_type, DataFormat dformat)
+        :shape_(shapes), dtype_(dtype),mem_type_(mem_type), dformat_(dformat){
+            // AmendShape();
+            CheckShapeAndDFormat();
+            size_t num_elements, bytes;
+            num_elements = shape_.num_elements();
+            requested_size_ = CalcRequestSize();
+
+            if(mem_type==HOST_MEMORY){
+                allocated_size_ = CalcAllocatedSize1D(shapes, dformat)*sizeof(float);
+                host_ = cpu_allocator()->AllocateRaw(32, allocated_size_);
+            }else if(mem_type==DEVICE_BUFFER){
+                LOG(FATAL);
+            }else if(mem_type==DEVICE_TEXTURE){
+                auto texture_shape = CalcAllocatedSize2D(shapes, dformat);
+                allocated_size_ = texture_shape[1]*texture_shape[0]*4*sizeof(float);
+                device_ = new Texture({texture_shape[1], texture_shape[0]}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
+            }else{
+                LOG(FATAL)<<"unsupported types!";
+            }
+            initialized_=true;
+        }
+
+
+    Tensor::Tensor(const Tensor* tensor)
+        :dtype_(tensor->dtype()), mem_type_(HOST_MEMORY),dformat_(tensor->dformat()),
+        shape_(tensor->shape()), requested_size_(tensor->RequestedSize()),
+        allocated_size_(tensor->AllocatedSize()){
+            host_ = StrideAllocator::Allocate(cpu_allocator(),
+                    allocated_size_, allocated_size_/sizeof(float), AllocationAttributes());;
+            initialized_ = true;
+        }
+
+
+
 }//namespace opengl

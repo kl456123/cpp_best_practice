@@ -3,6 +3,7 @@
 #include <vector>
 #include <glog/logging.h>
 #include "opengl/core/opengl.h"
+#include "opengl/core/types.h"
 
 namespace opengl{
     class Texture{
@@ -23,12 +24,14 @@ namespace opengl{
             }
             GLenum format()const{return format_;}
             GLenum type()const{return type_;}
+            uint64 bytes()const{return bytes_;}
         private:
             GLenum target_;
             GLuint id_;
             GLenum format_;
             // width, height
             std::vector<int> dims_;
+            uint64 bytes_;
             GLenum type_;
     };
 }//namespace opengl

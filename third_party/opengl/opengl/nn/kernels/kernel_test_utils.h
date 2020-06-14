@@ -8,12 +8,15 @@
 
 namespace opengl{
     namespace testing{
+        void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor);
+        void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor);
         // initialize environment
         std::unique_ptr<FBOSession> InitSession();
         void InitOGLContext();
 
         // check utils
         void CheckSameTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2);
+        void CheckSameDeviceTensor(const Tensor* gpu_tensor1, const Tensor* gpu_tensor2);
         void CheckSameValueTensor(const Tensor* cpu_tensor1, const Tensor* cpu_tensor2);
         void CleanupTensorList(::opengl::TensorList* outputs_tensor);
 
@@ -54,10 +57,10 @@ namespace opengl{
 }//namespace opengl
 
 #define DIFFERENT_SHAPE_LOOP_START                          \
-    for(int bz=0;bz<3;bz++){                                \
+    for(int bz=1;bz<10;bz++){                                \
         for(int size=1;size<=256;size*=2){                  \
             for(int channel=1;channel<=20;channel++){       \
-                const IntList shape{1, size, size, channel};
+                const IntList shape{bz, size, size, channel};
 
 #define DIFFERENT_SHAPE_LOOP_END    }}}
 

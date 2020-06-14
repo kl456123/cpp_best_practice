@@ -1,4 +1,5 @@
 #include "opengl/core/allocator.h"
+#include  "opengl/core/tensor_format.h"
 #include "opengl/utils/mem.h"
 
 namespace opengl{
@@ -14,6 +15,12 @@ namespace opengl{
                 void* p = port::AlignedMalloc(num_bytes, alignment);
                 return p;
             }
+
+            // void* AllocateRaw(const IntList& shape, DataFormat dformat,
+                    // Tensor::DataType dtype)override{
+                // const auto size = CalcAllocatedSize1D(shape, dformat);
+                // return AllocateRaw(32, size*sizeof(float));
+            // }
 
             void DeallocateRaw(void* ptr) override {
                 port::AlignedFree(ptr);

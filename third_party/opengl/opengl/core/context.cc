@@ -19,11 +19,15 @@ namespace opengl{
             return false;
         }
         void CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
-            CHECK(IsCPUDFormat(cpu_tensor->dformat()));
-            CHECK_EQ(device_tensor->dformat(), ::dlxnet::TensorProto::ANY);
-
             CHECK(cpu_tensor->is_host());
             CHECK(!device_tensor->is_host());
+
+            auto cpu_shape = cpu_tensor->shape();
+            auto device_shape = device_tensor->shape();
+            CHECK_EQ(cpu_shape.size(), device_shape.size());
+            for(int i=0;i<cpu_shape.size();++i){
+                CHECK_EQ(cpu_shape[i], device_shape[i]);
+            }
 
             // check same bytes
             CHECK_EQ(cpu_tensor->AllocatedSize(), device_tensor->AllocatedSize());
@@ -35,6 +39,30 @@ namespace opengl{
             GLenum type = texture->type();
             // TODO(breakpoint) why DMA is slower than non DMA
             CopyHostToTexture(cpu_tensor->host(), width, height, device_tensor->device<Texture>()->id(),
+                    format, type);
+        }
+
+    void CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
+            CHECK(cpu_tensor->is_host());
+            CHECK(!device_tensor->is_host());
+
+            auto cpu_shape = cpu_tensor->shape();
+            auto device_shape = device_tensor->shape();
+            CHECK_EQ(cpu_shape.size(), device_shape.size());
+            for(int i=0;i<cpu_shape.size();++i){
+                CHECK_EQ(cpu_shape[i], device_shape[i]);
+            }
+
+            // check same bytes
+            CHECK_EQ(cpu_tensor->AllocatedSize(), device_tensor->AllocatedSize());
+
+            auto texture = device_tensor->device<Texture>();
+            const int width = texture->width();
+            const int height = texture->height();
+            GLenum format = texture->format();
+            GLenum type = texture->type();
+            // TODO(breakpoint) why DMA is slower than non DMA
+            CopyTextureToHost(cpu_tensor->host(), width, height, device_tensor->device<Texture>()->id(),
                     format, type);
         }
     }
@@ -90,11 +118,11 @@ namespace opengl{
         float* nchw_data = tensor->host<float>();
         float* hwn4c4_data = (float*)src;
         const int num_elements = tensor->num_elements();
-        const int up_channel = UP_DIV(tensor->channel(), 4)*4;
-        const int c = tensor->channel();
-        const int h = tensor->height();
-        const int w = tensor->width();
-        const int n = tensor->num();
+        const int c = tensor->shape()[1];
+        const int h = tensor->shape()[2];
+        const int w = tensor->shape()[3];
+        const int n = tensor->shape()[0];
+        const int up_channel = UP_DIV(c, 4)*4;
         const int n4 = UP_DIV(n, 4);
         const int c4 = UP_DIV(c, 4);
 
@@ -182,7 +210,7 @@ namespace opengl{
         CHECK(dst_tensor->is_host());
 
         // check size
-        CHECK_EQ(src_tensor->size(), dst_tensor->size());
+        CHECK_EQ(src_tensor->RequestedSize(), dst_tensor->RequestedSize());
         const int num_elements = src_tensor->num_elements();
 
         float* src_data = src_tensor->host<float>();
@@ -234,9 +262,19 @@ namespace opengl{
                 LOG(FATAL)<<"Unsupported cpu_tensor dformat: "<<cpu_tensor->dformat();
             }
         }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){
-            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW)
-                <<"dformat of cpu tensor for filter should be NCHW";
-            ConvertTensorNCHWToHWN4C4(cpu_tensor, &data);
+            // CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW)
+            // <<"dformat of cpu tensor for filter should be NCHW";
+            // ConvertTensorNCHWToHWN4C4(cpu_tensor, &data);
+            auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
+                        cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
+            Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+            internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
+            functor::ConvertTensorNCHWToHWN4C4()(this, src_gpu_tensor, device_tensor);
+
+            auto dst_cpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(device_tensor));
+            Tensor* dst_cpu_tensor = dst_cpu_tensor_ptr.get();
+            CopyDeviceTensorToCPU(device_tensor, dst_cpu_tensor);
+            return;
         }else{
             data = cpu_tensor->host();
         }
@@ -328,7 +366,7 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
-        float* data = new float[device_tensor->size()/sizeof(float)];
+        float* data = new float[device_tensor->AllocatedSize()/sizeof(float)];
         auto texture = device_tensor->device<Texture>();
 
         const int width = texture->shape()[0];
@@ -350,7 +388,6 @@ namespace opengl{
             ConvertTensorNHWC4ToNHWC(data, cpu_tensor);
         }else if(device_tensor->dformat()==dlxnet::TensorProto::HWN4C4){
             // now used to download filter generated from onnx model
-            CHECK_EQ(cpu_tensor->dformat(), dlxnet::TensorProto::NCHW);
             ConvertTensorHWN4C4ToNCHW(data, cpu_tensor);
         }else{
             LOG(FATAL)<<"unsupported conversion from device_dformat: "

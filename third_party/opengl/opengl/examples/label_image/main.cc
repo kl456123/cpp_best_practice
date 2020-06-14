@@ -39,7 +39,7 @@ bool ReadImage(const char* image_name, Tensor** out){
     // copy to tensor
     Tensor* tensor = new Tensor(Tensor::DT_FLOAT, shape);
     // Tensor* tensor = Tensor::Ones(Tensor::DT_FLOAT, shape);
-    ::memcpy(tensor->host(), image.data, tensor->size());
+    ::memcpy(tensor->host(), image.data, tensor->RequestedSize());
 
     // assign to out
     *out = tensor;

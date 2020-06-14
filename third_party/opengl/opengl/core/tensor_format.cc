@@ -1,7 +1,11 @@
 #include "opengl/core/tensor_format.h"
 #include "opengl/utils/macros.h"
+#include "opengl/core/driver.h"
 
 namespace opengl{
+    namespace{
+        const uint64 kAlignment = 4;
+    }
     int GetChannel(const IntList& shape, DataFormat dformat){
         CHECK_GE(shape.size(), 4);
         if(dformat==::dlxnet::TensorProto::NHWC){
@@ -186,5 +190,120 @@ namespace opengl{
             return dlxnet::TensorProto::NCHW;
         }
         LOG(FATAL)<<"unsupported dformat: "<<dformat;
+    }
+
+    bool IsHostDFormat(DataFormat dformat){
+    }
+
+    bool IsDeviceDFormat(DataFormat dformat){
+    }
+
+
+    bool IsStrideDFormat(DataFormat dformat){
+        if(dformat==dlxnet::TensorProto::NHWC
+                ||dformat==dlxnet::TensorProto::NCHW
+                ||dformat==dlxnet::TensorProto::ANY){
+            return false;
+        }
+        return true;
+    }
+
+
+    uint64 CalcAllocatedSize1D(const IntList& shape, DataFormat dformat){
+        CHECK_GT(shape.size(), 0);
+        const int dim_size = shape.size();
+        const int last_dim = shape[dim_size-1];
+        int num_elements = 1;
+        for(auto item: shape){
+            num_elements*=item;
+        }
+        const uint64 max_stride = GetMaxTextureSize()*kAlignment;
+
+        // no stride dformat: NHWC, NCHW, ANY
+        // stride dformat: ANY4
+        // special case: NHWC4, HWN4C4
+        if(!IsStrideDFormat(dformat)){
+            uint64 align_num_elements = UP_ROUND(num_elements, kAlignment);
+            if(align_num_elements>max_stride){
+                return UP_ROUND(align_num_elements, max_stride);
+            }
+            return align_num_elements;
+        }
+
+        if(dformat==dlxnet::TensorProto::ANY4){
+            // change the last dim
+            uint64 align_dim = UP_ROUND(last_dim, kAlignment);
+            uint64 align_num_elements = num_elements/last_dim*align_dim;
+            if(align_num_elements>max_stride){
+                return UP_ROUND(align_num_elements, max_stride);
+            }
+            return align_num_elements;
+        }
+
+        CHECK_EQ(shape.size(), 4);
+        // nh, wc/4, 4
+        if(dformat==dlxnet::TensorProto::NHWC4){
+            int image_height = shape[0] * shape[1];
+            int image_width = UP_DIV(shape[3], kAlignment) * shape[2];
+            return image_width*image_height*kAlignment;
+        }
+        if(dformat==dlxnet::TensorProto::HWN4C4){
+            // make sure filter shape should be oihw format
+            // oihw
+            // hwo/4, i/4*4, 4
+            int image_height = shape[3]*shape[2]*UP_DIV(shape[0], kAlignment);
+            int image_width = UP_ROUND(shape[1], kAlignment);
+            return image_height*image_width*kAlignment;
+        }
+        LOG(FATAL)<<"unsupported dformat_str: "<<FormatToStr(dformat);
+    }
+
+    IntList CalcAllocatedSize2D(const IntList& shape, DataFormat dformat){
+        CHECK_GT(shape.size(), 0);
+        const int dim_size = shape.size();
+        const int last_dim = shape[dim_size-1];
+        int num_elements = 1;
+        for(auto item: shape){
+            num_elements*=item;
+        }
+        const uint64 max_stride = GetMaxTextureSize()*kAlignment;
+
+        // no stride dformat: NHWC, NCHW, ANY
+        // stride dformat: ANY4
+        // special case: NHWC4, HWN4C4
+        if(!IsStrideDFormat(dformat)){
+            uint64 align_num_elements = UP_ROUND(num_elements, kAlignment);
+            if(align_num_elements>max_stride){
+                return {int(UP_DIV(align_num_elements, max_stride)), int(max_stride/kAlignment)};
+            }
+            return {1, int(align_num_elements/kAlignment)};
+        }
+
+        if(dformat==dlxnet::TensorProto::ANY4){
+            // change the last dim
+            uint64 align_dim = UP_ROUND(last_dim, kAlignment);
+            uint64 align_num_elements = num_elements/last_dim*align_dim;
+            if(align_num_elements>max_stride){
+                return {int(UP_DIV(align_num_elements, max_stride)), int(max_stride/kAlignment)};
+            }
+            return {1, int(align_num_elements/kAlignment)};
+        }
+
+        CHECK_EQ(shape.size(), 4);
+        // nh, wc/4, 4
+        if(dformat==dlxnet::TensorProto::NHWC4){
+            int image_height = shape[0] * shape[1];
+            int image_width = UP_DIV(shape[3], kAlignment) * shape[2];
+            return {image_height, image_width};
+        }
+        if(dformat==dlxnet::TensorProto::HWN4C4){
+            // make sure filter shape should be oihw format
+            // oihw
+            // hwo/4, i/4*4, 4
+            int image_height = shape[3]*shape[2]*UP_DIV(shape[0], kAlignment);
+            int image_width = UP_ROUND(shape[1], kAlignment);
+            return {image_height, image_width};
+        }
+        LOG(FATAL)<<"unsupported dformat_str: "<<FormatToStr(dformat);
     }
 }//namespace opengl

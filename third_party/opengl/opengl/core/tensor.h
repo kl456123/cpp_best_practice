@@ -23,9 +23,7 @@ namespace dlxnet{
     class TensorDescription;
 }
 namespace opengl{
-    namespace{
-        const int kMaxChannelSize = 4;
-    }
+
     using dlxnet::TensorDescription;
     //TODO(breakpoint) put all tensor attributes in a struct
     // enum Tensor::DataType;
@@ -39,7 +37,7 @@ namespace opengl{
 
     class TensorShape{
         public:
-            TensorShape(std::vector<int>& dims)
+            TensorShape(const std::vector<int>& dims)
                 :dims_(dims){}
             TensorShape(){}
             size_t num_elements()const{
@@ -104,6 +102,8 @@ namespace opengl{
             Tensor(Allocator* a, DataType dtype, IntList shape,
                     DataFormat dformat);
 
+            Tensor(const Tensor* tensor);
+
             // to help test or debug, no need to allocate data by user
             // some helper funcs zeros, ones, empty, random
             // note that callee dont own it.
@@ -145,7 +145,6 @@ namespace opengl{
                 }
             const IntList& shape()const{return shape_.dims();}
             size_t num_elements()const{return shape_.num_elements();}
-            const int size()const{return size_;}
             const DataType dtype()const{return dtype_;}
             MemoryType mem_type()const{
                 return mem_type_;
@@ -156,9 +155,6 @@ namespace opengl{
                 host_ = data;
             }
 
-            void set_size(size_t size){
-                size_ = size;
-            }
             void set_dformat(DataFormat dformat){
                 dformat_ = dformat;
             }
@@ -255,27 +251,15 @@ namespace opengl{
             void* device_=nullptr;
             void* host_=nullptr;
 
-            int GetLastStride()const{
-                if(mem_type()==HOST_MEMORY){
-                    // more compactative memory usage
-                    // due to limit of device, we cannot use
-                    // too large stride
-                    return std::min(GetMaxTextureSize()*kMaxChannelSize, int(num_elements()));
-                }
-                int last_stride;
-                if(this->dformat()==dlxnet::TensorProto::ANY){
-                    last_stride = std::min(GetMaxTextureSize()*kMaxChannelSize, int(num_elements()));
-                }else{
-                    last_stride = this->last_stride();
-                }
-                return last_stride;
-            }
+            int GetLastStride()const;
+            template<typename T>
+                uint64 CalcRequestSize()const;
+
+            uint64 CalcRequestSize()const;
+            bool IsIntialized()const{return initialized_;}
 
             // help to tell if it is empty or not
             bool initialized_=false;
-
-            //TODO(breakpoint) change it to bytes, more readable
-            int size_;
 
             uint64 allocated_size_;
             uint64 requested_size_;
@@ -287,75 +271,19 @@ namespace opengl{
             DataFormat dformat_;
 
             // disallow copy and assign
-            Tensor(Tensor& other)=delete;
-            Tensor(Tensor&& other)=delete;
-            Tensor& operator=(Tensor& other)=delete;
-            Tensor& operator=(Tensor&& other)=delete;
+            DISALLOW_COPY_AND_ASSIGN(Tensor);
     };
 
-    inline Tensor::Tensor(DataType dtype, IntList shapes, MemoryType mem_type, DataFormat dformat)
-        :shape_(shapes), dtype_(dtype),mem_type_(mem_type), dformat_(dformat){
-            // AmendShape();
-            CheckShapeAndDFormat();
-            size_t num_elements, bytes;
-            num_elements = shape_.num_elements();
-            const int last_stride=GetLastStride();
-
-            if(dtype==DT_FLOAT){
-                bytes = sizeof(float)* num_elements;
-                allocated_size_ = sizeof(float)* num_elements/last_stride
-                    *UP_ROUND(last_stride, 4);
-            }else{
-                bytes = sizeof(int)*num_elements;
-                allocated_size_ = sizeof(int)* num_elements/last_stride
-                    *UP_ROUND(last_stride, 4);
-            }
-
-            // shape and type
-            size_ = bytes;
-
-            requested_size_ = size_;
-
-            if(mem_type==HOST_MEMORY){
-                host_ = StrideAllocator::Allocate(cpu_allocator(),
-                        size_, last_stride, AllocationAttributes());
-            }else if(mem_type==DEVICE_BUFFER){
-                device_ = new ShaderBuffer(allocated_size_);
-            }else if(mem_type==DEVICE_TEXTURE){
-                int image_height, image_width ;
-                if(dformat_==dlxnet::TensorProto::NHWC4){
-                    // when use texture, reorganize the shape to (H, W, 4)
-                    image_height = num()*height();
-                    image_width = UP_DIV(channel(), 4) * width();
-                }else if(dformat_==dlxnet::TensorProto::HWN4C4){
-                    // by default, shape_ = (N_out, N_in, h, w)
-                    // image (H*W*N4, C4*4, 4), merge N4 to height due to
-                    // spatial dim is small in most common cases for filter tensor
-                    image_height = width()*height()*UP_DIV(num(), 4);
-                    image_width = UP_DIV(channel(), 4)*4;
-                }else if(dformat==dlxnet::TensorProto::ANY4 || dformat==dlxnet::TensorProto::ANY){
-                    device_ = StrideAllocator::Allocate(ogl_texture_allocator(),
-                    size_, last_stride, AllocationAttributes());
-                    image_height = device<Texture>()->height();
-                    image_width = device<Texture>()->width();
-                    initialized_=true;
-                    size_= image_height*image_width*4*sizeof(float);
-                    return ;
-                }else{
-                    LOG(FATAL)<<"unsupported data format: "<<dformat_ <<" for mem_type: "<<mem_type;
-                }
-                if(!device_){
-                    CHECK_GT(image_width, 0);
-                    CHECK_GT(image_height, 0);
-                    size_ = image_height*image_width*4*sizeof(float);
-                    device_ = new Texture({image_width, image_height}, GL_RGBA32F, GL_TEXTURE_2D, nullptr);
-                }
-            }else{
-                LOG(FATAL)<<"unsupported types!";
-            }
-
-            initialized_=true;
+    template<typename T>
+        uint64 Tensor::CalcRequestSize()const{
+            return num_elements()*sizeof(T);
         }
 
+    inline uint64 Tensor::CalcRequestSize()const{
+        if(this->dtype()==Tensor::DT_FLOAT){
+            return CalcRequestSize<float>();
+        }
+        return CalcRequestSize<int>();
+    }
 }//namespace opengl
 #endif

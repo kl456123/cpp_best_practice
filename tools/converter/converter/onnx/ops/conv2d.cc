@@ -16,24 +16,12 @@ void ConvOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor, int tensor
     if(tensor_index==1){
         // filter
         dlcl_tensor->set_target_data_format(dlxnet::TensorProto::HWN4C4);
-        // set shape
-        // no need to change filter shape due to that it has
-        // nchw(n_out, n_in, h, w) dformat already
         CHECK_EQ(dlcl_tensor->dims_size(), 4);
-        dlcl_tensor->set_data_format(dlxnet::TensorProto::NCHW);
+        dlcl_tensor->set_data_format(dlxnet::TensorProto::ANY);
     }else{
         // bias, shape(n_out)
         dlcl_tensor->set_target_data_format(dlxnet::TensorProto::ANY4);
         CHECK_EQ(dlcl_tensor->dims_size(), 1);
-        // const int n_out = dlcl_tensor->dims(0);
-
-        // set shape
-        // TODO(breakpoint)simpliy it
-        // dlcl_tensor->clear_dims();
-        // dlcl_tensor->add_dims(1);
-        // dlcl_tensor->add_dims(n_out);
-        // dlcl_tensor->add_dims(1);
-        // dlcl_tensor->add_dims(1);
         dlcl_tensor->set_data_format(dlxnet::TensorProto::ANY);
     }
 }

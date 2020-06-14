@@ -43,6 +43,12 @@ namespace opengl{
     DataFormat FormatFromStride4(DataFormat dformat);
 
     uint64 CalcAllocatedNumForDformat(const IntList, DataFormat dformat);
+    bool IsHostDFormat(DataFormat dformat);
+    bool IsDeviceDFormat(DataFormat dformat);
+    bool IsStrideDFormat(DataFormat dformat);
+
+    uint64 CalcAllocatedSize1D(const IntList& shape, DataFormat dformat);
+    IntList CalcAllocatedSize2D(const IntList& shape, DataFormat dformat);
 }//namespace
 
 

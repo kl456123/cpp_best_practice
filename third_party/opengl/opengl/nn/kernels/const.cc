@@ -46,9 +46,10 @@ namespace opengl{
                 // output_shape = {tensor_->num(), tensor_->height(),
                     // tensor_->width(), tensor_->channel()};
             }else if(dformat==dlxnet::TensorProto::HWN4C4){
+                output_shape = tensor_->shape();
                 // nchw
-                output_shape = {tensor_->num(), tensor_->channel(),
-                    tensor_->height(), tensor_->width()};
+                // output_shape = {tensor_->num(), tensor_->channel(),
+                    // tensor_->height(), tensor_->width()};
             }else{
                 LOG(FATAL)<<"unsupported dformat "
                     << dformat << " in Const Kernel";

@@ -1,6 +1,7 @@
 #include <memory>
 #include "opengl/test/test.h"
 #include "opengl/core/tensor_format.h"
+#include "opengl/nn/kernels/kernel_test_utils.h"
 #include "opengl/core/types.h"
 
 
@@ -44,5 +45,20 @@ namespace opengl{
             int channel = GetBatch(item.shape, item.dformat);
             EXPECT_EQ(channel, item.batch);
         }
+    }
+
+    TEST(TensorFormat, CalcAllocatedSize1DTest){
+        DIFFERENT_SHAPE_LOOP_START;
+        // const IntList& shape = {1, 320, 320, 3};
+        DataFormat dformat1 = dlxnet::TensorProto::NHWC;
+        DataFormat dformat2 = dlxnet::TensorProto::ANY;
+        auto size = CalcAllocatedSize1D(shape, dformat1);
+        auto texture_shape = CalcAllocatedSize2D(shape, dformat2);
+
+        EXPECT_EQ(texture_shape[0]*texture_shape[1]*4, size);
+        DIFFERENT_SHAPE_LOOP_END;
+    }
+
+    TEST(TensorFormat, CalcAllocatedSize2DTest){
     }
 }//namespace opengl

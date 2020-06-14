@@ -8,6 +8,7 @@
  */
 #include <vector>
 #include <string>
+#include "opengl/core/types.h"
 #include <functional>
 #include "opengl/core/opengl.h"
 
@@ -55,6 +56,10 @@ namespace opengl{
     // some common allocators
     Allocator* ogl_texture_allocator();
     Allocator* cpu_allocator();
+    void* allocate_texture(const IntList& shape, DataFormat dformat);
+    void* allocate_host_mem(const IntList& shape, DataFormat dformat);
+    void deallocate_texture(void* ptr);
+    void deallocate_host_mem(void* ptr);
 
     // high level api of allocator, used to construct PoolAllocator and BFCAllocator
     class SubAllocator{
