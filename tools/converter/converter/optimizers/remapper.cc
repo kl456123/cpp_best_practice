@@ -10,6 +10,7 @@
 
 namespace optimizer{
     namespace{
+        typedef std::vector<graph::Node*> NodeList;
         constexpr int kMissingIndex = -1;
         // matched pattern
         struct ContractionWithBatchNormAndActivation{
@@ -85,8 +86,8 @@ namespace optimizer{
             tensor->mutable_float_data()->Resize(num_elements, 0);
             // set tensor info
             tensor->set_data_type(dlxnet::TensorProto::FLOAT32);
-            tensor->set_data_format(dlxnet::TensorProto::NCHW);
-            tensor->set_target_data_format(dlxnet::TensorProto::NHWC4);
+            tensor->set_data_format(dlxnet::TensorProto::ANY);
+            tensor->set_target_data_format(dlxnet::TensorProto::ANY4);
 
             auto src_node = graph->AddNode(node_proto);
             graph->AddEdge(src_node, 0, dst_node, input_index);
@@ -166,6 +167,9 @@ namespace optimizer{
         for(int i=0;i<graph->num_node_ids();++i){
             // find specified pattern from each node
             auto node = graph->FindNodeId(i);
+            if(node->name()=="685"){
+                int a =10;
+            }
 
             if(nodes_to_delete[i])continue;
 
@@ -186,17 +190,36 @@ namespace optimizer{
         for(int i=0;i<nodes_to_delete.size();++i){
             if(!nodes_to_delete[i])continue;
             auto node = graph->FindNodeId(i);
+
+            // only single input supported.
+            // when remove the node, all nodes that the node output is connected
+            // with will reconnect to that single input
             // get src and dst first
+            // CHECK_EQ(node->num_inputs(), 1);
             auto src = node->input_edge(0)->src();
-            auto dst = node->output_edge(0)->dst();
             auto src_index = node->input_edge(0)->src_output();
-            auto dst_index = node->output_edge(0)->dst_input();
+
+            std::vector<int> dst_indexes;
+            std::vector<graph::Node*> dst_nodes;
+            for(auto e: node->out_edges()){
+                dst_nodes.emplace_back(e->dst());
+                dst_indexes.emplace_back(e->dst_input());
+            }
+            // auto dst = node->output_edge(0)->dst();
+            // auto dst_index = node->output_edge(0)->dst_input();
+
+            auto tmp = graph->FindNodeId(569);
+            if(i==432){
+                int a = 10;
+            }
 
             // then remove current node
             graph->RemoveNode(node);
 
-            // finally reconnect prev node and next node
-            graph->AddEdge(src, src_index, dst, dst_index);
+            for(int i=0;i<dst_indexes.size();++i){
+                // finally reconnect prev node and next node
+                graph->AddEdge(src, src_index, dst_nodes[i], dst_indexes[i]);
+            }
         }
     }
     REGISTER_PASS_WITH_NAME(Remapper, "Remapper");

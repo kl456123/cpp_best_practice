@@ -235,11 +235,15 @@ namespace graph{
         std::vector<int>  sorted_node_indexes;
         TopologicalSort(this, &sorted_node_indexes);
 
+
         for(auto i: sorted_node_indexes){
             const Node* node = FindNodeId(i);
             // The current Node in Index is already freed
             if(node==nullptr){
                 continue;
+            }
+            if(node->type_string()=="BatchNormalization"){
+                int a = 10;
             }
             auto node_def = graph_def->add_node();
             // set node_def from scratch
@@ -248,9 +252,11 @@ namespace graph{
             node_def->set_type(node->type_string());
             node_def->set_doc_string(node->def().doc_string());
 
+            auto input_index = node_def->mutable_input_index();
+            input_index->Resize(node->num_inputs(), 0);
             // set input index
-            for (int i=0; i < node->num_inputs();++i) {
-                const Edge* edge = node->input_edge(i);
+            for(auto edge: node->in_edges()){
+                // const Edge* edge = node->input_edge(i);
                 // make sure all input prepare
                 const Node* src = edge->src();
                 // consider node name as output tensor name
@@ -259,7 +265,8 @@ namespace graph{
                 auto iter = total_tensor_names.find(src->name());
                 CHECK(iter!=total_tensor_names.end())<<"Input Tensor: "
                     <<src->name()<<" Cannot be Prepared";
-                node_def->add_input_index(iter->second);
+                input_index->Set(edge->dst_input(), iter->second);
+                // node_def->mutable_input_index()();
             }
             // Input Node Type
             if(node->type_string()=="Input"){
@@ -287,11 +294,18 @@ namespace graph{
                 CHECK_EQ(node_def->input_index_size(), 0)<<" In Index "<<i
                     <<" Name: "<<node_def->name();
             }
+            if(node->name()=="685"){
+                int a = 10;
+            }
 
             if(node->type_string()=="Conv"){
                 CHECK_EQ(node_def->output_index_size(), 1);
                 CHECK(node_def->input_index_size()== 2
                         ||node_def->input_index_size()== 3);
+            }
+
+            if(node->type_string()=="BatchNormalization"){
+                CHECK_EQ(node_def->input_index_size(), 5);
             }
 
             if(node->type_string()=="MaxPool"){
