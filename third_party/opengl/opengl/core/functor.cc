@@ -70,5 +70,23 @@ namespace opengl{
             internal::RunOpenGLProgram("../opengl/nn/glsl/nchw_to_hwn4c4.glsl",
                     ctx, src_tensor, dst_tensor);
         }
+
+        void ConvertTensorTest::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            internal::RunOpenGLProgram("../opengl/nn/glsl/layout_test.glsl",
+                    ctx, src_tensor, dst_tensor);
+        };
+
+        void ConvertTensorNHWC4ToANY::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            internal::RunOpenGLProgram("../opengl/nn/glsl/nhwc4_to_any.glsl",
+                    ctx, src_tensor, dst_tensor);
+        };
+
+        void ConvertTensorHWN4C4ToNCHW::operator()(Context* ctx,
+                const Tensor* src_tensor, Tensor* dst_tensor){
+            internal::RunOpenGLProgram("../opengl/nn/glsl/hwn4c4_to_nchw.glsl",
+                    ctx, src_tensor, dst_tensor);
+        };
     }//namespace functor
 }//namespace opengl

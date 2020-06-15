@@ -28,6 +28,19 @@ namespace opengl{
         struct ConvertTensorNCHWToHWN4C4{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
+
+        // used for test
+        struct ConvertTensorTest{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        struct ConvertTensorNHWC4ToANY{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
+
+        struct ConvertTensorHWN4C4ToNCHW{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
     }//namespace functor
 }// namespace opengl
 
