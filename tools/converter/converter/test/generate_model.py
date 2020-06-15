@@ -63,8 +63,8 @@ def generate_onnx(saved_path):
     inputs = torch.ones(1, 3, 224, 224)
 
     # model construction
-    model = Model()
-    #  model = resnet.resnet50(pretrained=pretrained)
+    # model = Model()
+    model = resnet.resnet50(pretrained=pretrained)
     #  model = mobilenet.mobilenet_v2(pretrained=pretrained)
     # inferece works
     model.eval()

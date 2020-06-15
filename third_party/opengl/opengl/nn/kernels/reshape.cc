@@ -5,19 +5,11 @@
 #include "opengl/core/context.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel_registry.h"
+#include "opengl/utils/util.h"
 
 
 namespace opengl{
     namespace{
-        IntList AmendShape(const IntList& shape){
-            CHECK_LE(shape.size(), 4);
-            const int remain_dims = 4-shape.size();
-            IntList amended_shape = shape;
-            for(int i=0;i<remain_dims;++i){
-                amended_shape.insert(amended_shape.begin(), 1);
-            }
-            return amended_shape;
-        }
     inline IntList ShapeToStride(const IntList& shape){
             IntList stride;
             int num_elements = 1;

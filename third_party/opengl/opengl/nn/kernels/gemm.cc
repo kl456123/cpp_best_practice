@@ -4,12 +4,13 @@
 #include "opengl/core/context.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel_registry.h"
+#include "opengl/utils/util.h"
 
 
 namespace opengl{
     GemmKernel::GemmKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+            kernel_fname_ = "../opengl/nn/glsl/gemm.glsl";
         }
 
     void GemmKernel::SetupAttr(const dlxnet::Attribute& attr){
@@ -19,11 +20,7 @@ namespace opengl{
         transB_ = gemm_params.transb();
 
         // single output
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
-
-        kernel_size_ = 1;
-        padding_=0;
-        stride_=1;
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
     }
 
     void GemmKernel::Compute(TensorList& inputs, TensorList& outputs){
@@ -37,69 +34,69 @@ namespace opengl{
         auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
 
-        program_->set_vec3i("input_shape", inputs[0]->height(),
-                inputs[0]->width(), inputs[0]->channel());
-        program_->set_vec3i("output_shape", outputs[0]->height(),
-                outputs[0]->width(), outputs[0]->channel());
-        program_->set_int("padding", padding_);
-        program_->set_int("kernel_size", kernel_size_);
-        program_->set_int("stride_size", stride_);
+        program_->set_vec2i("input_shape", inputs[0]->shape()[0], inputs[0]->shape()[1]);
+        program_->set_vec2i("output_shape", outputs[0]->shape()[0], outputs[0]->shape()[1]);
         program_->set_int("use_bias", int(use_bias));
+        program_->set_float("beta", beta_);
+        program_->set_float("alpha", alpha_);
         // input
         {
-            program_->set_image2D("input_image", input_image->id(),  0);
+            program_->set_image2D("A", input_image->id(),  0);
             OPENGL_CHECK_ERROR;
         }
 
         // filter
         {
-            program_->set_image2D("input_filter", input_filter->id(),  1);
+            program_->set_image2D("B", input_filter->id(),  1);
             OPENGL_CHECK_ERROR;
         }
         if(use_bias){
             // bias
             auto input_bias = inputs[2]->device<Texture>();
-            program_->set_image2D("input_bias", input_bias->id(),  2);
+            program_->set_image2D("C", input_bias->id(),  2);
             OPENGL_CHECK_ERROR;
         }
 
         program_->Run();
     }
 
-    void GemmKernel::InferOutputShape(const TensorList& input_tensors,
-            TensorShapeList& output_shapes){
-        CHECK_EQ(input_tensors.size(), 3);
-        output_shapes.clear();
-        output_shapes.resize(1);
-        // check in_channels
-        CHECK_EQ(input_tensors[1]->channel(), input_tensors[0]->channel());
-        // check out_channels
-        CHECK_EQ(input_tensors[1]->num(), input_tensors[2]->channel());
-
-        // Y: (N, 1, 1, C_out)
-        output_shapes[0]={input_tensors[0]->num(), 1, 1, input_tensors[2]->channel()};
-    }
 
     void GemmKernel::InferOutputShape(TensorShapeList& input_shapes,
             TensorShapeList& output_shapes){
-        // Y = WX+B
+        // Y = XW+B
         // X, W, B, like conv2d
-        // X: (N, 1, 1, C_in)
-        // W: (C_out, C_in, 1, 1)
-        // B: (1, C_out, 1, 1)
-        // Y: (N, 1, 1, C_out)
+        // X: (N, C_in)
+        // W: (C_in, C_out)
+        // B: (N, C_out)
+        // Y: (N, C_out)
         // TODO(breakpoint) merge gemm to conv1x1
-        CHECK_EQ(input_shapes.size(), 3);
         output_shapes.clear();
         output_shapes.resize(1);
-        // check in_channels
-        CHECK_EQ(input_shapes[1][1], input_shapes[0][3]);
-        // check out_channels
-        // TODO(breakpoint) bias shape is not correct, it should be NHWC instead of NCHW
-        CHECK_EQ(input_shapes[1][0], input_shapes[2][3]);
+        CHECK_EQ(input_shapes[0].size(), 2);
+        CHECK_EQ(input_shapes[1].size(), 2);
 
-        // Y: (N, 1, 1, C_out)
-        output_shapes[0]={input_shapes[0][0], 1, 1, input_shapes[1][0]};
+        if(transB_){
+            // check in_channels
+            CHECK_EQ(input_shapes[1][1], input_shapes[0][1]);
+            // Y: (N, C_out)
+            output_shapes[0]={input_shapes[0][0], input_shapes[1][0]};
+        }else{
+            CHECK_EQ(input_shapes[1][0], input_shapes[0][1]);
+            output_shapes[0]={input_shapes[0][0], input_shapes[1][1]};
+        }
+
+        if(input_shapes.size()>2){
+            if(input_shapes[2].size()==2){
+                //no need to broadcast
+                CHECK_EQ(output_shapes[0][0], input_shapes[2][0]);
+                CHECK_EQ(output_shapes[0][1], input_shapes[2][1]);
+            }else{
+                CHECK_EQ(input_shapes[2].size(), 1);
+                // C can be broadcast to (M, N)
+                CHECK_EQ(output_shapes[0][1], input_shapes[2][0]);
+            }
+        }
+
     }
 
     GemmKernel::~GemmKernel(){}

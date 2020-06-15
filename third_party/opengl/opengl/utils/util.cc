@@ -2,6 +2,7 @@
 
 #include "opengl/core/opengl.h"
 #include "opengl/utils/util.h"
+#include "opengl/utils/logging.h"
 
 
 namespace opengl{
@@ -32,6 +33,23 @@ namespace opengl{
             prefix.push_back(os.str());
         }
 
+    }
+
+    IntList AmendShape(const IntList& shape, const int amend_size){
+        // CHECK_LE(shape.size(), amend_size);
+        IntList amended_shape;
+        if(amend_size<shape.size()){
+            for(int i=shape.size()-amend_size;i<shape.size();++i){
+                amended_shape.emplace_back(shape[i]);
+            }
+            return amended_shape;
+        }
+        const int remain_dims = amend_size-shape.size();
+        amended_shape = shape;
+        for(int i=0;i<remain_dims;++i){
+            amended_shape.insert(amended_shape.begin(), 1);
+        }
+        return amended_shape;
     }
 }//namespace opengl
 

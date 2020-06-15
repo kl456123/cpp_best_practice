@@ -26,6 +26,15 @@ namespace opengl{
         float min;
         float max;
     };
+    struct FlattenParams{
+        int axis;
+    };
+
+    struct GemmParams{
+        float alpha;
+        float beta;
+        int transb;
+    };
 
     int AddConstNode(Scope* scope, const std::string& name, const Tensor* cpu_tensor);
     int AddConstNode(Scope* scope, const std::string& name,
@@ -47,6 +56,12 @@ namespace opengl{
 
     int AddClipNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
             const ClipParams& clip_params);
+
+    int AddFlattenNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const FlattenParams& flatten_params);
+
+    int AddGemmNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const GemmParams& gemm_params);
 }// namespace opengl
 
 

@@ -9,33 +9,6 @@ void GemmOpConverter::SetTensorInfo(dlxnet::TensorProto* dlcl_tensor,
     // Y = WX+B
     CHECK(tensor_index==1||tensor_index==2);
 
-    if(tensor_index==1){
-        // 1. fc.weight (N_out, N_in)
-        CHECK_EQ(dlcl_tensor->dims_size(), 2);
-        // set shape
-        // const int n_out = dlcl_tensor->dims(0);
-        // const int n_in = dlcl_tensor->dims(1);
-
-        // dlcl_tensor->clear_dims();
-        // dlcl_tensor->add_dims(n_out);
-        // dlcl_tensor->add_dims(n_in);
-        // // set spatial dim to 1x1
-        // dlcl_tensor->add_dims(1);
-        // dlcl_tensor->add_dims(1);
-
-        // set format
-    }else{
-        // 2. fc.bias(N_out)
-        // CHECK_EQ(dlcl_tensor->dims_size(), 1);
-        // const int n_out = dlcl_tensor->dims(0);
-
-        // dlcl_tensor->clear_dims();
-        // dlcl_tensor->add_dims(1);
-        // dlcl_tensor->add_dims(n_out);
-        // dlcl_tensor->add_dims(1);
-        // dlcl_tensor->add_dims(1);
-        // set format
-    }
     dlcl_tensor->set_target_data_format(dlxnet::TensorProto::ANY4);
     dlcl_tensor->set_data_format(dlxnet::TensorProto::ANY);
 }

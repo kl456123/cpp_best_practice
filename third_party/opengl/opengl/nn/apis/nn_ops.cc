@@ -159,4 +159,40 @@ namespace opengl{
         clip_attr->set_max(clip_params.max);
         return tensor_id;
     }
+
+    int AddFlattenNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const FlattenParams& flatten_params){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Flatten");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+
+        auto flatten_attr = dlcl_node->mutable_attr()
+            ->mutable_flatten_attr();
+        flatten_attr->set_axis(flatten_params.axis);
+        return tensor_id;
+    }
+
+    int AddGemmNode(Scope* scope, const std::string& name, std::vector<int> input_ids,
+            const GemmParams& gemm_params){
+        auto dlcl_node = scope->AddNode();
+        dlcl_node->set_name(name);
+        dlcl_node->set_type("Gemm");
+        int tensor_id = scope->AddTensor(name);
+        for(auto tensor_id:input_ids){
+            dlcl_node->add_input_index(tensor_id);
+        }
+        dlcl_node->add_output_index(tensor_id);
+
+        auto gemm_attr = dlcl_node->mutable_attr()
+            ->mutable_gemm_attr();
+        gemm_attr->set_alpha(gemm_params.alpha);
+        gemm_attr->set_beta(gemm_params.beta);
+        gemm_attr->set_transb(gemm_params.transb);
+        return tensor_id;
+    }
 }//namespace opengl

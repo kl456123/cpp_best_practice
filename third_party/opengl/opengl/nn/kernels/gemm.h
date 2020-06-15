@@ -14,20 +14,13 @@ namespace opengl{
             GemmKernel(Context* context);
             virtual void Compute(TensorList& inputs, TensorList& outputs);
             virtual void InferOutputShape(TensorShapeList& inputs,
-                    TensorShapeList& outputs);
-            virtual void InferOutputShape(const TensorList& inputs,
-                    TensorShapeList& outputs);
+                    TensorShapeList& outputs)override;
             virtual void SetupAttr(const dlxnet::Attribute& attr);
             virtual ~GemmKernel();
         private:
             float alpha_;
             float beta_;
             int transB_;
-
-            // like conv2d
-            int padding_;
-            int stride_;
-            int kernel_size_;
     };
 }//namespace opengl
 

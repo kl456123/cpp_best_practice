@@ -4,12 +4,14 @@
 #include "opengl/core/context.h"
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel_registry.h"
+#include "opengl/utils/util.h"
 
 
 namespace opengl{
     FlattenKernel::FlattenKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/flatten.glsl";
+            // kernel_fname_ = "../opengl/nn/glsl/flatten.glsl";
+            kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
         }
 
     void FlattenKernel::SetupAttr(const dlxnet::Attribute& attr){
@@ -25,10 +27,8 @@ namespace opengl{
         auto input_image = inputs[0]->device<Texture>();
 
         program_->SetRetVal(outputs);
-        program_->set_vec3i("input_shape", inputs[0]->height(),
-                inputs[0]->width(), inputs[0]->channel());
-        program_->set_vec3i("output_shape", outputs[0]->height(),
-                outputs[0]->width(), outputs[0]->channel());
+        program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
+        program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
         // input
         {
@@ -43,7 +43,7 @@ namespace opengl{
             TensorShapeList& output_shapes){
         // set output dformat first, then we can according
         // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
 
         // single output
         CHECK_EQ(input_shapes.size(), 1);
@@ -61,10 +61,6 @@ namespace opengl{
             output_shapes[0].emplace_back(input_shapes[0][i]);
         }
         output_shapes[0].emplace_back(num_elements);
-        const int output_dim_size = output_shapes[0].size();
-        for(int i=0;i<4-output_dim_size;++i){
-            output_shapes[0].insert(output_shapes[0].begin()+1, 1);
-        }
     }
 
     FlattenKernel::~FlattenKernel(){}
