@@ -72,8 +72,8 @@ int main(int argc, char** argv){
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::TensorNameList output_names({"cls_and_bbox"});
-    ::opengl::IntList input_shape({1, 320, 320, 3});
-    ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
+    ::opengl::IntList input_shape({1, 2});
+    ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::ANY;
     Tensor* input_tensor= Tensor::Ones(Tensor::DT_FLOAT,
             input_shape, input_dformat);
     auto profiler = std::unique_ptr<Profiler>(new Profiler);

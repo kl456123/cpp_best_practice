@@ -24,6 +24,8 @@ namespace opengl{
     }
 
     void GemmKernel::Compute(TensorList& inputs, TensorList& outputs){
+        CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::ANY4);
+        CHECK_EQ(inputs[1]->dformat(), dlxnet::TensorProto::ANY4);
         DLOG(INFO)<<"GemmKernel Inputs: "<<inputs.size();
         program_->Activate();
         auto input_image = inputs[0]->device<Texture>();
@@ -37,6 +39,7 @@ namespace opengl{
         program_->set_vec2i("input_shape", inputs[0]->shape()[0], inputs[0]->shape()[1]);
         program_->set_vec2i("output_shape", outputs[0]->shape()[0], outputs[0]->shape()[1]);
         program_->set_int("use_bias", int(use_bias));
+        program_->set_int("transb", transB_);
         program_->set_float("beta", beta_);
         program_->set_float("alpha", alpha_);
         // input

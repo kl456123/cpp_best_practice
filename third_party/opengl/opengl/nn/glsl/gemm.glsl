@@ -10,6 +10,7 @@ uniform float alpha;
 uniform float beta;
 
 uniform int use_bias;
+uniform int transb;
 
 
 // M, K
@@ -53,8 +54,15 @@ void main(){
             }
 
             {
-                int tmp = b_index%output_shape.y;
-                int offset = b_index / output_shape.y * UP_DIV(output_shape.y, 4)+tmp/4;
+                int last_dim;
+                if(transb==0){
+                    last_dim= output_shape.y;
+                }else{
+                    last_dim = input_shape.y;
+                }
+
+                int tmp = b_index % last_dim;
+                int offset = b_index / last_dim * UP_DIV(last_dim, 4)+tmp/4;
                 if(tmp%4==0){
                     b = texelFetch(B, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
                 }else if(tmp%4==1){

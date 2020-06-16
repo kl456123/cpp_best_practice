@@ -14,22 +14,22 @@ namespace opengl{
             const float* b = tensor_b->host<float>();
             const float* c = tensor_c->host<float>();
             float* y = tensor_y->host<float>();
-            CHECK_EQ(transb, 0);
+            // CHECK_EQ(transb, 0);
 
             auto y_shape = tensor_y->shape();
             const int num_elements = tensor_y->num_elements();
-            // (M, K) * (K, N) + (M, M) = (M, N)
+            // (M, K) * (K, N) + (M, N) = (M, N)
             const int M = y_shape[0];
             const int N = y_shape[1];
             const int K = tensor_a->shape()[1];
             for(int i=0; i<M; ++i){
                 for(int j=0; j<N; ++j){
-                    y[i*M+j] = 0;
+                    y[i*N+j] = 0;
                     for(int m=0; m<K; ++m){
                         // (i, j) = (i, m) * (m, j)
-                        y[i*M+j] += alpha * a[i*K+m] * b[m*N+j] ;
+                        y[i*N+j] += alpha * a[i*K+m] * b[m*N+j];
                     }
-                    y[i*M+j]+=beta * c[i*M+j];
+                    y[i*N+j]+=beta * c[i*N+j];
                 }
             }
 
@@ -65,7 +65,7 @@ namespace opengl{
         }
 
         void SingleInference(const IntList& input1_shape, const IntList& input2_shape,
-                const float alpha, const float beta, const int transb){
+                const IntList& input3_shape, const float alpha, const float beta, const int transb){
             auto session = InitSession();
             const auto const_tensor1_ptr = std::unique_ptr<Tensor>(
                     Tensor::Random(Tensor::DT_FLOAT, input1_shape,
@@ -77,7 +77,7 @@ namespace opengl{
 
             auto actual_shape = ComputeShape(input1_shape, input2_shape, transb);
             const auto const_tensor3_ptr = std::unique_ptr<Tensor>(
-                    Tensor::Random(Tensor::DT_FLOAT, actual_shape,
+                    Tensor::Random(Tensor::DT_FLOAT, input3_shape,
                         dlxnet::TensorProto::ANY));
 
             const auto actual_tensor_ptr = std::unique_ptr<Tensor>(
@@ -100,10 +100,6 @@ namespace opengl{
             ::opengl::StringList dformats({"ANY"});
             session->GetOutputs(output_names, dformats, &outputs_cpu);
 
-            std::cout<<const_tensor1->ShortDebugString();
-            std::cout<<const_tensor2->ShortDebugString();
-            std::cout<<const_tensor3->ShortDebugString();
-
             GemmCPU(const_tensor1, const_tensor2, const_tensor3, actual_tensor,
                     alpha, beta, transb);
 
@@ -114,11 +110,22 @@ namespace opengl{
     } // namespace
 
     TEST(GemmTest, SimpleTest){
-        IntList shape1{3, 1};
-        IntList shape2{1, 2};
+        IntList shape1{10, 1024};
+        IntList shape2{1024, 1000};
+        IntList shape3{10, 1000};
         float alpha = 1.0;
         float beta = 1.0;
         int transb = 0;
-        SingleInference(shape1, shape2, alpha, beta, transb);
+        SingleInference(shape1, shape2, shape3, alpha, beta, transb);
+    }
+
+    TEST(GemmTest, WithTransBTest){
+        IntList shape1{1, 2048};
+        IntList shape2{1000, 2048};
+        IntList shape3{1000};
+        float alpha = 1.0;
+        float beta = 1.0;
+        int transb = 1;
+        SingleInference(shape1, shape2, shape3, alpha, beta, transb);
     }
 } // namespace opengl

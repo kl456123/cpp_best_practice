@@ -5,6 +5,7 @@
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel_registry.h"
 #include "opengl/utils/util.h"
+#include "opengl/core/functor.h"
 
 
 namespace opengl{
@@ -23,11 +24,24 @@ namespace opengl{
 
     void FlattenKernel::Compute(TensorList& inputs, TensorList& outputs){
         DLOG(INFO)<<"FlattenKernel Inputs: "<<inputs.size();
+
+        Tensor* any4_tensor = nullptr;
+        auto input_tensor = inputs[0];
+        if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
+            VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
+            any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
+        }else{
+            any4_tensor = inputs[0];
+        }
+        CHECK_EQ(any4_tensor->dformat(), dlxnet::TensorProto::ANY4);
+
         program_->Activate();
-        auto input_image = inputs[0]->device<Texture>();
+        auto input_image = any4_tensor->device<Texture>();
 
         program_->SetRetVal(outputs);
-        program_->set_vec4i("input_shape", AmendShape(inputs[0]->shape()));
+        program_->set_vec4i("input_shape", AmendShape(any4_tensor->shape()));
         program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
         // input
