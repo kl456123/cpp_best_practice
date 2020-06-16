@@ -19,16 +19,16 @@ class Model(torch.nn.Module):
         self.maxpool = torch.nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         self.avgpool = torch.nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = torch.nn.Flatten(1)
-        #  self.model = resnet.resnet50()
-        self.model = mobilenet.mobilenet_v2(pretrained=True)
+        self.model = resnet.resnet50(pretrained=True)
+        # self.model = mobilenet.mobilenet_v2(pretrained=True)
         # self.model.eval()
         self.fc = torch.nn.Linear(10, 5)
 
     def forward(self, x):
         # x = x.reshape(x.shape[0], -1)
-        # x = self.model.conv1(x)
-        # x = self.model.bn1(x)
-        # x = self.model.relu(x)
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
         # x = self.model.maxpool(x)
         # x = self.model.layer1(x)
         # x = self.model.layer2(x)
@@ -38,8 +38,8 @@ class Model(torch.nn.Module):
         # x = torch.flatten(x, 1)
         # x = self.model.fc(x)
         #  x = self.conv2d1(x)
-        x = self.model.features(x)
-        x = self.avgpool(x)
+        # x = self.model.features(x)
+        # x = self.avgpool(x)
         #  x = x.mean([2, 3])
         #  x = self.classifier(x)
         # x = self.batchnorm(x)
@@ -60,7 +60,7 @@ def generate_onnx(saved_path):
     """
     # build graph first
     pretrained = True
-    inputs = torch.ones(1, 3, 224, 224)
+    inputs = torch.ones(1, 3, 320, 320)
 
     # model construction
     model = Model()
@@ -99,7 +99,7 @@ def generate_onnx(saved_path):
     torch.save(model.state_dict(), pth_path)
 
     input_names = ['input']
-    output_names = ['output']
+    output_names = ['cls_and_bbox']
     torch.onnx.export(
         model,
         inputs,

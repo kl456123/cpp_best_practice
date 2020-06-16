@@ -242,9 +242,7 @@ namespace graph{
             if(node==nullptr){
                 continue;
             }
-            if(node->type_string()=="BatchNormalization"){
-                int a = 10;
-            }
+
             auto node_def = graph_def->add_node();
             // set node_def from scratch
             node_def->mutable_attr()->CopyFrom(node->def().attr());
@@ -256,6 +254,7 @@ namespace graph{
             input_index->Resize(node->num_inputs(), 0);
             // set input index
             for(auto edge: node->in_edges()){
+                node->input_edge(0);
                 // const Edge* edge = node->input_edge(i);
                 // make sure all input prepare
                 const Node* src = edge->src();
@@ -293,9 +292,6 @@ namespace graph{
                     <<" Name: "<<node_def->name();
                 CHECK_EQ(node_def->input_index_size(), 0)<<" In Index "<<i
                     <<" Name: "<<node_def->name();
-            }
-            if(node->name()=="685"){
-                int a = 10;
             }
 
             if(node->type_string()=="Conv"){
