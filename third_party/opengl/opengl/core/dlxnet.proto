@@ -84,6 +84,9 @@ message Conv2dAttribute{
     repeated int64 pads=3;
     repeated int64 dilations=4;
     int64 group=5;
+    string activation_type=6;
+    float min=7;
+    float max=8;
 };
 
 message ConstAttribute{

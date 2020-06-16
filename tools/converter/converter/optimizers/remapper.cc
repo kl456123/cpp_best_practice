@@ -154,6 +154,17 @@ namespace optimizer{
                 std::vector<bool>* nodes_to_delete){
             ContractionWithBatchNorm base{matched.contraction, matched.batchnorm};
             (*nodes_to_delete)[matched.activation] = true;
+            auto contraction_node  = graph->FindNodeId(matched.contraction);
+            auto act_node  = graph->FindNodeId(matched.activation);
+            auto conv2d_attr = contraction_node->def().mutable_attr()->mutable_conv2d_attr();
+            conv2d_attr->set_activation_type(act_node->type_string());
+
+            // assume it is clip node, like in onnx
+            CHECK_EQ(act_node->type_string(), "Clip");
+            auto clip_attr = act_node->def().attr().clip_attr();
+            conv2d_attr->set_min(clip_attr.min());
+            conv2d_attr->set_max(clip_attr.max());
+
             MergeBatchNormToConvolution(graph, base, nodes_to_delete);
         }
     }
@@ -162,25 +173,25 @@ namespace optimizer{
     void Remapper::Run(graph::Graph* graph){
         std::vector<bool> nodes_to_delete(graph->num_node_ids(), false);
 
-        for(int i=0;i<graph->num_node_ids();++i){
+        // travel in reverse order
+        for(int i=graph->num_node_ids()-1;i>=0;--i){
             // find specified pattern from each node
             auto node = graph->FindNodeId(i);
-            if(node->name()=="685"){
-                int a =10;
-            }
-
             if(nodes_to_delete[i])continue;
 
             ContractionWithBatchNormAndActivation contraction_with_batchnorm_activation;
             ContractionWithBatchNorm contraction_with_batchnorm;
-            // if(FindContractionWithBatchNormAndActivation(graph, i, &contraction_with_batchnorm_activation)){
-            // MergeBatchNormActivationToConvolution(graph, contraction_with_batchnorm_activation,
-            // &nodes_to_delete);
-            // continue;
-            // }
+
 
             if(FindContractionWithBatchNorm(graph, i, &contraction_with_batchnorm)){
                 MergeBatchNormToConvolution(graph, contraction_with_batchnorm, &nodes_to_delete);
+                continue;
+            }
+
+            if(FindContractionWithBatchNormAndActivation(graph, i,
+                        &contraction_with_batchnorm_activation)){
+                MergeBatchNormActivationToConvolution(graph, contraction_with_batchnorm_activation,
+                        &nodes_to_delete);
                 continue;
             }
         }
