@@ -26,10 +26,10 @@ class Model(torch.nn.Module):
 
     def forward(self, x):
         # x = x.reshape(x.shape[0], -1)
-        # x = self.model.conv1(x)
-        # x = self.model.bn1(x)
-        # x = self.model.relu(x)
-        # x = self.model.maxpool(x)
+        x = self.model.conv1(x)
+        x = self.model.bn1(x)
+        x = self.model.relu(x)
+        x = self.model.maxpool(x)
         # x = self.model.layer1(x)
         # x = self.model.layer2(x)
         # x = self.model.layer3(x)
@@ -60,7 +60,7 @@ def generate_onnx(saved_path):
     """
     # build graph first
     pretrained = True
-    inputs = torch.ones(1, 2)
+    inputs = torch.ones(1, 3, 320, 320)
 
     # model construction
     model = Model()

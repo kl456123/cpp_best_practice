@@ -23,6 +23,9 @@ namespace opengl{
             int kernel_size_;
             int group_size_;
             int dilation_;
+            std::string activation_type_;
+            float min_;
+            float max_;
     };
 }//namespace opengl
 

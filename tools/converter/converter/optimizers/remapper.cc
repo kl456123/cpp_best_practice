@@ -126,7 +126,7 @@ namespace optimizer{
                 bias_node = contraction_node->input_edge(2)->src();
             }else{
                 // add bias to graph
-                bias_node = MakeNode(graph, {1, num_elements, 1, 1},
+                bias_node = MakeNode(graph, {num_elements},
                         contraction_node->id());
             }
             auto bias_data = bias_node->def().mutable_attr()->mutable_const_attr()
@@ -136,8 +136,6 @@ namespace optimizer{
                 ->mutable_value()->mutable_float_data()->mutable_data();
             auto weight_dims = weight_node->def().attr().const_attr().value().dims();
             const int chw = weight_dims[1]*weight_dims[2]*weight_dims[3];
-            // float* scale = new float[num_elements];
-            // float* bias = new float[num_elements];
 
             // TODO(breakpoint) use parallel style
             for(int i=0; i<num_elements; ++i){
@@ -156,6 +154,22 @@ namespace optimizer{
                 std::vector<bool>* nodes_to_delete){
             ContractionWithBatchNorm base{matched.contraction, matched.batchnorm};
             (*nodes_to_delete)[matched.activation] = true;
+            auto contraction_node  = graph->FindNodeId(matched.contraction);
+            auto act_node  = graph->FindNodeId(matched.activation);
+            auto conv2d_attr = contraction_node->def().mutable_attr()->mutable_conv2d_attr();
+            conv2d_attr->set_activation_type(act_node->type_string());
+
+            if(act_node->type_string()== "Clip"){
+                // clip
+                auto clip_attr = act_node->def().attr().clip_attr();
+                conv2d_attr->set_max(clip_attr.max());
+            }else{
+                // relu
+                conv2d_attr->set_min(0);
+                conv2d_attr->set_max(0);
+            }
+
+
             MergeBatchNormToConvolution(graph, base, nodes_to_delete);
         }
     }
@@ -164,25 +178,25 @@ namespace optimizer{
     void Remapper::Run(graph::Graph* graph){
         std::vector<bool> nodes_to_delete(graph->num_node_ids(), false);
 
-        for(int i=0;i<graph->num_node_ids();++i){
+        // travel in reverse order
+        for(int i=graph->num_node_ids()-1;i>=0;--i){
             // find specified pattern from each node
             auto node = graph->FindNodeId(i);
-            if(node->name()=="685"){
-                int a =10;
-            }
-
             if(nodes_to_delete[i])continue;
 
             ContractionWithBatchNormAndActivation contraction_with_batchnorm_activation;
             ContractionWithBatchNorm contraction_with_batchnorm;
-            // if(FindContractionWithBatchNormAndActivation(graph, i, &contraction_with_batchnorm_activation)){
-            // MergeBatchNormActivationToConvolution(graph, contraction_with_batchnorm_activation,
-            // &nodes_to_delete);
-            // continue;
-            // }
+
 
             if(FindContractionWithBatchNorm(graph, i, &contraction_with_batchnorm)){
                 MergeBatchNormToConvolution(graph, contraction_with_batchnorm, &nodes_to_delete);
+                continue;
+            }
+
+            if(FindContractionWithBatchNormAndActivation(graph, i,
+                        &contraction_with_batchnorm_activation)){
+                MergeBatchNormActivationToConvolution(graph, contraction_with_batchnorm_activation,
+                        &nodes_to_delete);
                 continue;
             }
         }
@@ -191,11 +205,6 @@ namespace optimizer{
             if(!nodes_to_delete[i])continue;
             auto node = graph->FindNodeId(i);
 
-            // only single input supported.
-            // when remove the node, all nodes that the node output is connected
-            // with will reconnect to that single input
-            // get src and dst first
-            // CHECK_EQ(node->num_inputs(), 1);
             auto src = node->input_edge(0)->src();
             auto src_index = node->input_edge(0)->src_output();
 
@@ -205,18 +214,10 @@ namespace optimizer{
                 dst_nodes.emplace_back(e->dst());
                 dst_indexes.emplace_back(e->dst_input());
             }
-            // auto dst = node->output_edge(0)->dst();
-            // auto dst_index = node->output_edge(0)->dst_input();
-
-            auto tmp = graph->FindNodeId(569);
-            if(i==432){
-                int a = 10;
-            }
-
             // then remove current node
             graph->RemoveNode(node);
 
-            for(int i=0;i<dst_indexes.size();++i){
+            for(int i=0; i<dst_indexes.size(); ++i){
                 // finally reconnect prev node and next node
                 graph->AddEdge(src, src_index, dst_nodes[i], dst_indexes[i]);
             }

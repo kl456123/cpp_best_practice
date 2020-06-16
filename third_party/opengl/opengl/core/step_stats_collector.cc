@@ -12,6 +12,7 @@ namespace opengl{
         : NodeExecStatsWrapper(std::unique_ptr<NodeExecStats>(new NodeExecStats), node,
                 step_stats_collector) {
             stats_->set_node_name(node->kernel_name());
+            stats_->set_node_type(node->kernel_type());
         }
 
     NodeExecStatsWrapper::NodeExecStatsWrapper(

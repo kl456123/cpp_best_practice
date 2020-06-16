@@ -10,6 +10,11 @@ uniform int padding;
 // use int type to represent bool type
 uniform int use_bias;
 
+// fused op with activation(means clip here)
+uniform int act;
+uniform float min_value;
+uniform float max_value;
+
 // height, width and channel of input and output
 uniform ivec3 input_shape;
 uniform ivec3 output_shape;
@@ -109,4 +114,11 @@ void main() {
     color.y +=res[1];
     color.z +=res[2];
     color.w +=res[3];
+
+    if(act==1){
+        color = max(vec4(min_value), color);
+        color = min(vec4(max_value), color);
+    }else if(act==2){
+        color = max(vec4(min_value), color);
+    }
 }

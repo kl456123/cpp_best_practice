@@ -34,3 +34,7 @@ target_link_libraries(gl_nn gl_core)
 add_executable(main ${CMAKE_CURRENT_SOURCE_DIR}/main.cc)
 set_target_properties(main PROPERTIES LINK_FLAGS -Wl,--no-as-needed)
 target_link_libraries(main gl_nn)
+
+add_executable(profile_main ${CMAKE_CURRENT_SOURCE_DIR}/profile_main.cc)
+set_target_properties(profile_main PROPERTIES LINK_FLAGS -Wl,--no-as-needed)
+target_link_libraries(profile_main gl_nn)

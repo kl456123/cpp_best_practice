@@ -63,6 +63,11 @@ namespace opengl{
             kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
         }
 
+        // only used for fused op
+        activation_type_= conv2d_params.activation_type();
+        min_=conv2d_params.min();
+        max_=conv2d_params.max();
+
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }
 
@@ -90,6 +95,18 @@ namespace opengl{
         program_->set_int("group", group_size_);
         program_->set_int("dilation", dilation_);
         program_->set_int("use_bias", int(use_bias));
+        if(!activation_type_.empty()){
+            if(activation_type_=="Clip"){
+                // clip case
+                program_->set_int("act", 1);
+            }else{
+                program_->set_int("act", 2);
+            }
+            program_->set_float("min_value", min_);
+            program_->set_float("max_value", max_);
+        }else{
+            program_->set_int("act", 0);
+        }
         // input
         {
             program_->set_image2D("input_image", input_image->id(),  0);
