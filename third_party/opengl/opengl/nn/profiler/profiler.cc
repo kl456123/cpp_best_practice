@@ -37,9 +37,9 @@ namespace opengl{
         // print time map
         for(auto& iter:type2time){
             ss<<"Node Type: "<<iter.first<<"\t"
-                <<"Time: "<<iter.second.first<<"\t"
+                <<"Time: "<<iter.second.first<<"ms\t"
                 <<"Count: "<<iter.second.second<<"\n";
         }
-        LOG(INFO)<<ss.str();
+        std::cout<<ss.str()<<std::endl;
     }
 }
