@@ -66,7 +66,7 @@ int main(int argc, char** argv){
 
     // some params
     std::string model_path = "./demo.dlx";
-    const int num_iters = 1;
+    const int num_iters = 10;
     const float precision = 1e-6;
 
     // prepare inputs and outputs
@@ -134,8 +134,8 @@ int main(int argc, char** argv){
         LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
     }
     auto duration_time = env_time->NowMicros()-start_time1;
-    std::cout<<"Total Time: "<<duration_time*1e-3<<" ms\n";
     auto second_per_round = duration_time*1e-6/num_iters;
+    std::cout<<"Total Time: "<<duration_time*1e-3/num_iters<<" ms\n";
     // force to display
     std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
 

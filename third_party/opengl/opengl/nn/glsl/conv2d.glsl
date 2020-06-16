@@ -37,12 +37,6 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    /* int bias_pos_x = out_4_ind; */
-    /* int bias_pos_y = batch_ind; */
-
-    /* int out_group_size = output_shape.z/group; */
-    /* int in_group_size = input_shape.z/group; */
-
     if(use_bias==1){
         /* color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0); */
         color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);

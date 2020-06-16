@@ -36,7 +36,7 @@ int main(int argc,char** argv){
     // add optimizer config
     auto optimizer = Optimizer::Global();
 
-    // converter->Optimize(optimizer);
+    converter->Optimize(optimizer);
 
     // save model proto to binary file
     converter->Save();

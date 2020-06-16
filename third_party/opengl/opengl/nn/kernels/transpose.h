@@ -19,6 +19,9 @@ namespace opengl{
             private:
                 std::vector<int> perm_;
 
+                // cached any4 tensor
+                Tensor* cached_any4_tensor_ = nullptr;
+
         };
 }//namespace opengl
 

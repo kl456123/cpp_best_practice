@@ -352,18 +352,26 @@ namespace opengl{
     void FBOSession::GetOutputs(const TensorNameList& output_names,
             const StringList& output_dformats, TensorList* outputs){
         CHECK_EQ(output_names.size(), output_dformats.size());
-        outputs->clear();
-        outputs->reserve(output_names.size());
+        const int num_outputs = output_names.size();
+        // outputs->clear();
+        // outputs->reserve(output_names.size());
+        if(outputs->size()<num_outputs){
+            outputs->resize(num_outputs);
+        }
 
         int index = 0;
-        for(auto& tensor_name: output_names){
+        for(int i=0;i<output_names.size();++i){
+            auto tensor_name = output_names[i];
             auto gpu_tensor = FindTensorByName(tensor_name);
             auto dformat_str = output_dformats[index++];
             DataFormat dformat = StrToFormat(dformat_str);
-            Tensor* cpu_tensor = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape(),
-                    Tensor::HOST_MEMORY, dformat);
-            context_->CopyDeviceTensorToCPU(gpu_tensor, cpu_tensor);
-            outputs->emplace_back(cpu_tensor);
+            if(outputs->at(i)==nullptr){
+                outputs->at(i) = new Tensor(Tensor::DT_FLOAT, gpu_tensor->shape(),
+                        Tensor::HOST_MEMORY, dformat);
+            }else{
+                // check its shape, it should be same with gpu tensor
+            }
+            context_->CopyDeviceTensorToCPU(gpu_tensor, outputs->at(i));
         }
     }
 

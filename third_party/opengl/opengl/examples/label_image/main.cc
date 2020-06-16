@@ -66,15 +66,11 @@ int main(int argc, char** argv){
         return -1;
     }
 
-    ::opengl::NamedTensorList inputs;
     ::opengl::TensorList outputs_cpu;
-    inputs.resize(1);
-    inputs[0].first = "input";
-    inputs[0].second = image_ptr;
 
     // Run Session with input
     // do computation for the graph
-    session->Run(inputs);
+    session->Run({{"input", image_ptr}});
 
     // get cpu outputs from device
     session->GetOutputs({"output"}, {"NHWC"}, &outputs_cpu);

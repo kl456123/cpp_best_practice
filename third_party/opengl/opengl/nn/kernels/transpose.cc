@@ -51,9 +51,17 @@ namespace opengl{
         Tensor* any4_tensor = nullptr;
         auto input_tensor = inputs[0];
         if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
+            // use tensor cache
             VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
-            any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
-                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            if(cached_any4_tensor_==nullptr){
+                any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
+                        Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+                cached_any4_tensor_ = any4_tensor;
+            }else{
+                // assume it is the same as before
+                // it happens when loop inference
+                any4_tensor = cached_any4_tensor_;
+            }
             functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
         }else{
             any4_tensor = inputs[0];

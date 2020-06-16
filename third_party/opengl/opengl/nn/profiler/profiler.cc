@@ -19,7 +19,7 @@ namespace opengl{
             for(auto& node_stats: dev_stats.node_stats()){
                 const float t = node_stats.all_end_rel_micros()*1e-3;
                 // ss<<"node name: "<<node_stats.node_name()<<"\t"
-                    // <<"compute time: "<<t<<" ms\n";
+                // <<"compute time: "<<t<<" ms\n";
                 total_micros+=t;
                 if(type2time.find(node_stats.node_type())!=type2time.end()){
                     type2time[node_stats.node_type()].first+=t;
@@ -35,10 +35,11 @@ namespace opengl{
         ss<<"Output Time: "<<step_stats->output_time_micros()*1e-3<<" ms\n";
 
         // print time map
+        ss<<"Node Type\tTime\tCount\n";
         for(auto& iter:type2time){
-            ss<<"Node Type: "<<iter.first<<"\t"
-                <<"Time: "<<iter.second.first<<"ms\t"
-                <<"Count: "<<iter.second.second<<"\n";
+            ss<<iter.first<<"\t\t"
+                <<iter.second.first<<"ms\t\t"
+                <<iter.second.second<<"\n";
         }
         std::cout<<ss.str()<<std::endl;
     }
