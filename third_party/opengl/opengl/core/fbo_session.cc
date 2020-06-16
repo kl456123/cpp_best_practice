@@ -164,16 +164,18 @@ namespace opengl{
 
     void FBOSession::Run(const NamedTensorList& inputs_cpu,
             StepStats* step_stats){
-        // auto step_collector = std::unique_ptr<StepStatsCollector>(
-        // new StepStatsCollector(step_stats));
+        std::unique_ptr<StepStatsCollector> step_collector=nullptr;
+        if(tracking_stats){
+            step_collector.reset(new StepStatsCollector(step_stats));
+        }
 
         // session set up
         {
             // OPENGL_CALL(glFinish());
             // const uint64 start_time_usecs = env_->NowMicros();
-            Start();
+            // Start();
             Setup(inputs_cpu, nullptr);
-            Stop("Setup Time");
+            // Stop("Setup Time");
             // OPENGL_CALL(glFinish());
             // float session_setup_time = (env_->NowMicros() - start_time_usecs);
             // step_stats->set_all_setup_time_micros(session_setup_time);
@@ -190,12 +192,12 @@ namespace opengl{
                 continue;
             }
             // Start();
-            // if(step_collector){
-            // stats = step_collector->CreateNodeExecStats(kernel);
-            // auto scheduled_nsec = nodestats::NowInNsec();
-            // nodestats::SetScheduled(stats, scheduled_nsec);
-            // nodestats::SetAllStart(stats);
-            // }
+            if(step_collector){
+                stats = step_collector->CreateNodeExecStats(kernel);
+                auto scheduled_nsec = nodestats::NowInNsec();
+                nodestats::SetScheduled(stats, scheduled_nsec);
+                nodestats::SetAllStart(stats);
+            }
 
             // op computation time
             // nodestats::SetOpStart(stats);
@@ -209,16 +211,18 @@ namespace opengl{
             // nodestats::SetOpEnd(stats);
 
             // // node end time
-            // nodestats::SetAllEnd(stats);
+            if(step_collector){
+                nodestats::SetAllEnd(stats);
+                stats->Done(kOpenGLDeviceName);
+            }
 
             // // save to collector with device name
-            // stats->Done(kOpenGLDeviceName);
         }
 
-        // if(step_collector){
-        // // save data to proto
-        // step_collector->Finalize();
-        // }
+        if(step_collector){
+            // save data to proto
+            step_collector->Finalize();
+        }
         Stop("ExecTime");
         metrics::UpdateGraphExecTime(env_->NowMicros() - start_time_usecs);
     }
