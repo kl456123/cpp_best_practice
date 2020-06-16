@@ -6,6 +6,13 @@ namespace opengl{
             PosixEnv() {}
 
             ~PosixEnv() override { LOG(FATAL) << "Env::Default() must not be destroyed"; }
+
+            int32 GetCurrentThreadId() override {
+                return 0;
+            }
+            bool GetCurrentThreadName(string* name) override {
+                return false;
+            }
     };
 
     Env* Env::Default() {

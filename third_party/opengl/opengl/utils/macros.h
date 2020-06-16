@@ -47,4 +47,27 @@ namespace opengl{
     TypeName(const TypeName&) = delete;         \
     void operator=(const TypeName&) = delete
 
+#ifdef __has_builtin
+#define HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define HAS_BUILTIN(x) 0
+#endif
+
+// Compilers can be told that a certain branch is not likely to be taken
+// (for instance, a CHECK failure), and use that information in static
+// analysis. Giving it this information can help it optimize for the
+// common case in the absence of better information (ie.
+// -fprofile-arcs).
+//
+// We need to disable this for GPU builds, though, since nvcc8 and older
+// don't recognize `__builtin_expect` as a builtin, and fail compilation.
+#if (!defined(__NVCC__)) && \
+    (HAS_BUILTIN(__builtin_expect) || (defined(__GNUC__) && __GNUC__ >= 3))
+#define PREDICT_FALSE(x) (__builtin_expect(x, 0))
+#define PREDICT_TRUE(x) (__builtin_expect(!!(x), 1))
+#else
+#define PREDICT_FALSE(x) (x)
+#define PREDICT_TRUE(x) (x)
+#endif
+
 #endif

@@ -39,6 +39,16 @@ namespace opengl{
 
             /// \brief Returns the number of seconds since the Unix epoch.
             virtual uint64 NowSeconds() const { return env_time_->NowSeconds(); }
+
+
+            // Returns the thread id of calling thread.
+            // Posix: Returns pthread id which is only guaranteed to be unique within a
+            //        process.
+            // Windows: Returns thread id which is unique.
+            virtual int32 GetCurrentThreadId() = 0;
+
+            // Copies current thread name to "name". Returns true if success.
+            virtual bool GetCurrentThreadName(string* name) = 0;
         private:
             DISALLOW_COPY_AND_ASSIGN(Env);
             EnvTime* env_time_ = EnvTime::Default();
