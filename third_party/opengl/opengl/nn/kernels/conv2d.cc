@@ -96,12 +96,16 @@ namespace opengl{
         program_->set_int("dilation", dilation_);
         program_->set_int("use_bias", int(use_bias));
         if(!activation_type_.empty()){
-            // use clip by default like onnx
-            program_->set_int("use_act", 1);
+            if(activation_type_=="Clip"){
+                // clip case
+                program_->set_int("act", 1);
+            }else{
+                program_->set_int("act", 2);
+            }
             program_->set_float("min_value", min_);
             program_->set_float("max_value", max_);
         }else{
-            program_->set_int("use_act", 0);
+            program_->set_int("act", 0);
         }
         // input
         {

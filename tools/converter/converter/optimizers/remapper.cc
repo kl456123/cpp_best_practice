@@ -159,11 +159,16 @@ namespace optimizer{
             auto conv2d_attr = contraction_node->def().mutable_attr()->mutable_conv2d_attr();
             conv2d_attr->set_activation_type(act_node->type_string());
 
-            // assume it is clip node, like in onnx
-            CHECK_EQ(act_node->type_string(), "Clip");
-            auto clip_attr = act_node->def().attr().clip_attr();
-            conv2d_attr->set_min(clip_attr.min());
-            conv2d_attr->set_max(clip_attr.max());
+            if(act_node->type_string()== "Clip"){
+                // clip
+                auto clip_attr = act_node->def().attr().clip_attr();
+                conv2d_attr->set_max(clip_attr.max());
+            }else{
+                // relu
+                conv2d_attr->set_min(0);
+                conv2d_attr->set_max(0);
+            }
+
 
             MergeBatchNormToConvolution(graph, base, nodes_to_delete);
         }

@@ -11,7 +11,7 @@ uniform int padding;
 uniform int use_bias;
 
 // fused op with activation(means clip here)
-uniform int use_act;
+uniform int act;
 uniform float min_value;
 uniform float max_value;
 
@@ -115,8 +115,10 @@ void main() {
     color.z +=res[2];
     color.w +=res[3];
 
-    if(use_act==1){
+    if(act==1){
         color = max(vec4(min_value), color);
         color = min(vec4(max_value), color);
+    }else if(act==2){
+        color = max(vec4(min_value), color);
     }
 }
