@@ -19,6 +19,7 @@ namespace opengl{
             auto y_shape = tensor_y->shape();
             const int num_elements = tensor_y->num_elements();
             // (M, K) * (K, N) + (M, N) = (M, N)
+            // (M, K) * (N, K) + (M, N) = (M, N)
             const int M = y_shape[0];
             const int N = y_shape[1];
             const int K = tensor_a->shape()[1];
@@ -27,12 +28,15 @@ namespace opengl{
                     y[i*N+j] = 0;
                     for(int m=0; m<K; ++m){
                         // (i, j) = (i, m) * (m, j)
-                        y[i*N+j] += alpha * a[i*K+m] * b[m*N+j];
+                        if(transb){
+                            y[i*N+j] += alpha * a[i*K+m] * b[j*K+ m];
+                        }else{
+                            y[i*N+j] += alpha * a[i*K+m] * b[m*N+j];
+                        }
                     }
                     y[i*N+j]+=beta * c[i*N+j];
                 }
             }
-
         }
 
         const ::dlxnet::ModelProto BuildGraph(const Tensor* cpu_tensor1,

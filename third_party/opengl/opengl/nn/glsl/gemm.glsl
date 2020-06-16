@@ -35,7 +35,12 @@ void main(){
         int i = output_index/output_shape.y;
         for(int m=0;m<input_shape.y;++m){
             int a_index = i*input_shape.y+m;
-            int b_index = m*output_shape.y+j;
+            int b_index;
+            if(transb==1){
+                b_index = j*input_shape.y+m;
+            }else{
+                b_index = m*output_shape.y+j;
+                }
             float a;
             float b;
             {
