@@ -57,7 +57,7 @@ set(CORE_SRC_NAMES
     )
 
 set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc
-    port.cc strings.cc)
+    port.cc strings.cc status.cc abi.cc)
 
 foreach(fname ${CORE_SRC_NAMES})
     set(CORE_SRC_FILES ${CORE_SRC_FILES} ${CORE_SRC_DIR}/${fname})
