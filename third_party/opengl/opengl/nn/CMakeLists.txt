@@ -21,7 +21,8 @@ foreach(file_path ${APIS_SRC_FNAMES})
 endforeach()
 
 set(PROFILER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/profiler)
-set(PROFILER_SRC_FNAMES profiler.cc traceme_recorder.cc)
+set(PROFILER_SRC_FNAMES profiler.cc traceme_recorder.cc
+    host_tracer.cc host_tracer_utils.cc)
 
 foreach(file_path ${PROFILER_SRC_FNAMES})
     set(PROFILER_SRC_FILES ${PROFILER_SRC_FILES} ${PROFILER_SRC_DIR}/${file_path})

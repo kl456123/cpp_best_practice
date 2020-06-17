@@ -17,7 +17,8 @@ namespace opengl{
             // loop all nodes which in that device
             for(auto& node_stats: dev_stats.node_stats()){
                 const float t = node_stats.all_end_rel_micros()*1e-3;
-                // ss<<"node name: "<<node_stats.node_name()<<"\t"
+                // std::cout<<"node name: "<<node_stats.node_name()<<"\t"
+                    // <<"node type: "<<node_stats.node_type()<<"\t"
                 // <<"compute time: "<<t<<" ms\n";
                 total_micros+=t;
                 if(type2time.find(node_stats.node_type())!=type2time.end()){

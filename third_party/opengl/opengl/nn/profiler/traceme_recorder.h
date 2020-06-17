@@ -1,3 +1,5 @@
+#ifndef OPENGL_NN_PROFILER_TRACEME_RECORDER_H_
+#define OPENGL_NN_PROFILER_TRACEME_RECORDER_H_
 #include <atomic>
 #include "opengl/core/types.h"
 #include "opengl/utils/macros.h"
@@ -94,3 +96,5 @@ namespace opengl{
         };
     }//namespace profiler
 }//namespace opengl
+
+#endif

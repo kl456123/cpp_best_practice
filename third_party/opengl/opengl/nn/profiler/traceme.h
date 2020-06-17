@@ -1,4 +1,6 @@
 #include "opengl/nn/profiler/traceme_recorder.h"
+#include "opengl/utils/env_time.h"
+#include "opengl/utils/macros.h"
 
 
 namespace opengl{
@@ -49,7 +51,7 @@ namespace opengl{
                     DCHECK_GE(level, 1);
                     if (TraceMeRecorder::Active(level)) {
                         new (&no_init_.name) string(std::move(activity_name));
-                        start_time_ = EnvTime::NowNanos();
+                        start_time_ = EnvTime::Default()->NowNanos();
                     }
                 }
 
@@ -65,10 +67,10 @@ namespace opengl{
                     //   spuriously record the event. This is extremely rare, and acceptable as
                     //   event will be discarded when its start timestamp fall outside of the
                     //   start/stop session timestamp.
-                    if (TF_PREDICT_FALSE(start_time_ != kUntracedActivity)) {
-                        if (TF_PREDICT_TRUE(TraceMeRecorder::Active())) {
+                    if (PREDICT_FALSE(start_time_ != kUntracedActivity)) {
+                        if (PREDICT_TRUE(TraceMeRecorder::Active())) {
                             TraceMeRecorder::Record({kCompleteActivity, std::move(no_init_.name),
-                                    start_time_, EnvTime::NowNanos()});
+                                    start_time_, EnvTime::Default()->NowNanos()});
                         }
                         no_init_.name.~string();
                         start_time_ = kUntracedActivity;
@@ -81,11 +83,11 @@ namespace opengl{
 
                 // Record the start time of an activity.
                 // Returns the activity ID, which is used to stop the activity.
-                static uint64 ActivityStart(absl::string_view name, int level = 1) {
-                    if (TF_PREDICT_FALSE(TraceMeRecorder::Active(level))) {
+                static uint64 ActivityStart(const string& name, int level = 1) {
+                    if (PREDICT_FALSE(TraceMeRecorder::Active(level))) {
                         uint64 activity_id = TraceMeRecorder::NewActivityId();
                         TraceMeRecorder::Record({activity_id, string(name),
-                                /*start_time=*/EnvTime::NowNanos(),
+                                /*start_time=*/EnvTime::Default()->NowNanos(),
                                 /*end_time=*/0});
                         return activity_id;
                     }
@@ -95,10 +97,10 @@ namespace opengl{
                 // Record the end time of an activity started by ActivityStart().
                 static void ActivityEnd(uint64 activity_id) {
                     // We don't check the level again (see TraceMe::Stop()).
-                    if (TF_PREDICT_FALSE(activity_id != kUntracedActivity)) {
-                        if (TF_PREDICT_TRUE(TraceMeRecorder::Active())) {
+                    if (PREDICT_FALSE(activity_id != kUntracedActivity)) {
+                        if (PREDICT_TRUE(TraceMeRecorder::Active())) {
                             TraceMeRecorder::Record({activity_id, /*name=*/"", /*start_time=*/0,
-                                    /*end_time=*/EnvTime::NowNanos()});
+                                    /*end_time=*/EnvTime::Default()->NowNanos()});
                         }
                     }
                 }

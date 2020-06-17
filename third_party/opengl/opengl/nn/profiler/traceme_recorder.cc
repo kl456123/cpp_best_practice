@@ -12,6 +12,17 @@ namespace opengl{
         namespace{
             class EventQueue{
             };
+
+            std::vector<TraceMeRecorder::Event> PopAll(
+                    std::queue<TraceMeRecorder::Event>* queue) {
+                // Read index before contents.
+                std::vector<TraceMeRecorder::Event> result;
+                while (!queue->empty ()) {
+                    result.emplace_back(queue->front());
+                    queue->pop();
+                }
+                return result;
+            }
         }
 
 
@@ -39,7 +50,7 @@ namespace opengl{
 
                 // Clear is called from the control thread when tracing starts/stops, or from
                 // the owner thread when it shuts down (see destructor).
-                TraceMeRecorder::ThreadEvents Clear() { return {info_, {queue_.front()}}; }
+                TraceMeRecorder::ThreadEvents Clear() { return {info_, PopAll(&queue_)}; }
 
             private:
                 TraceMeRecorder::ThreadInfo info_;
@@ -62,6 +73,21 @@ namespace opengl{
                 Clear();
             }
             return started;
+        }
+
+        void TraceMeRecorder::RegisterThread(int32 tid, ThreadLocalRecorder* thread) {
+            threads_.emplace(tid, thread);
+        }
+
+        void TraceMeRecorder::UnregisterThread(int32 tid) {
+            auto it = threads_.find(tid);
+            if (it != threads_.end()) {
+                auto events = it->second->Clear();
+                if (!events.events.empty()) {
+                    orphaned_events_.push_back(std::move(events));
+                }
+                threads_.erase(it);
+            }
         }
 
         TraceMeRecorder::Events TraceMeRecorder::StopRecording() {
@@ -89,6 +115,11 @@ namespace opengl{
                 }
             }
             return result;
+        }
+
+        void TraceMeRecorder::Record(Event event) {
+            static thread_local ThreadLocalRecorder thread_local_recorder;
+            thread_local_recorder.Record(std::move(event));
         }
 
         /*static*/ uint64 TraceMeRecorder::NewActivityId() {

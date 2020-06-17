@@ -130,6 +130,10 @@ namespace opengl{
             void Save(const string& device, NodeExecStats* node_stats_pb);
             void Save(const string& device, NodeExecStatsWrapper* node_stats);
 
+            // Saves thread name.
+            void SaveThreadName(const string& device, const uint32 thread_id,
+                    const string& thread_name);
+
             NodeExecStatsInterface* CreateNodeExecStats(const Kernel* node) override;
             string ReportAllocsOnResourceExhausted(const string& err) override;
 
@@ -146,11 +150,13 @@ namespace opengl{
             static const uint64 kMaxCollectedNodes = 1 << 20;
 
             typedef std::vector<std::unique_ptr<NodeExecStatsWrapper>> NodeStatsVector;
+            typedef std::unordered_map<uint32, string> ThreadNamesMap;
 
             void FinalizeInternal();
 
             bool finalized_;
             std::unordered_map<string, NodeStatsVector> dev_stats_ ;
+            std::unordered_map<string, ThreadNamesMap> thread_names_;
             StepStats* step_stats_ ;
             uint64 collected_nodes_ = 0;
     };
