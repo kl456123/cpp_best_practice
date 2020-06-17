@@ -56,12 +56,25 @@ namespace opengl{
             }
         }
 
-        if(group_size_!=1){
-            // more general conv2d case, commonly used by depthwise conv2d
-            kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+        // as for different conv2d use different shaders
+        if(kernel_size_==1&& group_size_==1&&dilation_==1&&stride_==1&&padding_==0){
+            // 1x1 conv2d
+            kernel_fname_="../opengl/nn/glsl/conv2d_pw.glsl";
+        }else if(group_size_!=1){
+            // add insanity check here to make sure it is dw conv
+            // consider it as depthwise conv2d
+            kernel_fname_="../opengl/nn/glsl/conv2d_dw.glsl";
         }else{
+            // default conv2d shader
             kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
         }
+
+        // if(group_size_!=1){
+            // // more general conv2d case, commonly used by depthwise conv2d
+            // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+        // }else{
+            // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+        // }
 
         // only used for fused op
         activation_type_= conv2d_params.activation_type();

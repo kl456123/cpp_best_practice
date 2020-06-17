@@ -126,9 +126,7 @@ int main(int argc, char** argv){
         }
 
         // collect data for profilling
-        std::cout<<"----------------------profiler start------------------"<<std::endl;
         profiler->CollectData(&step_stats);
-        std::cout<<"----------------------profiler end------------------"<<std::endl;
 
         // print output
         LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
@@ -139,6 +137,9 @@ int main(int argc, char** argv){
     // force to display
     std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
 
+    std::cout<<"----------------------profiler start------------------"<<std::endl;
+    profiler->PrintProfiling();
+    std::cout<<"----------------------profiler end------------------"<<std::endl;
     // std::cout<<"----------------------metric start------------------"<<std::endl;
     // ProfileProgram();
     // std::cout<<"----------------------metric end------------------"<<std::endl;
