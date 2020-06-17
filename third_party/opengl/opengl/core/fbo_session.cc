@@ -168,17 +168,21 @@ namespace opengl{
         if(tracking_stats){
             step_collector.reset(new StepStatsCollector(step_stats));
         }
-
         // session set up
         {
-            // OPENGL_CALL(glFinish());
-            // const uint64 start_time_usecs = env_->NowMicros();
+            uint64 start_time_usecs;
+            if(step_collector){
+                OPENGL_CALL(glFinish());
+                start_time_usecs = env_->NowMicros();
+            }
             // Start();
             Setup(inputs_cpu, nullptr);
             // Stop("Setup Time");
-            // OPENGL_CALL(glFinish());
-            // float session_setup_time = (env_->NowMicros() - start_time_usecs);
-            // step_stats->set_all_setup_time_micros(session_setup_time);
+            if(step_collector){
+                OPENGL_CALL(glFinish());
+                float session_setup_time = (env_->NowMicros() - start_time_usecs);
+                step_stats->set_all_setup_time_micros(session_setup_time);
+            }
         }
 
         CHECK(finalized_)<<"Please Setup Session First";
