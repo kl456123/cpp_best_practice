@@ -21,6 +21,16 @@ find_package(OpenCV REQUIRED)
 find_package(glog REQUIRED)
 find_package(Protobuf REQUIRED)
 
+include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+file(GLOB ABS_ProtoFiles opengl/**/*.proto)
+foreach(FIL ${ABS_ProtoFiles})
+    FILE(RELATIVE_PATH RELA_FIL ${CMAKE_CURRENT_SOURCE_DIR} ${FIL})
+    set(ProtoFiles ${ProtoFiles} ${RELA_FIL})
+endforeach()
+set(PROTOBUF_GENERATE_CPP_APPEND_PATH FALSE)
+protobuf_generate_cpp(ProtoSources ProtoHeaders ${ProtoFiles})
+
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
 
@@ -51,9 +61,9 @@ set(CORE_SRC_NAMES
     step_stats_collector.cc
 
     # some protos
-    dlxnet.pb.cc
-    tensor_description.pb.cc
-    step_stats.pb.cc
+    # dlxnet.pb.cc
+    # tensor_description.pb.cc
+    # step_stats.pb.cc
     )
 
 set(UTIL_SRC_NAMES macros.cc util.cc protobuf.cc env.cc env_time.cc
@@ -85,7 +95,8 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES} ${LIB_SRC_FILES})
+message(${CMAKE_CURRENT_SOURCE_DIR})
+add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources})
 # use both in case anyone of them not found
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
     ${PROTOBUF_LIBRARY})
