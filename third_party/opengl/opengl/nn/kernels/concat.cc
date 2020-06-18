@@ -83,7 +83,7 @@ namespace opengl{
         // to dformat to infer output shape
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
         if(axis_==-1){
-            axis_=input_tensors[0]->last_stride();
+            axis_=input_tensors[0]->shape().size()-1;
         }
 
         output_shapes.clear();
