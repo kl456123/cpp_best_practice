@@ -48,7 +48,8 @@ namespace opengl{
         return *this;
     }
 
-    Program& Program::AttachFile(const std::string fname, GLenum type){
+    Program& Program::AttachFile(const std::string fname, GLenum type,
+            const std::string& build_options){
         // Load GLSL Shader Source from File
         std::ifstream fd(fname);
         std::string src = std::string(std::istreambuf_iterator<char>(fd),
@@ -59,6 +60,7 @@ namespace opengl{
         // add head
         std::ostringstream tc;
         tc << GetHead("rgba32f");
+        tc << build_options;
         tc<<src;
 
         return AttachSource(tc.str().c_str(), type);

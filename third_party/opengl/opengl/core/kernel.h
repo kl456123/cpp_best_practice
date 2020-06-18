@@ -66,6 +66,9 @@ namespace opengl{
 
             virtual bool ForceReady()const{return false;}
             const std::string kernel_fname()const{return kernel_fname_;}
+
+            std::string build_options()const{return build_options_;}
+            void set_build_options(const std::string& opt){build_options_=opt;}
         protected:
             // attach output tensor to the target(fbo)
             // used in compute function of subclass
@@ -108,6 +111,8 @@ namespace opengl{
 
             std::string kernel_name_;
             std::string kernel_type_;
+
+            std::string build_options_;
 
             // reference of current activated session
             FBOSession* session_=nullptr;

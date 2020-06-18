@@ -137,10 +137,6 @@ namespace opengl{
             kernel->set_kernel_type(node.type());
             kernel->set_session(this);
 
-            kernel->SetupAttr(node.attr());
-
-            // setup program for each kernel here
-            kernel->SetupProgram(context_->CreateProgram(kernel->kernel_fname()));
             // fill inputs and outputs
             for(int i=0; i<node.input_index_size(); ++i){
                 kernel->input_tensor_indexes_.emplace_back(node.input_index(i));
@@ -148,6 +144,12 @@ namespace opengl{
             for(int i=0; i<node.output_index_size(); ++i){
                 kernel->output_tensor_indexes_.emplace_back(node.output_index(i));
             }
+
+            kernel->SetupAttr(node.attr());
+
+            // setup program for each kernel here
+            kernel->SetupProgram(context_->CreateProgram(kernel->kernel_fname(),
+                        kernel->build_options()));
             kernels_.emplace_back(std::move(kernel_ptr));
         }
         finalized_ = false;

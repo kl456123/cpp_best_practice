@@ -48,12 +48,11 @@ void main() {
     int out_4_ind = pos.x%out_4_dims;
     int output_index_x = pos.x/out_4_dims;
 
-    if(use_bias==1){
-        /* color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0); */
-        color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
-    }else{
-        color = vec4(0.0);
-    }
+#ifdef USE_BIAS
+    color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
+#else
+    color = vec4(0.0);
+#endif
 
     // make sure out_group_size=1
     /* int out_group_size = output_shape.z/group; */
@@ -82,10 +81,12 @@ void main() {
         }
     }
 
-    if(act==1){
-        color = max(vec4(min_value), color);
-        color = min(vec4(max_value), color);
-    }else if(act==2){
-        color = max(vec4(min_value), color);
-    }
+#ifdef USE_CLIP
+    color = max(vec4(min_value), color);
+    color = min(vec4(max_value), color);
+#endif
+
+#ifdef USE_RELU
+    color = max(vec4(min_value), color);
+#endif
 }

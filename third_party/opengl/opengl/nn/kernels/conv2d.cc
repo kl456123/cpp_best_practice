@@ -69,11 +69,13 @@ namespace opengl{
             kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
         }
 
+
+
         // if(group_size_!=1){
-            // // more general conv2d case, commonly used by depthwise conv2d
-            // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+        // // more general conv2d case, commonly used by depthwise conv2d
+        // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
         // }else{
-            // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+        // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
         // }
 
         // only used for fused op
@@ -82,6 +84,17 @@ namespace opengl{
         max_=conv2d_params.max();
 
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+
+        // set build options here
+        if(input_tensor_indexes_.size()==3){
+            build_options_ += "#define USE_BIAS\n";
+        }
+
+        if(activation_type_=="Clip"){
+            build_options_ += "#define USE_CLIP\n";
+        }else if(activation_type_=="Relu"){
+            build_options_ += "#define USE_RELU\n";
+        }
     }
 
 

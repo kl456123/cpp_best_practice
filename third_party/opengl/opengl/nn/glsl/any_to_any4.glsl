@@ -1,3 +1,7 @@
+/********
+* this file used only to load tensor from cpu to gpu,
+* so it cannot be called more than once
+*/
 // (1, (nhwc)/4, 4)
 uniform sampler2D input_image;
 

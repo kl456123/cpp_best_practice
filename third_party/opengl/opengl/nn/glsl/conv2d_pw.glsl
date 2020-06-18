@@ -1,6 +1,6 @@
 /**
-* group=1, dialtion=1, kernel=1, stride=1, padding=0
-*/
+ * group=1, dialtion=1, kernel=1, stride=1, padding=0
+ */
 // nhwc4
 uniform sampler2D input_image;
 // hwo4i4
@@ -43,12 +43,11 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    if(use_bias==1){
-        /* color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0); */
-        color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
-    }else{
-        color = vec4(0.0);
-    }
+#ifdef USE_BIAS
+    color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
+#else
+    color = vec4(0.0);
+#endif
     int in_4_dim = UP_DIV(input_shape.z, 4);
 
     int input_index_x = output_index_x;
@@ -75,11 +74,12 @@ void main() {
         color+=k*texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0);
     }
 
-    // use macro instead of if-else
-    if(act==1){
-        color = max(vec4(min_value), color);
-        color = min(vec4(max_value), color);
-    }else if(act==2){
-        color = max(vec4(min_value), color);
-    }
+#ifdef USE_CLIP
+    color = max(vec4(min_value), color);
+    color = min(vec4(max_value), color);
+#endif
+
+#ifdef USE_RELU
+    color = max(vec4(min_value), color);
+#endif
 }

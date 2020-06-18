@@ -52,7 +52,8 @@ namespace opengl{
             void CopyDeviceBufferToCPU(Buffer* buffer, void* buffer_cpu);
             void Finish(){glFlush();}
 
-            Program* CreateProgram(const std::string& kernel_fname);
+            Program* CreateProgram(const std::string& kernel_fname,
+                    const std::string& build_options="");
         private:
             // used to allocator new buffer or texture duration runtime
             Allocator* allocator_;

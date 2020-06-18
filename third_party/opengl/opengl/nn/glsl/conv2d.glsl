@@ -37,12 +37,11 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    if(use_bias==1){
-        /* color = texelFetch(input_bias, ivec2(bias_pos_x,   bias_pos_y), 0); */
+#ifdef USE_BIAS
         color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
-    }else{
+#else
         color = vec4(0.0);
-    }
+#endif
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i*dilation-padding;
@@ -78,10 +77,12 @@ void main() {
         }
     }
 
-    if(act==1){
+#ifdef USE_CLIP
         color = max(vec4(min_value), color);
         color = min(vec4(max_value), color);
-    }else if(act==2){
+#endif
+
+#ifdef USE_RELU
         color = max(vec4(min_value), color);
-    }
+#endif
 }

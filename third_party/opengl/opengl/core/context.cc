@@ -246,7 +246,8 @@ namespace opengl{
         OPENGL_CALL(glDeleteFramebuffers(1, &frame_buffer_));
     }
 
-    Program* Context::CreateProgram(const std::string& kernel_fname){
+    Program* Context::CreateProgram(const std::string& kernel_fname,
+            const std::string& build_options){
         if(kernel_fname.empty()){
             // no kernel program needed for this op, like const op
             return nullptr;
@@ -254,7 +255,7 @@ namespace opengl{
         // set program
         // program_ .reset(new Program);
         auto program = new Program;
-        (*program).AttachFile(kernel_fname, GL_FRAGMENT_SHADER)
+        (*program).AttachFile(kernel_fname, GL_FRAGMENT_SHADER, build_options)
             .AttachShader(vertex_shader_);
         program->Link();
         program->Activate();
