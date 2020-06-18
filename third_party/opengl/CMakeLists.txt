@@ -95,7 +95,6 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-message(${CMAKE_CURRENT_SOURCE_DIR})
 add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources})
 # use both in case anyone of them not found
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}

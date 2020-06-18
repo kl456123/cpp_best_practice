@@ -125,31 +125,16 @@ namespace opengl{
             kernel=nullptr;
             // TODO(breakpoint) handle with input node, ignore it for now
             if(node.type()=="Input"){
-                LOG(INFO)<<"Ignore Node Type: "<<node.type();
+                LOG(WARNING)<<"Ignore Node Type: "<<node.type();
                 continue;
             }
             KernelRegistry::Global()->CreateKernel(node.type(), &kernel, context_);
-            kernel_ptr.reset(kernel);
             if(kernel==nullptr){
                 LOG(FATAL)<<"unsupported kernel name "<<node.type();
             }
-            kernel->set_kernel_name(node.name());
-            kernel->set_kernel_type(node.type());
-            kernel->set_session(this);
+            kernel_ptr.reset(kernel);
+            kernel->Setup(node, this);
 
-            // fill inputs and outputs
-            for(int i=0; i<node.input_index_size(); ++i){
-                kernel->input_tensor_indexes_.emplace_back(node.input_index(i));
-            }
-            for(int i=0; i<node.output_index_size(); ++i){
-                kernel->output_tensor_indexes_.emplace_back(node.output_index(i));
-            }
-
-            kernel->SetupAttr(node.attr());
-
-            // setup program for each kernel here
-            kernel->SetupProgram(context_->CreateProgram(kernel->kernel_fname(),
-                        kernel->build_options()));
             kernels_.emplace_back(std::move(kernel_ptr));
         }
         finalized_ = false;

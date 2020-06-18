@@ -25,6 +25,27 @@ namespace opengl{
         program_->SetRetVal(outputs);
     }
 
+    void Kernel::Setup(const dlxnet::NodeProto& node,
+            FBOSession* session){
+        set_kernel_name(node.name());
+        set_kernel_type(node.type());
+        set_session(session);
+
+        // fill inputs and outputs
+        for(int i=0; i<node.input_index_size(); ++i){
+            input_tensor_indexes_.emplace_back(node.input_index(i));
+        }
+        for(int i=0; i<node.output_index_size(); ++i){
+            output_tensor_indexes_.emplace_back(node.output_index(i));
+        }
+
+        SetupAttr(node.attr());
+
+        // setup program for each kernel here
+        SetupProgram(context_->CreateProgram(kernel_fname(),
+                    build_options()));
+    }
+
     std::string Kernel::DebugString()const{
         // print input shape and output shape for debug
         std::stringstream ss;
@@ -79,6 +100,10 @@ namespace opengl{
             input_shapes.emplace_back(input_tensor->shape());
         }
         InferOutputShape(input_shapes, output_shapes);
+    }
+
+    void Kernel::Compute(){
+        Compute(input_tensors_, output_tensors_);
     }
 
 

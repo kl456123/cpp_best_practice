@@ -12,12 +12,16 @@ namespace opengl{
     Tensor::~Tensor(){
         if(mem_type()==HOST_MEMORY){
             // host memory
-            CHECK_NOTNULL(host_);
             CHECK_EQ(dtype(), DT_FLOAT);
-            delete reinterpret_cast<float*>(host_);
+            if(host_){
+                delete reinterpret_cast<float*>(host_);
+            }
         }else{
-            // device memory
-            delete reinterpret_cast<Texture*>(device_);
+            // in some case device_ is already freed
+            if(device_){
+                // device memory
+                delete reinterpret_cast<Texture*>(device_);
+            }
         }
     }
 
@@ -230,6 +234,21 @@ namespace opengl{
                     allocated_size_, allocated_size_/sizeof(float), AllocationAttributes());;
             initialized_ = true;
         }
+
+
+    void Tensor::SwapData(Tensor* other_tensor){
+        CHECK_EQ(mem_type(), other_tensor->mem_type());
+        if(mem_type()==Tensor::HOST_MEMORY){
+            void* tmp = host_;
+            host_ = other_tensor->host_;
+            other_tensor->host_ = tmp;
+        }else{
+            // swap texture
+            void* tmp = device_;
+            device_ = other_tensor->device_;
+            other_tensor->device_ = tmp;
+        }
+    }
 
 
 

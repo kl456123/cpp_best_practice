@@ -25,9 +25,10 @@ namespace opengl{
 
             virtual void SetupAttr(const dlxnet::Attribute& attr)=0;
 
-            void Compute(){
-                Compute(input_tensors_, output_tensors_);
-            }
+            virtual void Setup(const dlxnet::NodeProto& node_proto,
+                    FBOSession* session);
+
+            void Compute();
 
             DataFormat GetOutputDFormat(int i)const;
             DataFormat GetRequestInputDFormat(int i)const;

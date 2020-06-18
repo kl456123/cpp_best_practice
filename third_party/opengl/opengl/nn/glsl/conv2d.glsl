@@ -46,13 +46,13 @@ void main() {
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i*dilation-padding;
             int input_index_y = output_index_y*stride_size+j*dilation-padding;
-            if(input_index_x<0||input_index_x>=input_shape.y){
-                continue;
-                // when out of boundary
-            }
-            if(input_index_y<0||input_index_y>=input_shape.x){
-                continue;
-            }
+            /* if(input_index_x<0||input_index_x>=input_shape.y){ */
+                /* continue; */
+                /* // when out of boundary */
+            /* } */
+            /* if(input_index_y<0||input_index_y>=input_shape.x){ */
+                /* continue; */
+            /* } */
             // loop in channel dim
             for(int in_4_ind=0;in_4_ind< UP_DIV(input_shape.z, 4);++in_4_ind){
                 // get input image

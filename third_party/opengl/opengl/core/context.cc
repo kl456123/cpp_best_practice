@@ -109,10 +109,22 @@ namespace opengl{
 
 
     void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
+        // optimize for special case
+        if(cpu_tensor->last_stride()%4==0
+                && device_tensor->dformat()==dlxnet::TensorProto::ANY4){
+            internal::CopyCPUTensorToDevice(cpu_tensor, device_tensor);
+            return;
+        }
+
+        if(device_tensor->dformat()==cpu_tensor->dformat()){
+            internal::CopyCPUTensorToDevice(cpu_tensor, device_tensor);
+            return;
+        }
+
         auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
                     cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
         Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
-            internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
+        internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
         if(device_tensor->dformat()==dlxnet::TensorProto::ANY4){
             // any to any4 (device->device)
             functor::ConvertTensorANYToANY4()(this, src_gpu_tensor, device_tensor);
@@ -130,6 +142,17 @@ namespace opengl{
 
 
     void Context::CopyDeviceTensorToCPU(const Tensor* device_tensor, Tensor* cpu_tensor){
+        // optimize for special case
+        if(cpu_tensor->last_stride()%4==0
+                && device_tensor->dformat()==dlxnet::TensorProto::ANY4){
+            internal::CopyDeviceTensorToCPU(device_tensor, cpu_tensor);
+            return;
+        }
+
+        if(device_tensor->dformat()==cpu_tensor->dformat()){
+            internal::CopyDeviceTensorToCPU(device_tensor, cpu_tensor);
+            return;
+        }
         auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
                     device_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
         Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
