@@ -122,5 +122,15 @@ namespace opengl{
             if (options.host_tracer_level == 0) return nullptr;
             return std::unique_ptr<HostTracer>(new HostTracer(options.host_tracer_level));
         }
+
+        auto register_host_tracer_factory = [] {
+            bool enable=true;
+
+            // TF_CHECK_OK(ReadBoolFromEnvVar("TF_ENABLE_OSS_CPU_PROFILER", true, &enable));
+            if (enable) {
+                RegisterProfilerFactory(&CreateHostTracer);
+            }
+            return 0;
+        }();
     } // namespace profiler
 } // namespace opengl

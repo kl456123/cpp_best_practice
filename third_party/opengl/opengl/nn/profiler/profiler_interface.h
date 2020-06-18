@@ -1,5 +1,8 @@
 #ifndef OPENGL_NN_PROFILER_PROFILER_INTERFACE_H_
 #define OPENGL_NN_PROFILER_PROFILER_INTERFACE_H_
+#include <memory>
+#include <vector>
+
 #include "opengl/utils/status.h"
 
 namespace opengl{
@@ -51,6 +54,15 @@ namespace opengl{
                 virtual DeviceType GetDeviceType() = 0;
         };
     }//namespace profiler
+
+    using ProfilerFactory = std::unique_ptr<profiler::ProfilerInterface> (*)(
+            const profiler::ProfilerOptions&);
+
+    void RegisterProfilerFactory(ProfilerFactory factory);
+
+    void CreateProfilers(
+            const profiler::ProfilerOptions& options,
+            std::vector<std::unique_ptr<profiler::ProfilerInterface>>* result);
 }//namespace opengl
 
 

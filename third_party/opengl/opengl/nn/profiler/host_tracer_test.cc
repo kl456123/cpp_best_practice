@@ -2,7 +2,8 @@
 #include "opengl/nn/profiler/profiler_interface.h"
 #include "opengl/nn/profiler/traceme.h"
 #include "opengl/utils/env.h"
-#include "opengl/test/test.h"
+#include "opengl/utils/status_test_util.h"
+#include "opengl/core/step_stats.pb.h"
 
 namespace opengl{
     namespace profiler{
@@ -15,14 +16,20 @@ namespace opengl{
 
                 auto tracer = CreateHostTracer(ProfilerOptions());
 
-                tracer->Start();
+                DLXNET_ASSERT_OK(tracer->Start());
                 { TraceMe traceme("hello"); }
                 { TraceMe traceme("world"); }
                 { TraceMe traceme("contains#inside"); }
                 { TraceMe traceme("good#key1=value1#"); }
                 { TraceMe traceme("morning#key1=value1,key2=value2#"); }
                 { TraceMe traceme("incomplete#key1=value1,key2#"); }
-                tracer->Stop();
+                DLXNET_ASSERT_OK(tracer->Stop());
+
+                StepStats step_stats;
+                DLXNET_ASSERT_OK(tracer->CollectData(&step_stats));
+
+                EXPECT_EQ(step_stats.dev_stats_size(), 1);
+                EXPECT_EQ(step_stats.dev_stats(0).node_stats_size(), 6);
             }
         }//namespace
     }//namespace profier
