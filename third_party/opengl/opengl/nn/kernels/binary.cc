@@ -14,11 +14,14 @@ namespace opengl{
             for(int i=0;i<3;i++){
                 work_sizes_[i] = 1;
             }
-            kernel_fname_ = "../opengl/nn/glsl/binary.glsl";
         }
 
 
     BinaryKernel::~BinaryKernel(){}
+    void BinaryKernel::SelectKernel(const TensorList& inputs){
+        kernel_fname_ = "../opengl/nn/glsl/binary.glsl";
+        output_tensor_dformats_.emplace_back(inputs[0]->dformat());
+    }
 
     void BinaryKernel::Compute(TensorList& inputs, TensorList& outputs){
         program_->Activate();
@@ -30,8 +33,7 @@ namespace opengl{
         auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
 
-        program_->set_vec3i("input_shape", inputs[0]->height(),
-                inputs[0]->width(), inputs[0]->channel());
+        program_->set_vec3i("input_shape", input_shape[1], input_shape[2], input_shape[3]);
         // input
         {
             program_->set_image2D("input0", input0->id(),  0);
@@ -64,7 +66,6 @@ namespace opengl{
     }
 
     void BinaryKernel::SetupAttr(const dlxnet::Attribute& attr){
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
     }
 
     REGISTER_KERNEL_WITH_NAME(BinaryKernel, "Add");

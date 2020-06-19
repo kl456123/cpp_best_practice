@@ -15,7 +15,7 @@ void main(){
     ivec2 pos = ivec2(gl_FragCoord.xy);
     // find the index of output
     // decompose output index to output coords
-    int index = pos.x;
+    int index = pos.x + pos.y*MAX_TEXTURE_SIZE;
     int out_c_i = index % UP_DIV(output_shape.w, 4);
     index = index/UP_DIV(output_shape.w, 4);
     int out_w_i = index%output_shape.z;
@@ -29,21 +29,21 @@ void main(){
             color = texelFetch(origin_image, pos, 0);
         }else{
             int offset = (((out_n_i-axis_offset)*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
-            color = texelFetch(input_image, ivec2(offset, 0), 0);
+            color = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0);
         }
     }else if(axis==1){
         if(out_h_i<axis_offset||out_h_i>=axis_offset+input_shape.y){
             color = texelFetch(origin_image, pos, 0);
         }else{
             int offset = ((out_n_i*input_shape.y+out_h_i-axis_offset)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+out_c_i;
-            color = texelFetch(input_image, ivec2(offset, 0), 0);
+            color = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0);
         }
     }else if(axis==2){
         if(out_w_i<axis_offset||out_w_i>=axis_offset+input_shape.z){
             color = texelFetch(origin_image, pos, 0);
         }else{
             int offset = ((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i-axis_offset)*UP_DIV(input_shape.w, 4)+out_c_i;
-            color = texelFetch(input_image, ivec2(offset, 0), 0);
+            color = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0);
         }
     }else{
         // assign seperately
@@ -53,13 +53,13 @@ void main(){
             int in_c_i = out_c_i*4+0-axis_offset;
             int offset = (((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+in_c_i/4);
             if(in_c_i%4==0){
-                color.x = texelFetch(input_image, ivec2(offset, 0), 0).x;
+                color.x = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
             }else if(in_c_i%4==1){
-                color.x = texelFetch(input_image, ivec2(offset, 0), 0).y;
+                color.x = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
             }else if(in_c_i%4==2){
-                color.x = texelFetch(input_image, ivec2(offset, 0), 0).z;
+                color.x = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
             }else {
-                color.x = texelFetch(input_image, ivec2(offset, 0), 0).w;
+                color.x = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
             }
         }
 
@@ -69,13 +69,13 @@ void main(){
             int in_c_i = out_c_i*4+1-axis_offset;
             int offset = (((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+in_c_i/4);
             if(in_c_i%4==0){
-                color.y = texelFetch(input_image, ivec2(offset, 0), 0).x;
+                color.y = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
             }else if(in_c_i%4==1){
-                color.y = texelFetch(input_image, ivec2(offset, 0), 0).y;
+                color.y = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
             }else if(in_c_i%4==2){
-                color.y = texelFetch(input_image, ivec2(offset, 0), 0).z;
+                color.y = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
             }else {
-                color.y = texelFetch(input_image, ivec2(offset, 0), 0).w;
+                color.y = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
             }
         }
 
@@ -85,13 +85,13 @@ void main(){
             int in_c_i = out_c_i*4+2-axis_offset;
             int offset = (((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+in_c_i/4);
             if(in_c_i%4==0){
-                color.z = texelFetch(input_image, ivec2(offset, 0), 0).x;
+                color.z = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
             }else if(in_c_i%4==1){
-                color.z = texelFetch(input_image, ivec2(offset, 0), 0).y;
+                color.z = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
             }else if(in_c_i%4==2){
-                color.z = texelFetch(input_image, ivec2(offset, 0), 0).z;
+                color.z = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
             }else {
-                color.z = texelFetch(input_image, ivec2(offset, 0), 0).w;
+                color.z = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
             }
         }
 
@@ -101,13 +101,13 @@ void main(){
             int in_c_i = out_c_i*4+3-axis_offset;
             int offset = (((out_n_i*input_shape.y+out_h_i)*input_shape.z+out_w_i)*UP_DIV(input_shape.w, 4)+in_c_i/4);
             if(in_c_i%4==0){
-                color.w = texelFetch(input_image, ivec2(offset, 0), 0).x;
+                color.w = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
             }else if(in_c_i%4==1){
-                color.w = texelFetch(input_image, ivec2(offset, 0), 0).y;
+                color.w = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
             }else if(in_c_i%4==2){
-                color.w = texelFetch(input_image, ivec2(offset, 0), 0).z;
+                color.w = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
             }else {
-                color.w = texelFetch(input_image, ivec2(offset, 0), 0).w;
+                color.w = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
             }
         }
     }

@@ -40,14 +40,15 @@ void main() {
     int out_4_dims = UP_DIV(output_shape.z, 4);
     int in_4_dims = UP_DIV(input_shape.z, 4);
 
-    // decompose pos
-    // pos = (w*out_4_i, nh_i)
-    // output_shape=(h,w,c)
-    int output_index_y = pos.y%output_shape.x;
-    int batch_ind = pos.y/output_shape.x;
+    int index = pos.x + pos.y * MAX_TEXTURE_SIZE;
 
-    int out_4_ind = pos.x%out_4_dims;
-    int output_index_x = pos.x/out_4_dims;
+    int out_4_ind = index%out_4_dims;
+    index = index/out_4_dims;
+    int output_index_x = index%output_shape.y;
+    index = index/output_shape.y;
+    int output_index_y = index%output_shape.x;
+    int batch_ind = index/output_shape.x;
+
 
 #ifdef USE_BIAS
     color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
@@ -66,11 +67,11 @@ void main() {
             int input_index_x = i*dilation+input_index_x_base;
             int input_index_y = j*dilation+input_index_y_base;
             /* if(input_index_x<0||input_index_x>=input_shape.y){ */
-                /* continue; */
-                /* // when out of boundary */
+            /* continue; */
+            /* // when out of boundary */
             /* } */
             /* if(input_index_y<0||input_index_y>=input_shape.x){ */
-                /* continue; */
+            /* continue; */
             /* } */
 
             int input_pos_y = batch_ind*input_shape.x+input_index_y;

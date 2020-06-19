@@ -9,7 +9,6 @@
 namespace opengl{
     BatchNormKernel::BatchNormKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/batchnorm.glsl";
         }
 
     void BatchNormKernel::SetupAttr(const dlxnet::Attribute& attr){
@@ -17,8 +16,16 @@ namespace opengl{
         momentum_ = bn_params.momentum();
         eps_ = bn_params.epsilon();
 
+
+    }
+    void BatchNormKernel::SelectKernel(const TensorList& inputs){
+        if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+            kernel_fname_ = "../opengl/nn/glsl/batchnorm_any4.glsl";
+        }else{
+            kernel_fname_ = "../opengl/nn/glsl/batchnorm.glsl";
+        }
         // single output
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+        output_tensor_dformats_.emplace_back(inputs[0]->dformat());
     }
 
     void BatchNormKernel::Compute(TensorList& inputs, TensorList& outputs){

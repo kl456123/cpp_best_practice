@@ -41,9 +41,7 @@ namespace opengl{
 
         SetupAttr(node.attr());
 
-        // setup program for each kernel here
-        SetupProgram(context_->CreateProgram(kernel_fname(),
-                    build_options()));
+
     }
 
     std::string Kernel::DebugString()const{

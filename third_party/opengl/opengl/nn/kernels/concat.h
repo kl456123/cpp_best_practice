@@ -17,6 +17,7 @@ namespace opengl{
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs)override{}
             virtual void SetupAttr(const dlxnet::Attribute& attr);
+            virtual void SelectKernel(const TensorList& inputs)override;
             virtual ~ConcatKernel();
         private:
             int axis_;

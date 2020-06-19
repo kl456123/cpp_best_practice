@@ -27,8 +27,20 @@ namespace opengl{
     }
     ConcatKernel::ConcatKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/concat_multi.glsl";
         }
+
+    void ConcatKernel::SelectKernel(const TensorList& inputs){
+        CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::ANY4);
+        if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+            kernel_fname_ = "../opengl/nn/glsl/concat_multi.glsl";
+        }else{
+            // kernel_fname_ = "../opengl/nn/glsl/concat.glsl";
+        }
+
+        // set output dformat first, then we can according
+        // to dformat to infer output shape
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+    }
 
     void ConcatKernel::SetupAttr(const dlxnet::Attribute& attr){
         auto& concat_params = attr.concat_attr();
@@ -77,11 +89,12 @@ namespace opengl{
         }
     }
 
+
+
+
     void ConcatKernel::InferOutputShape(const TensorList& input_tensors,
             TensorShapeList& output_shapes){
-        // set output dformat first, then we can according
-        // to dformat to infer output shape
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+
         if(axis_==-1){
             axis_=input_tensors[0]->shape().size()-1;
         }

@@ -286,12 +286,18 @@ namespace opengl{
                 CHECK(input_tensor)<<"input tensor is uninitialized of kernel index: "<<i;
                 kernel->input_tensors_.emplace_back(input_tensor);
             }
+            // build kernel here before all tensors allocated
+            kernel->SelectKernel(kernel->input_tensors_);
+            // setup program for each kernel here
+            kernel->SetupProgram(context_->CreateProgram(kernel->kernel_fname(),
+                        kernel->build_options()));
 
             // infer output shapes from input shapes
             // Note that use input tensor as arg instead of input shapes
             // we need dformat(like nhwc) info to derminate the output shape no only the input shape.
             // kernel->InferOutputShape(input_tensors, output_shapes);
             kernel->InferOutputShape(kernel->input_tensors_, output_shapes);
+
             CHECK_GT(output_shapes.size(), 0);
 
             // allocate memory for each output tensors according to their shapes
@@ -303,6 +309,8 @@ namespace opengl{
 
                 kernel->output_tensors_.emplace_back(output_tensor);
             }
+
+
 
             if(CheckKernelReady(kernel.get())){
                 // precompute kernel, not only used for constant kernel

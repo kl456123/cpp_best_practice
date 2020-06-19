@@ -16,6 +16,56 @@ namespace opengl{
             }
         }
 
+    void Conv2DKernel::SelectKernel(const TensorList& inputs){
+        if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+            // as for different conv2d use different shaders
+            if(kernel_size_==1&& group_size_==1&&dilation_==1&&stride_==1&&padding_==0){
+                // 1x1 conv2d
+                kernel_fname_="../opengl/nn/glsl/conv2d_pw_any4.glsl";
+            }else if(group_size_!=1){
+                // add insanity check here to make sure it is dw conv
+                // consider it as depthwise conv2d
+                kernel_fname_="../opengl/nn/glsl/conv2d_dw_any4.glsl";
+            }else{
+                // default conv2d shader
+                kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+            }
+        }else{
+            // as for different conv2d use different shaders
+            if(kernel_size_==1&& group_size_==1&&dilation_==1&&stride_==1&&padding_==0){
+                // 1x1 conv2d
+                kernel_fname_="../opengl/nn/glsl/conv2d_pw.glsl";
+            }else if(group_size_!=1){
+                // add insanity check here to make sure it is dw conv
+                // consider it as depthwise conv2d
+                kernel_fname_="../opengl/nn/glsl/conv2d_dw.glsl";
+            }else{
+                // default conv2d shader
+                kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+            }
+        }
+
+        // set build options here
+        if(input_tensor_indexes_.size()==3){
+            build_options_ += "#define USE_BIAS\n";
+        }
+
+        if(activation_type_=="Clip"){
+            build_options_ += "#define USE_CLIP\n";
+        }else if(activation_type_=="Relu"){
+            build_options_ += "#define USE_RELU\n";
+        }
+
+        // if(group_size_!=1){
+        // // more general conv2d case, commonly used by depthwise conv2d
+        // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
+        // }else{
+        // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
+        // }
+
+        output_tensor_dformats_.emplace_back(inputs[0]->dformat());
+    }
+
     void Conv2DKernel::SetupAttr(const dlxnet::Attribute& attr){
         auto& conv2d_params = attr.conv2d_attr();
 
@@ -56,45 +106,10 @@ namespace opengl{
             }
         }
 
-        // as for different conv2d use different shaders
-        if(kernel_size_==1&& group_size_==1&&dilation_==1&&stride_==1&&padding_==0){
-            // 1x1 conv2d
-            kernel_fname_="../opengl/nn/glsl/conv2d_pw.glsl";
-        }else if(group_size_!=1){
-            // add insanity check here to make sure it is dw conv
-            // consider it as depthwise conv2d
-            kernel_fname_="../opengl/nn/glsl/conv2d_dw.glsl";
-        }else{
-            // default conv2d shader
-            kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
-        }
-
-
-
-        // if(group_size_!=1){
-        // // more general conv2d case, commonly used by depthwise conv2d
-        // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
-        // }else{
-        // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
-        // }
-
         // only used for fused op
         activation_type_= conv2d_params.activation_type();
         min_=conv2d_params.min();
         max_=conv2d_params.max();
-
-        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
-
-        // set build options here
-        if(input_tensor_indexes_.size()==3){
-            build_options_ += "#define USE_BIAS\n";
-        }
-
-        if(activation_type_=="Clip"){
-            build_options_ += "#define USE_CLIP\n";
-        }else if(activation_type_=="Relu"){
-            build_options_ += "#define USE_RELU\n";
-        }
     }
 
 
@@ -111,10 +126,10 @@ namespace opengl{
         auto input_shape = inputs[0]->shape();
         auto output_shape = outputs[0]->shape();
 
-        program_->set_vec3i("input_shape", inputs[0]->height(),
-                inputs[0]->width(), inputs[0]->channel());
-        program_->set_vec3i("output_shape", outputs[0]->height(),
-                outputs[0]->width(), outputs[0]->channel());
+        program_->set_vec3i("input_shape", input_shape[1],
+                input_shape[2], input_shape[3]);
+        program_->set_vec3i("output_shape", output_shape[1],
+                output_shape[2], output_shape[3]);
         program_->set_int("padding", padding_);
         program_->set_int("kernel_size", kernel_size_);
         program_->set_int("stride_size", stride_);

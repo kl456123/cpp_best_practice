@@ -70,6 +70,8 @@ namespace opengl{
 
             std::string build_options()const{return build_options_;}
             void set_build_options(const std::string& opt){build_options_=opt;}
+
+            virtual void SelectKernel(const TensorList& inputs){};
         protected:
             // attach output tensor to the target(fbo)
             // used in compute function of subclass

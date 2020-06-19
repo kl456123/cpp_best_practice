@@ -17,6 +17,7 @@ namespace opengl{
             virtual void InferOutputShape(TensorShapeList& inputs,
                     TensorShapeList& outputs);
             virtual void SetupAttr(const dlxnet::Attribute& attr);
+            virtual void SelectKernel(const TensorList& inputs)override;
             virtual ~BatchNormKernel();
         private:
             float momentum_;

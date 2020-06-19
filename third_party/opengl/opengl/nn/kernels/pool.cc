@@ -10,13 +10,22 @@ namespace opengl{
     template<PoolType pool_type>
         PoolKernel<pool_type>::PoolKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/pool.glsl";
+        }
+
+    template<PoolType pool_type>
+        void PoolKernel<pool_type>::SelectKernel(const TensorList& inputs){
+            if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+                kernel_fname_ = "../opengl/nn/glsl/pool_any4.glsl";
+            }else{
+                kernel_fname_ = "../opengl/nn/glsl/pool.glsl";
+            }
+            // set single output dformat for all typed pool kernels
+            output_tensor_dformats_.emplace_back(inputs[0]->dformat());
         }
 
     template<PoolType pool_type>
         void PoolKernel<pool_type>::SetupAttr(const dlxnet::Attribute& attr){
-            // set single output dformat for all typed pool kernels
-            output_tensor_dformats_.emplace_back(dlxnet::TensorProto::NHWC4);
+
             if(pool_type_==GlobalAveragePool){
                 return;
             }
