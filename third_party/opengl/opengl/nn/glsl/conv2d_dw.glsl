@@ -65,13 +65,13 @@ void main() {
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = i*dilation+input_index_x_base;
             int input_index_y = j*dilation+input_index_y_base;
-            /* if(input_index_x<0||input_index_x>=input_shape.y){ */
-                /* continue; */
-                /* // when out of boundary */
-            /* } */
-            /* if(input_index_y<0||input_index_y>=input_shape.x){ */
-                /* continue; */
-            /* } */
+            if(input_index_x<0||input_index_x>=input_shape.y){
+                continue;
+                // when out of boundary
+            }
+            if(input_index_y<0||input_index_y>=input_shape.x){
+                continue;
+            }
 
             int input_pos_y = batch_ind*input_shape.x+input_index_y;
             int input_pos_x = input_index_x*in_4_dims+out_4_ind;

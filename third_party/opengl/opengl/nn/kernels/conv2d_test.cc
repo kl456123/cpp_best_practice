@@ -22,6 +22,8 @@ namespace opengl{
         bool use_bias = true;
         const std::string weight_name = "conv2d1.weight";
         const std::string bias_name = "conv2d1.bias";
+        DataFormat input_dformat = dlxnet::TensorProto::NHWC;
+        string output_dformat_str = "NHWC";
 
 
 
@@ -41,6 +43,8 @@ namespace opengl{
             groups = 1;
             dilation = 1;
             use_bias = false;
+            input_dformat = dlxnet::TensorProto::NHWC;
+            output_dformat_str = "NHWC";
         }
 
         // cpu version of conv2d used for check the correctness
@@ -146,10 +150,11 @@ namespace opengl{
             ::opengl::NamedTensorList inputs(1);
             ::opengl::TensorList outputs_cpu;
             inputs[0].first = "input";
-            inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape);
+            inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape, input_dformat);
 
             ::opengl::TensorNameList output_names({"output", weight_name});
             ::opengl::StringList dformats({"NHWC", "NCHW"});
+            dformats[0]=output_dformat_str;
             if(use_bias){
                 output_names.emplace_back(bias_name);
                 dformats.emplace_back("ANY");
@@ -206,6 +211,23 @@ namespace opengl{
         }
 
     }
+
+    TEST(Conv2dTest, ANYInputTest){
+        Reset();
+        input_channels = 1;
+        use_bias = false;
+        kernel_size = 3;
+        // set conv2d params first
+        // const int size = 2;
+        input_height = 2;
+        input_width = 2;
+
+        input_dformat = dlxnet::TensorProto::ANY;
+        output_dformat_str = "ANY";
+
+        SingleInference();
+    }
+
     TEST(Conv2dTest, DifferentInputShape){
         Reset();
 

@@ -29,14 +29,20 @@ namespace opengl{
             return amended_shape;
         }
     }
-    TransposeKernel::TransposeKernel(Context* context)
-        :Kernel(context){
+
+    void TransposeKernel::SelectKernel(const TensorList& inputs){
+        if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+            kernel_fname_ = "../opengl/nn/glsl/transpose_any4.glsl";
+        }else{
             kernel_fname_ = "../opengl/nn/glsl/transpose.glsl";
-
-            request_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
-
-            output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
         }
+
+        // output dformat must be any4
+        output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+    }
+
+    TransposeKernel::TransposeKernel(Context* context)
+        :Kernel(context){}
 
     void TransposeKernel::SetupAttr(const dlxnet::Attribute& attr){
         auto& transpose_params = attr.transpose_attr();
@@ -50,30 +56,30 @@ namespace opengl{
         DLOG(INFO)<<"TransposeKernel Inputs: "<<inputs.size();
         Tensor* any4_tensor = nullptr;
         auto input_tensor = inputs[0];
-        if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
-            // use tensor cache
-            VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
-            if(cached_any4_tensor_==nullptr){
-                any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
-                        Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
-                cached_any4_tensor_ = any4_tensor;
-            }else{
-                // assume it is the same as before
-                // it happens when loop inference
-                any4_tensor = cached_any4_tensor_;
-            }
-            functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
-        }else{
-            any4_tensor = inputs[0];
-        }
-        CHECK_EQ(any4_tensor->dformat(), dlxnet::TensorProto::ANY4);
+        // if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
+            // // use tensor cache
+            // VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
+            // if(cached_any4_tensor_==nullptr){
+                // any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
+                        // Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+                // cached_any4_tensor_ = any4_tensor;
+            // }else{
+                // // assume it is the same as before
+                // // it happens when loop inference
+                // any4_tensor = cached_any4_tensor_;
+            // }
+            // functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
+        // }else{
+            // any4_tensor = inputs[0];
+        // }
+        // CHECK_EQ(any4_tensor->dformat(), dlxnet::TensorProto::ANY4);
         program_->Activate();
-        auto input_image = any4_tensor->device<Texture>();
+        auto input_image = input_tensor->device<Texture>();
 
         program_->SetRetVal(outputs);
         // set params
         program_->set_vec4i("perm", AmendPerm(perm_));
-        program_->set_vec4i("input_shape", AmendShape(any4_tensor->shape()));
+        program_->set_vec4i("input_shape", AmendShape(input_tensor->shape()));
         program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
         // set args

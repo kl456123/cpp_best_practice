@@ -39,6 +39,7 @@ void main() {
     ivec2 pos = ivec2(gl_FragCoord.xy);
     int out_4_dims = UP_DIV(output_shape.z, 4);
     int in_4_dims = UP_DIV(input_shape.z, 4);
+    int input_base = UP_DIV(input_shape.z, 4)*input_shape.y;
 
     int index = pos.x + pos.y * MAX_TEXTURE_SIZE;
 
@@ -66,22 +67,23 @@ void main() {
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = i*dilation+input_index_x_base;
             int input_index_y = j*dilation+input_index_y_base;
-            /* if(input_index_x<0||input_index_x>=input_shape.y){ */
-            /* continue; */
-            /* // when out of boundary */
-            /* } */
-            /* if(input_index_y<0||input_index_y>=input_shape.x){ */
-            /* continue; */
-            /* } */
+            if(input_index_x<0||input_index_x>=input_shape.y){
+                continue;
+                // when out of boundary
+            }
+            if(input_index_y<0||input_index_y>=input_shape.x){
+                continue;
+            }
 
             int input_pos_y = batch_ind*input_shape.x+input_index_y;
             int input_pos_x = input_index_x*in_4_dims+out_4_ind;
+            int input_index = input_pos_x+input_pos_y*input_base;
 
             // (h*w*o/4, 1, o4)
             int filter_pos_y = (j*kernel_size+i)*out_4_dims+out_4_ind;
             vec4 k = texelFetch(input_filter, ivec2(0, filter_pos_y), 0);
 
-            color+=k*texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0);
+            color+=k*texelFetch(input_image, ivec2(input_index%MAX_TEXTURE_SIZE, input_index/MAX_TEXTURE_SIZE), 0);
         }
     }
 

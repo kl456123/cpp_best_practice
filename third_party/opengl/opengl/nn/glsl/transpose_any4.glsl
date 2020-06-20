@@ -1,3 +1,4 @@
+
 // (nh, wc/4, 4)
 uniform sampler2D input_image;
 
@@ -27,7 +28,6 @@ void main(){
     perms[1] = perm.y;
     perms[2] = perm.z;
     perms[3] = perm.w;
-    int input_base = UP_DIV(input_shape.w, 4)*input_shape.z;
 
     int input_coord[4];
     float res[4];
@@ -50,21 +50,16 @@ void main(){
 
         // nhw*c/4 , 4
         int offset = ((input_coord[0]*input_shape.y+input_coord[1])*input_shape.z+input_coord[2])*UP_DIV(input_shape.w, 4)+input_coord[3]/4;
-
-
-        int input_pos_y = offset/input_base;
-        int input_pos_x = offset%input_base;
-
-
         if(input_coord[3]%4==0){
-            res[ind] = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).x;
+            res[ind] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
         }else if(input_coord[3]%4==1){
-            res[ind] = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).y;
+            res[ind] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
         }else if(input_coord[3]%4==2){
-            res[ind] = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).z;
+            res[ind] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
         }else if(input_coord[3]%4==3){
-            res[ind] = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0).w;
+            res[ind] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
         }
+        /* res[ind] = ((input_coord[0]*input_shape.y+input_coord[1])*input_shape.z+input_coord[2])*input_shape.w; */
     }
 
     color.x = res[0];

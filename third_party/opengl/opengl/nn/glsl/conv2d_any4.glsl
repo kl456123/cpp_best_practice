@@ -22,43 +22,50 @@ out vec4 color;
 #define UP_DIV(x, y) (((x)+(y)-1)/(y))
 
 // filter shape: (h*w* out_4, in_4*in4, out4)
-// image shape: (1, n*h*w*in_4, in4)
-// output shape: (1, n*h*w*out_4, out4)
+// image shape: (n*h, w*in_4, in4)
+// output shape: (n*h, w*out_4, out4)
 // bias shape: (1, out/4, out4)
 // where in4=out4 = 4
 void main() {
     ivec2 pos = ivec2(gl_FragCoord.xy);
-    int index = pos.x + pos.y * MAX_TEXTURE_SIZE;
-    int out_4_dims = UP_DIV(output_shape.z, 4);
+    int output_index = pos.x+pos.y*MAX_TEXTURE_SIZE;
 
-    int out_4_ind = index%out_4_dims;
-    index = index/out_4_dims;
-    int output_index_x = index%output_shape.y;
-    index = index/output_shape.y;
-    int output_index_y = index%output_shape.x;
-    int batch_ind = index/output_shape.x;
+    int output_base = UP_DIV(output_shape.z, 4)*output_shape.y;
+    int input_base = UP_DIV(input_shape.z, 4)*input_shape.y;
+
+    int output_pos_y = output_index/output_base;
+    int output_pos_x = output_index%output_base;
+    // decompose pos
+    // pos = (w*out_4_i, nh_i)
+    // output_shape=(h,w,c)
+    int output_index_y = output_pos_y%output_shape.x;
+    int batch_ind = output_pos_y/output_shape.x;
+
+    int out_4_ind = output_pos_x%UP_DIV(output_shape.z, 4);
+    int output_index_x = output_pos_x/UP_DIV(output_shape.z, 4);
 
 #ifdef USE_BIAS
-        color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
+    color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
 #else
-        color = vec4(0.0);
+    color = vec4(0.0);
 #endif
     for(int i=0;i<kernel_size;++i){
         for (int j=0;j<kernel_size;++j) {
             int input_index_x = output_index_x*stride_size+i*dilation-padding;
             int input_index_y = output_index_y*stride_size+j*dilation-padding;
-            /* if(input_index_x<0||input_index_x>=input_shape.y){ */
-                /* continue; */
-                /* // when out of boundary */
-            /* } */
-            /* if(input_index_y<0||input_index_y>=input_shape.x){ */
-                /* continue; */
-            /* } */
+            if(input_index_x<0||input_index_x>=input_shape.y){
+                continue;
+                // when out of boundary
+            }
+            if(input_index_y<0||input_index_y>=input_shape.x){
+                continue;
+            }
             // loop in channel dim
             for(int in_4_ind=0;in_4_ind< UP_DIV(input_shape.z, 4);++in_4_ind){
                 // get input image
                 int input_pos_y = batch_ind*input_shape.x+input_index_y;
                 int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
+                int input_index = input_pos_x+input_pos_y*input_base;
 
                 // get input filter
                 // filter shape: (h*w*out_4, in_4*in4, out4)
@@ -73,17 +80,17 @@ void main() {
                 mat4 k = mat4(k0, k1, k2, k3);
 
                 // a 4-elements tuple in output channel dim
-                color+=k*texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0);
+                color+=k*texelFetch(input_image, ivec2(input_index%MAX_TEXTURE_SIZE, input_index/MAX_TEXTURE_SIZE), 0);
             }
         }
     }
 
 #ifdef USE_CLIP
-        color = max(vec4(min_value), color);
-        color = min(vec4(max_value), color);
+    color = max(vec4(min_value), color);
+    color = min(vec4(max_value), color);
 #endif
 
 #ifdef USE_RELU
-        color = max(vec4(min_value), color);
+    color = max(vec4(min_value), color);
 #endif
 }

@@ -11,10 +11,11 @@ namespace opengl{
         class TransposeKernel: public Kernel{
             public:
                 TransposeKernel(Context* context);
-                virtual void Compute(TensorList& inputs, TensorList& outputs);
+                virtual void Compute(TensorList& inputs, TensorList& outputs)override;
                 virtual void InferOutputShape(TensorShapeList& inputs,
-                        TensorShapeList& outputs);
-                virtual void SetupAttr(const dlxnet::Attribute& attr);
+                        TensorShapeList& outputs)override;
+                virtual void SetupAttr(const dlxnet::Attribute& attr)override;
+                virtual void SelectKernel(const TensorList& inputs)override;
                 virtual ~TransposeKernel();
             private:
                 std::vector<int> perm_;

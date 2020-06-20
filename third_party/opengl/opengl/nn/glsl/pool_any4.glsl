@@ -20,6 +20,7 @@ void main() {
     ivec2 pos = ivec2(gl_FragCoord.xy);
     int index = pos.x + pos.y * MAX_TEXTURE_SIZE;
     int out_4_dims = UP_DIV(output_shape.z, 4);
+    int input_base = UP_DIV(input_shape.z, 4)*input_shape.y;
 
     int out_4_ind = index%out_4_dims;
     index = index/out_4_dims;
@@ -47,8 +48,9 @@ void main() {
             int in_4_ind = out_4_ind;
             int input_pos_y = batch_ind*input_shape.x+input_index_y;
             int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
+            int input_index = input_pos_x+input_pos_y*input_base;
 
-            vec4 item = texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0);
+            vec4 item = texelFetch(input_image, ivec2(input_index%MAX_TEXTURE_SIZE, input_index/MAX_TEXTURE_SIZE), 0);
             if(pool_type==0){
                 // max pool
                 if(first){

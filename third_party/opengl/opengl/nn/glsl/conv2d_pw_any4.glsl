@@ -43,6 +43,7 @@ void main() {
     index = index/output_shape.y;
     int output_index_y = index%output_shape.x;
     int batch_ind = index/output_shape.x;
+    int input_base = UP_DIV(input_shape.z, 4)*input_shape.y;
 
 #ifdef USE_BIAS
     color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
@@ -58,6 +59,7 @@ void main() {
         // get input image
         int input_pos_y = batch_ind*input_shape.x+input_index_y;
         int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
+        int input_index = input_pos_x+input_pos_y*input_base;
 
         // get input filter
         // filter shape: (out_4, in_4*in4, out4)
@@ -72,7 +74,7 @@ void main() {
         mat4 k = mat4(k0, k1, k2, k3);
 
         // a 4-elements tuple in output channel dim
-        color+=k*texelFetch(input_image, ivec2(input_pos_x, input_pos_y), 0);
+        color+=k*texelFetch(input_image, ivec2(input_index%MAX_TEXTURE_SIZE, input_index/MAX_TEXTURE_SIZE), 0);
     }
 
 #ifdef USE_CLIP
