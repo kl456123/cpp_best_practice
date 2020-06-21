@@ -162,14 +162,17 @@ namespace opengl{
 
 
     DataFormat FormatToStride4(DataFormat dformat){
-        if(dformat==dlxnet::TensorProto::NHWC){
+        if(dformat==dlxnet::TensorProto::NHWC
+                ||dformat==dlxnet::TensorProto::NHWC4){
             return dlxnet::TensorProto::NHWC4;
         }
-        if(dformat==dlxnet::TensorProto::ANY){
+        if(dformat==dlxnet::TensorProto::ANY
+                ||dformat==dlxnet::TensorProto::ANY4){
             return dlxnet::TensorProto::ANY4;
         }
 
-        if(dformat==dlxnet::TensorProto::NCHW){
+        if(dformat==dlxnet::TensorProto::NCHW
+                ||dformat==dlxnet::TensorProto::HWN4C4){
             // only used for filter
             return dlxnet::TensorProto::HWN4C4;
         }
@@ -178,14 +181,17 @@ namespace opengl{
     }
 
     DataFormat FormatFromStride4(DataFormat dformat){
-        if(dformat==dlxnet::TensorProto::NHWC4){
+        if(dformat==dlxnet::TensorProto::NHWC4
+                ||dformat==dlxnet::TensorProto::NHWC){
             return dlxnet::TensorProto::NHWC;
         }
-        if(dformat==dlxnet::TensorProto::ANY4){
+        if(dformat==dlxnet::TensorProto::ANY4
+                ||dformat==dlxnet::TensorProto::ANY){
             return dlxnet::TensorProto::ANY;
         }
 
-        if(dformat==dlxnet::TensorProto::HWN4C4){
+        if(dformat==dlxnet::TensorProto::HWN4C4
+                ||dformat==dlxnet::TensorProto::NCHW){
             // only used for filter
             return dlxnet::TensorProto::NCHW;
         }
