@@ -7,7 +7,8 @@ set(NN_SRC_FNAMES conv2d.cc const.cc
     binary.cc batchnorm.cc relu.cc
     pool.cc flatten.cc gemm.cc clip.cc
     transpose.cc shape.cc gather.cc
-    unsqueeze.cc concat.cc reshape.cc)
+    unsqueeze.cc concat.cc reshape.cc
+    decoder.cc)
 
 foreach(file_path ${NN_SRC_FNAMES})
     set(NN_SRC_FILES ${NN_SRC_FILES} ${NN_SRC_DIR}/${file_path})

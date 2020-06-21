@@ -156,6 +156,9 @@ namespace graph{
 
 
             void ToGraphDef(::dlxnet::GraphProto* graph_def) const;
+
+            // called by graph constructor
+            void SetupInputAndOutputNames(const ::dlxnet::GraphProto& graph_def);
         private:
             // Ownership of the returned Node is not transferred to caller.
             Node* AllocateNode(std::shared_ptr<NodeProperties> props);
@@ -179,6 +182,10 @@ namespace graph{
 
             // For generating unique names.
             int name_counter_ = 0;
+
+            // input names and output names
+            std::vector<std::string> input_names_;
+            std::vector<std::string> output_names_;
 
     };
 }//namespace

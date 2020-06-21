@@ -1,6 +1,6 @@
-uniform sampler2D input_image;
-uniform sampler2D input_filter;
-uniform sampler2D input_bias;
+uniform PRECISION sampler2D  input_image;
+uniform PRECISION sampler2D  input_filter;
+uniform PRECISION sampler2D  input_bias;
 // conv2d params
 uniform int stride_size;
 uniform int kernel_size;
@@ -38,12 +38,12 @@ void main() {
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
 #ifdef USE_BIAS
-        color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
+    color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
 #else
-        color = vec4(0.0);
+    color = vec4(0.0);
 #endif
-    for(int i=0;i<kernel_size;++i){
-        for (int j=0;j<kernel_size;++j) {
+    for (int j=0;j<kernel_size;++j) {
+        for(int i=0;i<kernel_size;++i){
             int input_index_x = output_index_x*stride_size+i*dilation-padding;
             int input_index_y = output_index_y*stride_size+j*dilation-padding;
             if(input_index_x<0||input_index_x>=input_shape.y){
@@ -78,11 +78,12 @@ void main() {
     }
 
 #ifdef USE_CLIP
-        color = max(vec4(min_value), color);
-        color = min(vec4(max_value), color);
+    /* color = max(vec4(min_value), color); */
+    /* color = min(vec4(max_value), color); */
+    color = clamp(color, vec4(min_value), vec4(max_value));
 #endif
 
 #ifdef USE_RELU
-        color = max(vec4(min_value), color);
+    color = max(vec4(0.0), color);
 #endif
 }

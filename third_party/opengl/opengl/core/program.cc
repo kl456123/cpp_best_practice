@@ -87,7 +87,7 @@ namespace opengl{
         std::ostringstream headOs;
         headOs << "#version "<<GLSL_VERSION<<"\n";
         headOs << "#define FORMAT " << imageFormat << "\n";
-        headOs << "#define PRECISION highp\n";
+        headOs << "#define PRECISION mediump\n";
         headOs << "precision PRECISION float;\n";
         headOs<<"#define LOCAL_SIZE_X 1\n";
         headOs<<"#define LOCAL_SIZE_Y 1\n";

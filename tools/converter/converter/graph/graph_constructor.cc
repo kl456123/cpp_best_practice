@@ -22,11 +22,14 @@ namespace graph{
                 Convert();
 
                 FixupSourceAndSinkEdges();
+                SetupInputAndOutputNames();
                 return true;
             }
         private:
             void BuildNodeIndex();
             void InitFromEdges();
+            // make sure the names of input and output should be the same
+            void SetupInputAndOutputNames();
             void Convert();
             void FixupSourceAndSinkEdges();
             void MakeNode(NodeDef&& node_def, Node** node);
@@ -214,8 +217,13 @@ namespace graph{
     void GraphConstructor::MakeEdge(Node* src, int output_index, Node* dst,
             int input_index) {
         // VLOG(1)<<src->name()<<":"<<output_index<<" -> "
-            // <<dst->name()<<":"<<input_index;
+        // <<dst->name()<<":"<<input_index;
         g_->AddEdge(src, output_index, dst, input_index);
+    }
+
+
+    void GraphConstructor::SetupInputAndOutputNames(){
+        g_->SetupInputAndOutputNames(graph_def_);
     }
 
 

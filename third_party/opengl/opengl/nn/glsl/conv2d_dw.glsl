@@ -1,14 +1,14 @@
 // (nh, wc/4, 4)
 // nhwc4
-uniform sampler2D input_image;
+uniform  PRECISION sampler2D   input_image;
 
 // (h*w*o/4, 1, o4)
 // hwio4
-uniform sampler2D input_filter;
+uniform  PRECISION sampler2D   input_filter;
 
 // (1, o/4, 4)
 // any4
-uniform sampler2D input_bias;
+uniform PRECISION sampler2D   input_bias;
 
 // conv2d params
 uniform int stride_size;
@@ -61,8 +61,8 @@ void main() {
     int input_index_x_base = output_index_x*stride_size-padding;
     int input_index_y_base = output_index_y*stride_size-padding;
 
-    for(int i=0;i<kernel_size;++i){
-        for (int j=0;j<kernel_size;++j) {
+    for (int j=0;j<kernel_size;++j) {
+        for(int i=0;i<kernel_size;++i){
             int input_index_x = i*dilation+input_index_x_base;
             int input_index_y = j*dilation+input_index_y_base;
             if(input_index_x<0||input_index_x>=input_shape.y){
@@ -85,11 +85,12 @@ void main() {
     }
 
 #ifdef USE_CLIP
-    color = max(vec4(min_value), color);
-    color = min(vec4(max_value), color);
+    /* color = max(vec4(min_value), color); */
+    /* color = min(vec4(max_value), color); */
+    color = clamp(color, vec4(min_value), vec4(max_value));
 #endif
 
 #ifdef USE_RELU
-    color = max(vec4(min_value), color);
+    color = max(vec4(0.0), color);
 #endif
 }

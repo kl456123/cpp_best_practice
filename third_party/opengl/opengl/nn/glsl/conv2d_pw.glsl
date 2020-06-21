@@ -2,11 +2,11 @@
  * group=1, dialtion=1, kernel=1, stride=1, padding=0
  */
 // nhwc4
-uniform sampler2D input_image;
+uniform PRECISION sampler2D input_image;
 // hwo4i4
 // (h*w*o/4, i/4*i4, o4)
-uniform sampler2D input_filter;
-uniform sampler2D input_bias;
+uniform PRECISION sampler2D   input_filter;
+uniform PRECISION sampler2D  input_bias;
 // conv2d params
 uniform int stride_size;
 uniform int kernel_size;
@@ -52,11 +52,12 @@ void main() {
 
     int input_index_x = output_index_x;
     int input_index_y = output_index_y;
+    int tmp = batch_ind*input_shape.x;
     // loop in channel dim
     for(int in_4_ind=0;in_4_ind<in_4_dim;++in_4_ind){
         // get input image
-        int input_pos_y = batch_ind*input_shape.x+input_index_y;
-        int input_pos_x = input_index_x*UP_DIV(input_shape.z, 4)+in_4_ind;
+        int input_pos_y = tmp+input_index_y;
+        int input_pos_x = input_index_x*in_4_dim+in_4_ind;
 
         // get input filter
         // filter shape: (out_4, in_4*in4, out4)
@@ -66,6 +67,10 @@ void main() {
         vec4 k1 = texelFetch(input_filter, ivec2(filter_pos_x+1, filter_pos_y), 0);
         vec4 k2 = texelFetch(input_filter, ivec2(filter_pos_x+2, filter_pos_y), 0);
         vec4 k3 = texelFetch(input_filter, ivec2(filter_pos_x+3, filter_pos_y), 0);
+        /* vec4 k0=vec4(1.0); */
+        /* vec4 k1=vec4(2.0); */
+        /* vec4 k2=vec4(3.0); */
+        /* vec4 k3=vec4(4.0); */
 
         // kernel matrix
         mat4 k = mat4(k0, k1, k2, k3);
@@ -75,11 +80,12 @@ void main() {
     }
 
 #ifdef USE_CLIP
-    color = max(vec4(min_value), color);
-    color = min(vec4(max_value), color);
+    /* color = max(vec4(min_value), color); */
+    /* color = min(vec4(max_value), color); */
+    color = clamp(color, vec4(0.0), vec4(max_value));
 #endif
 
 #ifdef USE_RELU
-    color = max(vec4(min_value), color);
+    color = max(vec4(0.0), color);
 #endif
 }

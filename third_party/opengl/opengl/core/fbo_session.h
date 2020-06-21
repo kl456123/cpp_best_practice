@@ -49,6 +49,8 @@ namespace opengl{
                 return model_->producer_name()=="ONNX";
             }
 
+            Tensor* FindTensorByName(const std::string& name);
+
         private:
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
@@ -59,7 +61,6 @@ namespace opengl{
             bool CheckKernelReady(const Kernel* kernel);
             void UpdateKernelReady(const Kernel* kernel);
 
-            Tensor* FindTensorByName(const std::string& name);
             // caller does not own it
             Tensor* FindTensorById(const int id);
 

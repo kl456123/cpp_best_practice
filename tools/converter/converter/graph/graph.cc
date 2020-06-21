@@ -9,7 +9,8 @@
 namespace graph{
     namespace{
 
-        void TopologicalSort(const Graph* graph, std::vector<int>* sorted_node_indexes){
+        void TopologicalSort(const Graph* graph, std::vector<int>* sorted_node_indexes,
+                const std::set<std::string>& target_node_names){
             std::set<int> ready;
             std::vector<int> pending;
 
@@ -30,8 +31,12 @@ namespace graph{
                 int o = *ready.begin();
                 ready.erase(ready.begin());
                 const Node* node = graph->FindNodeId(o);
-                // skip unused op
-                if(node->out_edges().size()==0&&node->num_inputs()==0){continue;}
+
+                // skip unused op when satisfing both conditions
+                // 1. dead
+                // 2. not be used by output
+                if(node->out_edges().size()==0&&node->num_inputs()==0
+                        && (target_node_names.find(node->name())==target_node_names.end())){continue;}
                 sorted_node_indexes->emplace_back(o);
 
                 // update succeed nodes
@@ -233,7 +238,13 @@ namespace graph{
         std::unordered_map<std::string, int> total_tensor_names;
         // topological sort first and remove unused node at the same time
         std::vector<int>  sorted_node_indexes;
-        TopologicalSort(this, &sorted_node_indexes);
+
+        // TODO(breakpoint) should also use input_names here ?
+        std::set<std::string> target_node_names;
+        for(auto& name: output_names_){
+            target_node_names.insert(name);
+        }
+        TopologicalSort(this, &sorted_node_indexes, target_node_names);
 
 
         for(auto i: sorted_node_indexes){
@@ -310,6 +321,17 @@ namespace graph{
                 CHECK_EQ(node_def->input_index_size(), 1)<<" In Index "<<i
                     <<" Name: "<<node_def->name();
             }
+        }
+    }
+
+
+    void Graph::SetupInputAndOutputNames(const ::dlxnet::GraphProto& graph_def){
+        for(const auto& name: graph_def.input_names()){
+            input_names_.emplace_back(std::move(name));
+        }
+
+        for(const auto& name: graph_def.output_names()){
+            output_names_.emplace_back(std::move(name));
         }
     }
 

@@ -88,5 +88,72 @@ namespace opengl{
             internal::RunOpenGLProgram("../opengl/nn/glsl/hwn4c4_to_nchw.glsl",
                     ctx, src_tensor, dst_tensor);
         };
+
+        ////////////////////////////////
+        // common used functor in detector
+        void SSDBBoxDecoder::operator()(Context* ctx, const Tensor* prediction_tensor,
+                const Tensor* anchor_tensor, Tensor* decoded_tensor,
+                const std::vector<float>& variances){
+
+            // common used for copy from host to device
+            CHECK(!prediction_tensor->is_host());
+            CHECK(!anchor_tensor->is_host());
+            CHECK(!decoded_tensor->is_host());
+
+            auto program = std::unique_ptr<Program>(ctx->CreateProgram("../opengl/nn/glsl/decoder.glsl"));
+            // activate it before use
+            program->Activate();
+
+            program->SetRetVal({decoded_tensor});
+
+            // set input
+            auto prediction_texture = prediction_tensor->device<Texture>();
+            auto anchors_texture = anchor_tensor->device<Texture>();
+            program->set_vec4i("input_shape", prediction_tensor->shape());
+            program->set_vec4("variances", variances);
+            // prediction
+            {
+                program->set_image2D("prediction", prediction_texture->id(),  0);
+                OPENGL_CHECK_ERROR;
+            }
+
+            // prediction
+            {
+                program->set_image2D("anchors", anchors_texture->id(),  1);
+                OPENGL_CHECK_ERROR;
+            }
+            program->Run();
+        }
+
+        void SSDBBoxEncoder::operator()(Context* ctx, const Tensor* gtboxes_tensor,
+                const Tensor* anchor_tensor, Tensor* encoded_tensor){
+        }
+
+        void NMS::operator()(Context* ctx, const Tensor* boxes, Tensor* final_boxes, float nms_threshold){
+
+            // common used for copy from host to device
+            CHECK(!boxes->is_host());
+            CHECK(!final_boxes->is_host());
+            CHECK_EQ(boxes->shape().size(), 3);
+
+            auto program = std::unique_ptr<Program>(ctx->CreateProgram("../opengl/nn/glsl/nms.glsl"));
+            // activate it before use
+            program->Activate();
+
+            program->SetRetVal({final_boxes});
+
+            // set input
+            auto boxes_texture = boxes->device<Texture>();
+            program->set_vec3i("input_shape", boxes->shape());
+            program->set_float("nms_threshold", nms_threshold);
+            program->set_int("topk", 100);
+            // prediction
+            {
+                program->set_image2D("boxes", boxes_texture->id(),  0);
+                OPENGL_CHECK_ERROR;
+            }
+
+            program->Run();
+        }
     }//namespace functor
 }//namespace opengl
