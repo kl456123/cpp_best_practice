@@ -16,6 +16,7 @@
 #include "opengl/core/lib/monitor/collection_registry.h"
 #include "opengl/nn/profiler/profiler.h"
 #include "opengl/core/step_stats.pb.h"
+#include "opengl/nn/profiler/profiler_session.h"
 
 // only tensor is visible in nn module
 using opengl::Tensor;
@@ -25,6 +26,7 @@ using opengl::FBOSession;
 using opengl::monitoring::CollectionRegistry;
 using opengl::monitoring::CollectedMetrics;
 using opengl::Profiler;
+using opengl::ProfilerSession;
 
 namespace{
     void ProfileProgram(){
@@ -87,7 +89,6 @@ int main(int argc, char** argv){
     // <<session->DebugString();
 
     // warming up
-    ::opengl::SetTrackingStats(false);
     for(int i=0;i<3;++i){
         // init graph according to inputs
         // and then do computation for the graph
@@ -98,54 +99,28 @@ int main(int argc, char** argv){
         session->GetOutputs(output_names, dformats, &outputs_cpu);
 
     }
-    auto env_time = EnvTime::Default();
-    auto start_time1 = env_time->NowMicros();
-    ::opengl::SetTrackingStats(true);
 
+    auto profiler_session = ProfilerSession::Create();
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
         // do computation for the graph
-        ::opengl::StepStats step_stats;
         {
-            OPENGL_CALL(glFinish());
-            auto start_time1 = env_time->NowMicros();
-            session->Run({{"input", input_tensor}}, &step_stats);
-            OPENGL_CALL(glFinish());
-            auto duration_time = env_time->NowMicros()-start_time1;
-            std::cout<<"Run Time: "<<duration_time*1e-3<<" ms\n";
+            session->Run({{"input", input_tensor}});
         }
 
         {
-            OPENGL_CALL(glFinish());
-            auto start_time1 = env_time->NowMicros();
             // get cpu outputs from device
             session->GetOutputs(output_names, dformats, &outputs_cpu);
-            OPENGL_CALL(glFinish());
-            auto duration_time = env_time->NowMicros()-start_time1;
-            step_stats.set_output_time_micros(duration_time);
         }
-
-        // collect data for profilling
-        profiler->CollectData(&step_stats);
-
-        // print output
-        LOG(INFO)<<outputs_cpu[0]->ShortDebugString();
     }
-    auto duration_time = env_time->NowMicros()-start_time1;
-    auto second_per_round = duration_time*1e-6/num_iters;
-    std::cout<<"Total Time: "<<duration_time*1e-3/num_iters<<" ms\n";
-    // force to display
-    std::cout<<"FPS: "<<1.0/second_per_round<<std::endl;
+
+    ::opengl::StepStats step_stats;
+    profiler_session->CollectData(&step_stats);
+    profiler->CollectData(&step_stats);
 
     std::cout<<"----------------------profiler start------------------"<<std::endl;
-    profiler->PrintProfiling();
+    profiler->PrintProfiling(num_iters);
     std::cout<<"----------------------profiler end------------------"<<std::endl;
-    // std::cout<<"----------------------metric start------------------"<<std::endl;
-    // ProfileProgram();
-    // std::cout<<"----------------------metric end------------------"<<std::endl;
-
-    LOG(INFO)<<"BiasAdd Success";
-
 
     return 0;
 }

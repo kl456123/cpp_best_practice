@@ -20,6 +20,9 @@ namespace opengl{
                 ss<<arg1<<StrCat(args...);
                 return ss.str();
             }
+
+        void split(const std::string& s, std::vector<string>& tokens,
+                const std::string& delimiters= " ");
     }// namespace strings
 } // namespace opengl
 

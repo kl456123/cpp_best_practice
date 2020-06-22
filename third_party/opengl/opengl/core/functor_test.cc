@@ -263,9 +263,10 @@ namespace opengl{
         DIFFERENT_SHAPE_LOOP_END;
     }
 
-    TEST(FunctorTest, ANYToANY4ToANYTest){
+    TEST(FunctorTest, ANYToANY4Test){
         auto ctx = GetContext();
-        DIFFERENT_SHAPE_LOOP_START;
+        // DIFFERENT_SHAPE_LOOP_START;
+        IntList shape{2, 3};
         auto src_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
                     dlxnet::TensorProto::ANY));
         auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
@@ -273,25 +274,27 @@ namespace opengl{
         auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
                     Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
         auto actual_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
-                    dlxnet::TensorProto::ANY));
+                    dlxnet::TensorProto::ANY4));
+        auto expected_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
 
         Tensor* actual_cpu_tensor = actual_cpu_tensor_ptr.get();
         Tensor* src_cpu_tensor = src_cpu_tensor_ptr.get();
         Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
         Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
+        Tensor* expected_cpu_tensor = expected_cpu_tensor_ptr.get();
 
         // any to any (host->device)
         CopyCPUTensorToDevice(src_cpu_tensor, src_gpu_tensor);
         // any to any4 (device->device)
         functor::ConvertTensorANYToANY4()(ctx, src_gpu_tensor, dst_gpu_tensor);
-        // any4 to any (device->device)
-        functor::ConvertTensorANY4ToANY()(ctx, dst_gpu_tensor, src_gpu_tensor);
         // any to any (device->host)
-        CopyDeviceTensorToCPU(src_gpu_tensor, actual_cpu_tensor);
+        CopyDeviceTensorToCPU(dst_gpu_tensor, actual_cpu_tensor);
+        host_functor::ConvertTensorANYToANY4()(ctx, src_cpu_tensor, expected_cpu_tensor);
 
-        CheckSameTensor(src_cpu_tensor, actual_cpu_tensor);
+        CheckSameTensor(expected_cpu_tensor, actual_cpu_tensor);
 
-        DIFFERENT_SHAPE_LOOP_END;
+        // DIFFERENT_SHAPE_LOOP_END;
     }
 
     TEST(FunctorTest, ANYToNHWC4Test){

@@ -17,36 +17,37 @@ namespace opengl{
             // loop all nodes which in that device
             for(auto& node_stats: dev_stats.node_stats()){
                 const float t = node_stats.all_end_rel_micros()*1e-3;
-                std::cout<<"node name: "<<node_stats.node_name()<<"\t"
-                    <<"node type: "<<node_stats.node_type()<<"\t"
-                <<"compute time: "<<t<<" ms\n";
+                // std::cout<<"node name: "<<node_stats.node_name()<<"\t"
+                    // <<"node type: "<<node_stats.node_type()<<"\t"
+                // <<"compute time: "<<t<<" ms\n";
                 total_micros+=t;
-                if(type2time.find(node_stats.node_type())!=type2time.end()){
-                    type2time[node_stats.node_type()].first+=t;
-                    type2time[node_stats.node_type()].second++;
+                string key_name;
+                if(node_stats.node_type().empty()){
+                    key_name = node_stats.node_name();
                 }else{
-                    type2time[node_stats.node_type()].first = t;
-                    type2time[node_stats.node_type()].second = 1;
+                    key_name = node_stats.node_type();
+                }
+                if(type2time.find(key_name)!=type2time.end()){
+                    type2time[key_name].first+=t;
+                    type2time[key_name].second++;
+                }else{
+                    type2time[key_name].first = t;
+                    type2time[key_name].second = 1;
                 }
             }
         }
 
         step_stats_time.total_micros = total_micros;
-        step_stats_time.setup_micros = step_stats->all_setup_time_micros()*1e-3;
-        step_stats_time.output_micros = step_stats->output_time_micros()*1e-3;
         steps_stats_time_.emplace_back(std::move(step_stats_time));
     }
 
-    void Profiler::PrintProfiling(){
+    void Profiler::PrintProfiling(const int step_size){
         std::stringstream ss;
         StepStatsTime mean_step_stats_time;
         // calc mean of total stats
         // sum first
-        const int step_size = steps_stats_time_.size();
         for(auto & step_stats_time: steps_stats_time_){
             mean_step_stats_time.total_micros+=step_stats_time.total_micros;
-            mean_step_stats_time.setup_micros+=step_stats_time.setup_micros;
-            mean_step_stats_time.output_micros+=step_stats_time.output_micros;
             // mean for time map
             auto& mean_type2time = mean_step_stats_time.type2time;
             auto& type2time = step_stats_time.type2time;
@@ -61,8 +62,6 @@ namespace opengl{
         }
 
         ss<<"Total Computation Time: "<<mean_step_stats_time.total_micros/step_size<<" ms\n";
-        ss<<"Session Setup Time: "<<mean_step_stats_time.setup_micros/step_size <<" ms\n";
-        ss<<"Output Time: "<<mean_step_stats_time.output_micros/step_size<<" ms\n";
 
         // print time map
         ss<<"Node Type\tTime\tCount\n";

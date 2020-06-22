@@ -18,7 +18,7 @@ namespace opengl{
             };
             void CollectData(StepStats* step_stats);
 
-            void PrintProfiling();
+            void PrintProfiling(const int num_iters);
         private:
             std::vector<StepStatsTime> steps_stats_time_;
     };

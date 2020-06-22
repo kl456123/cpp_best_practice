@@ -34,6 +34,15 @@ protobuf_generate_cpp(ProtoSources ProtoHeaders ${ProtoFiles})
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
 
+set(PROFILER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn/profiler)
+set(PROFILER_SRC_FNAMES profiler.cc traceme_recorder.cc
+    host_tracer.cc host_tracer_utils.cc profiler_session.cc
+    profiler_utils.cc profiler_interface.cc device_tracer.cc)
+
+foreach(file_path ${PROFILER_SRC_FNAMES})
+    set(PROFILER_SRC_FILES ${PROFILER_SRC_FILES} ${PROFILER_SRC_DIR}/${file_path})
+endforeach()
+
 # lib/monitor
 set(CORE_LIB_MONITOR_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core/lib/monitor)
 set(CORE_LIB_MONITOR_SRC_FILES collection_registry.cc)
@@ -96,7 +105,8 @@ endif()
 set(GL_CORE gl_core)
 
 # build core library
-add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources})
+add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES}
+    ${PROFILER_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources})
 # use both in case anyone of them not found
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
     ${PROTOBUF_LIBRARY})

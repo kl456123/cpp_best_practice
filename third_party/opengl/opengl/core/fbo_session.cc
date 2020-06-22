@@ -13,36 +13,10 @@
 #include "opengl/core/step_stats_collector.h"
 #include "opengl/core/step_stats.pb.h"
 #include "opengl/utils/env.h"
+#include "opengl/nn/profiler/traceme.h"
 
 
 namespace opengl{
-    namespace{
-        string kOpenGLDeviceName="OpenGL";
-        uint64 time_stamp = 0;
-        bool tracking_stats=false;
-
-        void Start(){
-            if(!tracking_stats){
-                return;
-            }
-            CHECK_EQ(time_stamp, 0);
-            OPENGL_CALL(glFinish());
-            time_stamp=EnvTime::Default()->NowMicros();
-        }
-
-        void Stop(const string& event_name){
-            if(!tracking_stats){
-                return;
-            }
-            CHECK_NE(time_stamp, 0);
-            OPENGL_CALL(glFinish());
-            std::cout<<event_name<<": "<< (EnvTime::Default()->NowMicros()-time_stamp)*1e-3<<" ms\n";
-            time_stamp = 0;
-        }
-    }
-    void SetTrackingStats(bool flag){
-        tracking_stats=flag;
-    }
     namespace nodestats{
         inline int64 NowInNsec() { return EnvTime::Default()->NowNanos(); }
 
@@ -79,7 +53,8 @@ namespace opengl{
             if (!stats) return;
             stats->SetOutput(slot, v);
         }
-    }//namespace nodestats
+    } // namespace nodestats
+
     FBOSession::~FBOSession(){
         // delete all tensors
     }
@@ -143,79 +118,35 @@ namespace opengl{
     }
 
 
-
     void FBOSession::Run(const NamedTensorList& inputs_cpu){
-        StepStats step_stats;
-        Run(inputs_cpu, &step_stats);
-    }
+        profiler::TraceMe traceme("Run Time", 1, true);
 
-    void FBOSession::Run(const NamedTensorList& inputs_cpu,
-            StepStats* step_stats){
-        std::unique_ptr<StepStatsCollector> step_collector=nullptr;
-        if(tracking_stats){
-            step_collector.reset(new StepStatsCollector(step_stats));
-        }
         // session set up
         {
-            uint64 start_time_usecs;
-            if(step_collector){
-                OPENGL_CALL(glFinish());
-                start_time_usecs = env_->NowMicros();
-            }
-            // Start();
-            Setup(inputs_cpu, nullptr);
-            // Stop("Setup Time");
-            if(step_collector){
-                OPENGL_CALL(glFinish());
-                float session_setup_time = (env_->NowMicros() - start_time_usecs);
-                step_stats->set_all_setup_time_micros(session_setup_time);
-            }
+            profiler::TraceMe traceme("Setup Time", 1, true);
+            Setup(inputs_cpu);
         }
 
         CHECK(finalized_)<<"Please Setup Session First";
-        const uint64 start_time_usecs = env_->NowMicros();
-        NodeExecStatsInterface* stats = nullptr;
 
-        Start();
-        for(int i=0;i<kernels_.size();++i){
-            auto kernel = kernels_[i].get();
-            if(CheckKernelReady(kernel)){
-                continue;
+        {
+            profiler::TraceMe traceme("Computation Time", 1, true);
+            for(int i=0;i<kernels_.size();++i){
+                auto kernel = kernels_[i].get();
+                if(CheckKernelReady(kernel)){
+                    continue;
+                }
+                {
+                    auto kernel_name= kernel->kernel_name();
+                    auto kernel_type = kernel->kernel_type();
+                    profiler::TraceMe traceme(kernel_name+"#"+kernel_type+"#",
+                            1, true);
+                    kernel->Compute();
+                }
+
             }
-            // Start();
-            if(step_collector){
-                stats = step_collector->CreateNodeExecStats(kernel);
-                auto scheduled_nsec = nodestats::NowInNsec();
-                nodestats::SetScheduled(stats, scheduled_nsec);
-                nodestats::SetAllStart(stats);
-            }
-
-            // op computation time
-            // nodestats::SetOpStart(stats);
-            kernel->Compute();
-
-
-            // Stop(kernel->kernel_name()+" "+kernel->kernel_type());
-            // for(int i=0;i<kernel->output_tensors_.size();++i){
-            // nodestats::SetOutput(stats, i, kernel->output_tensors_[i]);
-            // }
-            // nodestats::SetOpEnd(stats);
-
-            // // node end time
-            if(step_collector){
-                nodestats::SetAllEnd(stats);
-                stats->Done(kOpenGLDeviceName);
-            }
-
-            // // save to collector with device name
         }
 
-        if(step_collector){
-            // save data to proto
-            step_collector->Finalize();
-        }
-        Stop("ExecTime");
-        metrics::UpdateGraphExecTime(env_->NowMicros() - start_time_usecs);
     }
 
 
@@ -239,8 +170,7 @@ namespace opengl{
         }
     }
 
-    void FBOSession::Setup(const NamedTensorList& inputs_cpu,
-            StepStatsCollector* step_collector){
+    void FBOSession::Setup(const NamedTensorList& inputs_cpu){
         CHECK(graph_created_)<<"No Graph Loaded!";
         // allocate memory for each tensor
         // so that dont need to allocate input and output tensors
@@ -350,6 +280,7 @@ namespace opengl{
 
     void FBOSession::GetOutputs(const TensorNameList& output_names,
             const StringList& output_dformats, TensorList* outputs){
+        profiler::TraceMe traceme("Output Time", 1, true);
         CHECK_EQ(output_names.size(), output_dformats.size());
         const int num_outputs = output_names.size();
         // outputs->clear();

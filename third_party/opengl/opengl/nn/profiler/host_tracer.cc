@@ -89,19 +89,19 @@ namespace opengl{
                     for (auto& event : thread.events) {
                         if (event.start_time && event.end_time) {
                             NodeExecStats* ns = new NodeExecStats;
-                            // if (event.name.back() != kUserMetadataMarker) {
-                            ns->set_node_name(std::move(event.name));
-                            // } else {
-                            // // Expect the format will be "<name>#<metadata>#"
-                            // std::vector<absl::string_view> parts =
-                            // absl::StrSplit(event.name, kUserMetadataMarker);
-                            // if (parts.size() >= 2) {
-                            // ns->set_node_name(string(parts[0]));
-                            // ns->set_timeline_label(string(parts[1]));
-                            // } else {
-                            // ns->set_node_name(std::move(event.name));
-                            // }
-                            // }
+                            if (event.name.back() != kUserMetadataMarker) {
+                                ns->set_node_name(std::move(event.name));
+                            } else {
+                                // // Expect the format will be "<node_name>#<node_type>#"
+                                std::vector<string> parts;
+                                strings::split(event.name, parts, "#");
+                                if (parts.size() >= 2) {
+                                    ns->set_node_name(parts[0]);
+                                    ns->set_node_type(parts[1]);
+                                } else {
+                                    ns->set_node_name(std::move(event.name));
+                                }
+                            }
                             ns->set_all_start_micros(event.start_time / EnvTime::kMicrosToNanos);
                             ns->set_all_end_rel_micros((event.end_time - event.start_time) /
                                     EnvTime::kMicrosToNanos);

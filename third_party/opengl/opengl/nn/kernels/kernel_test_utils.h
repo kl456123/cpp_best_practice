@@ -57,7 +57,7 @@ namespace opengl{
 }//namespace opengl
 
 #define DIFFERENT_SHAPE_LOOP_START                          \
-    for(int bz=1;bz<10;bz++){                                \
+    for(int bz=1;bz<5;bz++){                                \
         for(int size=1;size<=256;size*=2){                  \
             for(int channel=1;channel<=20;channel++){       \
                 const IntList shape{bz, size, size, channel};

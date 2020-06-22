@@ -14,8 +14,6 @@
 #include "opengl/core/fbo_session.h"
 #include "opengl/utils/env_time.h"
 #include "opengl/core/lib/monitor/collection_registry.h"
-#include "opengl/nn/profiler/profiler.h"
-#include "opengl/core/step_stats.pb.h"
 
 // only tensor is visible in nn module
 using opengl::Tensor;
@@ -24,7 +22,6 @@ using opengl::Session;
 using opengl::FBOSession;
 using opengl::monitoring::CollectionRegistry;
 using opengl::monitoring::CollectedMetrics;
-using opengl::Profiler;
 
 int main(int argc, char** argv){
     // Initialize Google's logging library.
@@ -49,18 +46,14 @@ int main(int argc, char** argv){
     ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
     Tensor* input_tensor= Tensor::Ones(Tensor::DT_FLOAT,
             input_shape, input_dformat);
-    auto profiler = std::unique_ptr<Profiler>(new Profiler);
     // ::opengl::StringList dformats({"NHWC"});
     // ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::ANY;
     ::opengl::StringList dformats({"ANY"});
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
     session->LoadGraph(model_path);
-    // LOG(INFO)<<"ModelInfo After Load Graph: "
-    // <<session->DebugString();
 
     // warming up
-    ::opengl::SetTrackingStats(false);
     for(int i=0;i<3;++i){
         // init graph according to inputs
         // and then do computation for the graph
@@ -73,13 +66,11 @@ int main(int argc, char** argv){
     }
     auto env_time = EnvTime::Default();
     auto start_time1 = env_time->NowMicros();
-    // ::opengl::SetTrackingStats(true);
 
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs
         // do computation for the graph
-        ::opengl::StepStats step_stats;
-        session->Run({{"input", input_tensor}}, &step_stats);
+        session->Run({{"input", input_tensor}});
 
         {
             // get cpu outputs from device
