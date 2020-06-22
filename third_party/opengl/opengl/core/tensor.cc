@@ -58,7 +58,8 @@ namespace opengl{
                         // host_ = StrideAllocator::Allocate(cpu_allocator(),
                         // requested_size_, last_stride, AllocationAttributes());
                         float* target_data = static_cast<float*>(host_);
-                        for(int i=0;i<num_elements();++i){
+                        const int data_size = tensor_proto.float_data_size();
+                        for(int i=0;i<data_size;++i){
                             target_data[i] = tensor_proto.float_data(i);
                         }
                         break;
@@ -71,7 +72,8 @@ namespace opengl{
                         host_ = cpu_allocator()->AllocateRaw(32, size*sizeof(int));
                         allocated_size_= size*sizeof(int);
                         float* target_data = static_cast<float*>(host_);
-                        for(int i=0;i<num_elements();++i){
+                        const int data_size = tensor_proto.int32_data_size();
+                        for(int i=0;i<data_size;++i){
                             target_data[i] = tensor_proto.int32_data(i);
                         }
                         break;
@@ -101,9 +103,11 @@ namespace opengl{
             DataFormat dformat){
         Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
         float* data = tensor->host<float>();
-        const int num_elements = tensor->num_elements();
-        for(int i=0;i<num_elements;++i){
-            data[i] = 1.0*random()/RAND_MAX;
+        const int num_elements = tensor->AllocatedElements();
+        for(int i=0; i<num_elements; ++i){
+            if(CheckIndexValid(i, shape, dformat)){
+                data[i] = 1.0*random()/RAND_MAX;
+            }
         }
         return tensor;
     }
@@ -111,15 +115,17 @@ namespace opengl{
     /*static*/ Tensor* Tensor::Zeros(DataType dtype, IntList shape,
             DataFormat dformat){
         Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
-        memset(tensor->host(), 0, sizeof(float)*tensor->num_elements());
+        memset(tensor->host(), 0, tensor->AllocatedSize());
         return tensor;
     }
 
     /*static*/ Tensor* Tensor::Ones(DataType dtype, IntList shape,
             DataFormat dformat){
         Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
-        for(int i=0;i<tensor->num_elements();++i){
-            tensor->host<float>()[i] = 1.0;
+        for(int i=0;i<tensor->AllocatedElements();++i){
+            if(CheckIndexValid(i, shape, dformat)){
+                tensor->host<float>()[i] = 1.0;
+            }
         }
         return tensor;
     }
@@ -136,8 +142,10 @@ namespace opengl{
         CHECK(is_host());
         std::stringstream ss;
         ss<<"\n";
-        const int num = num_elements();
+        const int num = AllocatedElements();
         for(int i=0;i<num;++i){
+
+            if(!CheckIndexValid(i, shape(), dformat())){continue;}
             ss<< host<float>()[i] <<", ";
             if(num-i>10&&i>10){
                 ss<<"..., ";

@@ -55,6 +55,7 @@ set(CORE_SRC_NAMES
     allocator.cc
     ogl_allocator.cc
     functor.cc
+    cpu_functor.cc
     buffer_base.cc
     cpu_allocator_impl.cc
     metric.cc

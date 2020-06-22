@@ -244,6 +244,7 @@ namespace opengl{
             void FillDescription(TensorDescription* description)const;
 
             uint64 AllocatedSize()const{return allocated_size_;}
+            uint64 AllocatedElements()const{return allocated_size_/sizeof(float);}
             uint64 RequestedSize() const{return requested_size_;}
             void SwapData(Tensor* other_tensor);
 

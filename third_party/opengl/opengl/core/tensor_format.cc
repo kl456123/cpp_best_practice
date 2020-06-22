@@ -214,6 +214,32 @@ namespace opengl{
         return true;
     }
 
+    bool CheckIndexValid(const uint64 index, const IntList& shape, DataFormat dformat){
+        // index is zero based
+        CHECK_GT(shape.size(), 0);
+        const int dim_size = shape.size();
+        const int last_dim = shape[dim_size-1];
+
+        int num_elements = 1;
+        for(auto item: shape){
+            num_elements*=item;
+        }
+
+        // continugous dformat
+        if(dformat==dlxnet::TensorProto::NHWC
+                || dformat==dlxnet::TensorProto::NCHW
+                || dformat==dlxnet::TensorProto::ANY){
+            return index<num_elements;
+        }
+
+        // stride dformat
+        if(dformat==dlxnet::TensorProto::NHWC4
+                || dformat==dlxnet::TensorProto::ANY4){
+            return (index<num_elements/last_dim*UP_ROUND(last_dim, 4))
+                && (index%UP_ROUND(last_dim, 4)<last_dim);
+        }
+    }
+
 
     uint64 CalcAllocatedSize1D(const IntList& shape, DataFormat dformat){
         CHECK_GT(shape.size(), 0);

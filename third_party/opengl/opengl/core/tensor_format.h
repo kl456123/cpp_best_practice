@@ -49,6 +49,9 @@ namespace opengl{
 
     uint64 CalcAllocatedSize1D(const IntList& shape, DataFormat dformat);
     IntList CalcAllocatedSize2D(const IntList& shape, DataFormat dformat);
+
+    bool CheckIndexValid(const uint64 index, const IntList& shape,
+            DataFormat dformat);
 }//namespace
 
 
