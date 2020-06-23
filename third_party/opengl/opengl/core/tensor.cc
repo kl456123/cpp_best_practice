@@ -101,7 +101,7 @@ namespace opengl{
 
     /*static*/ Tensor* Tensor::Random(DataType dtype, IntList shape,
             DataFormat dformat){
-        Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
+        Tensor* tensor = Tensor::Zeros(dtype, shape, dformat);
         float* data = tensor->host<float>();
         const int num_elements = tensor->AllocatedElements();
         for(int i=0; i<num_elements; ++i){
@@ -121,7 +121,7 @@ namespace opengl{
 
     /*static*/ Tensor* Tensor::Ones(DataType dtype, IntList shape,
             DataFormat dformat){
-        Tensor* tensor = Tensor::Empty(dtype, shape, dformat);
+        Tensor* tensor = Tensor::Zeros(dtype, shape, dformat);
         for(int i=0;i<tensor->AllocatedElements();++i){
             if(CheckIndexValid(i, shape, dformat)){
                 tensor->host<float>()[i] = 1.0;

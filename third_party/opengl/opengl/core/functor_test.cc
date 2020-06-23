@@ -198,11 +198,11 @@ namespace opengl{
     TEST(FunctorTest, NHWC4ToANY4Test){
         auto ctx = GetContext();
         DIFFERENT_SHAPE_LOOP_START;
-        // IntList shape{2, 5};
+        // IntList shape{1, 64, 64, 19};
         auto src_cpu_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
                     dlxnet::TensorProto::NHWC4));
         auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
-                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::NHWC4));
         auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
                     Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
         auto expected_tensor_ptr = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,

@@ -19,6 +19,9 @@ namespace opengl{
         float nms_threshold;
         float score_threshold;
         int topk;
+        std::vector<float> variances;
+        TensorNameList input_names;
+        TensorNameList output_names;
     };
     class FBOSession;
 
@@ -29,11 +32,11 @@ namespace opengl{
             void NMS(std::vector<BoxInfo>& boxInfos,std::vector<BoxInfo>& boxInfos_left, float threshold);
             virtual void Detect(const cv::Mat& raw_image, std::vector<BoxInfo>& finalBoxInfos);
 
-            virtual void Run();
 
             virtual ~Detector();
 
-            static std::unique_ptr<Detector> Create();
+            static std::unique_ptr<Detector> Create(const string& model_name,
+                    const TensorNameList& input_names, const TensorNameList& output_names);
             static std::unique_ptr<Detector> Create(const DetectorOptions& options);
 
 
@@ -42,9 +45,11 @@ namespace opengl{
             // only uesd in postprocess
             void GetTopK(std::vector<BoxInfo>& input, int top_k);
             void GenerateBoxInfo(std::vector<BoxInfo>& boxInfos, float score_threshold);
+            void LoadToInputTensors(const cv::Mat& raw_image);
+            void Run(const cv::Mat& raw_image);
 
-            std::vector<float> mVariance;
-            std::string mModelName;
+            std::vector<float> variances_;
+            std::string model_name_;
 
             int topk_;
             float score_threshold_;

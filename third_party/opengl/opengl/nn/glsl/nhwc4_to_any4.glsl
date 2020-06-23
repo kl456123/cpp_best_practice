@@ -14,6 +14,11 @@ void main(){
     ivec2 pos = ivec2(gl_FragCoord.xy);
 
     int index = pos.x+pos.y*MAX_TEXTURE_SIZE;
+    int output_num_elements = output_shape.x * output_shape.y
+                    * output_shape.z * UP_DIV(output_shape.w, 4);
+    if(index>=output_num_elements){
+        return;
+    }
 
     int base = UP_DIV(output_shape.w, 4)*output_shape.z;
 

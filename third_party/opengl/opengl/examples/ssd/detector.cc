@@ -3,10 +3,20 @@
 
 
 namespace opengl{
-    /*static*/ std::unique_ptr<Detector> Detector::Create(){
+    /*static*/ std::unique_ptr<Detector> Detector::Create(const string& model_name,
+            const TensorNameList& input_names, const TensorNameList& output_names){
         // use default options here
         DetectorOptions options;
+        options.model_name = model_name;
+        // remain params keep default
+        options.input_width = 320;
+        options.input_height = 320;
         options.topk = 100;
+        options.nms_threshold=0.45;
+        options.score_threshold = 0.3;
+        options.variances = {0.1, 0.1, 0.2, 0.2};
+        options.input_names = input_names;
+        options.output_names = output_names;
         return Create(options);
     }
 
@@ -15,7 +25,10 @@ namespace opengl{
     }
 
     Detector::Detector(const DetectorOptions& options){
-        mVariance = {0.1, 0.1, 0.2, 0.2};
+        variances_ = options.variances;
+        model_name_ = options.model_name;
+        input_names_ = options.input_names;
+        output_names_ = options.output_names;
 
         score_threshold_ = options.score_threshold;
         nms_threshold_= options.nms_threshold;
@@ -28,15 +41,15 @@ namespace opengl{
         session_->LoadGraph(options.model_name);
 
         // allocate memory for input tensor
-        ::opengl::IntList input_shape({1, 320, 320, 3});
+        ::opengl::IntList input_shape({1, input_sizes_[0], input_sizes_[1], 3});
         ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
         ::opengl::Tensor* image_ptr = Tensor::Ones(Tensor::DT_FLOAT,
                 input_shape, input_dformat);
 
         input_tensors_.emplace_back(image_ptr);
         output_tensors_.clear();
-        output_names_ = {"cls_and_bbox", "anchors"};
-        input_names_ = {"input"};
+        // output_names_ = {"cls_and_bbox", "anchors"};
+        // input_names_ = {"input"};
         output_dformats_ = {"ANY", "ANY"};
     }
 
@@ -96,11 +109,9 @@ namespace opengl{
     void Detector::GenerateBoxInfo(std::vector<BoxInfo>& boxInfos, float score_threshold){
         auto tensors_host = output_tensors_;
 
-        // auto scores_dataPtr  = tensors_host[0]->host<float>();
-        // auto boxes_dataPtr   = tensors_host[1]->host<float>();
         auto scores_and_boxes_dataPtr = tensors_host[0]->host<float>();
         auto anchors_dataPtr = tensors_host[1]->host<float>();
-        int num_boxes = tensors_host[0]->channel();
+        int num_boxes = tensors_host[0]->shape()[1];
         int raw_image_width = origin_input_sizes_[1];
         int raw_image_height = origin_input_sizes_[0];
         num_classes_ = tensors_host[0]->shape()[3]-4;
@@ -109,10 +120,10 @@ namespace opengl{
         for(int i = 0; i < num_boxes; ++i)
         {
             // location decoding
-            float ycenter =     scores_and_boxes_dataPtr[i*num_cols + +num_classes_+1] * mVariance[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
-            float xcenter =     scores_and_boxes_dataPtr[i*num_cols + num_classes_+0] * mVariance[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
-            float h       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+3] * mVariance[3]) * anchors_dataPtr[i*4 + 3];
-            float w       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+2] * mVariance[2]) * anchors_dataPtr[i*4 + 2];
+            float ycenter =     scores_and_boxes_dataPtr[i*num_cols + +num_classes_+1] * variances_[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
+            float xcenter =     scores_and_boxes_dataPtr[i*num_cols + num_classes_+0] * variances_[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
+            float h       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+3] * variances_[3]) * anchors_dataPtr[i*4 + 3];
+            float w       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+2] * variances_[2]) * anchors_dataPtr[i*4 + 2];
 
             float ymin    = ( ycenter - h * 0.5 ) * raw_image_height;
             float xmin    = ( xcenter - w * 0.5 ) * raw_image_width;
@@ -158,9 +169,14 @@ namespace opengl{
         }
     }
 
-    void Detector::Run(){
-        // Run Session with input
-        // do computation for the graph
+    void Detector::LoadToInputTensors(const cv::Mat& image){
+        void* data = input_tensors_[0]->host();
+        ::memcpy(data, image.data, input_tensors_[0]->num_elements());
+    }
+
+    void Detector::Run(const cv::Mat& image){
+        // load to cpu input tensor
+        LoadToInputTensors(image);
         session_->Run({{"input", input_tensors_[0]}});
         session_->GetOutputs(output_names_, output_dformats_, &output_tensors_);
     }
@@ -169,14 +185,14 @@ namespace opengl{
     void Detector::Detect(const cv::Mat& raw_image, std::vector<BoxInfo>& finalBoxInfos){
         // preprocess
         cv::Mat image;
-        std::cout<<"Preprocessing "<<std::endl;
+        VLOG(1)<<"Preprocessing ";
         Preprocess(raw_image, image);
 
 
-        std::cout<<"Running "<<std::endl;
-        Run();
+        VLOG(1)<<"Running ";
+        Run(image);
 
-        std::cout<<"Postprocessing "<<std::endl;
+        VLOG(1)<<"Postprocessing ";
         // postprocess
         std::vector<BoxInfo> boxInfos;
         GenerateBoxInfo(boxInfos, score_threshold_);

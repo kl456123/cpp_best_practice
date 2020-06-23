@@ -58,10 +58,10 @@ namespace opengl{
                 const Tensor* src_tensor, Tensor* dst_tensor){
             CHECK(src_tensor->is_host());
             CHECK(dst_tensor->is_host());
-            CHECK_EQ(dst_tensor->AllocatedSize(), src_tensor->AllocatedSize());
+            CHECK_GE(dst_tensor->AllocatedSize(), src_tensor->AllocatedSize());
             const float* src_data = src_tensor->host<float>();
             float* dst_data = dst_tensor->host<float>();
-            memcpy(dst_data, src_data, dst_tensor->AllocatedSize());
+            memcpy(dst_data, src_data, src_tensor->AllocatedSize());
         }
 
     } // namespace host_functor
