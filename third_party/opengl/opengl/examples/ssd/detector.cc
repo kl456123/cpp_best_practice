@@ -1,10 +1,11 @@
 #include "opengl/examples/ssd/detector.h"
+#include "opengl/core/fbo_session.h"
 
 
 namespace opengl{
     /*static*/ std::unique_ptr<Detector> Detector::Create(){
         // use default options here
-        DetectorOptions& options;
+        DetectorOptions options;
         options.topk = 100;
         return Create(options);
     }
@@ -20,11 +21,11 @@ namespace opengl{
         nms_threshold_= options.nms_threshold;
         topk_ = options.topk;
 
-        mInputSize.push_back(height);
-        mInputSize.push_back(width);
+        input_sizes_.push_back(options.input_height);
+        input_sizes_.push_back(options.input_width);
 
-        auto session = std::unique_ptr<FBOSession>(new FBOSession);
-        session->LoadGraph(modelName);
+        session_.reset(new FBOSession);
+        session_->LoadGraph(options.model_name);
 
         // allocate memory for input tensor
         ::opengl::IntList input_shape({1, 320, 320, 3});
@@ -32,11 +33,11 @@ namespace opengl{
         ::opengl::Tensor* image_ptr = Tensor::Ones(Tensor::DT_FLOAT,
                 input_shape, input_dformat);
 
-        mInputTensors.emplace_back(image_ptr);
-        mOutputTensors.clear();
-        mOutputNames = {"cls_and_bbox", "anchors"};
-        mInputNames = {"input"};
-        outptu_dformats_ = {"ANY", "ANY"};
+        input_tensors_.emplace_back(image_ptr);
+        output_tensors_.clear();
+        output_names_ = {"cls_and_bbox", "anchors"};
+        input_names_ = {"input"};
+        output_dformats_ = {"ANY", "ANY"};
     }
 
 
@@ -44,9 +45,9 @@ namespace opengl{
     void Detector::Preprocess(const cv::Mat& raw_image, cv::Mat& image){
         cv::cvtColor(raw_image,image, cv::COLOR_BGR2RGB);
 
-        mOriginInputSize = {raw_image.rows, raw_image.cols};
+        origin_input_sizes_ = {raw_image.rows, raw_image.cols};
         // order? hw or wh
-        cv::resize(image, image, cv::Size(mInputSize[1], mInputSize[0]));
+        cv::resize(image, image, cv::Size(input_sizes_[1], input_sizes_[0]));
 
         image.convertTo(image, CV_32FC3);
         const float mean_vals[3] = { 123.f, 117.f, 104.f};
@@ -93,25 +94,25 @@ namespace opengl{
     }
 
     void Detector::GenerateBoxInfo(std::vector<BoxInfo>& boxInfos, float score_threshold){
-        auto tensors_host = mOutputTensorsHost;
+        auto tensors_host = output_tensors_;
 
         // auto scores_dataPtr  = tensors_host[0]->host<float>();
         // auto boxes_dataPtr   = tensors_host[1]->host<float>();
         auto scores_and_boxes_dataPtr = tensors_host[0]->host<float>();
         auto anchors_dataPtr = tensors_host[1]->host<float>();
         int num_boxes = tensors_host[0]->channel();
-        int raw_image_width = mOriginInputSize[1];
-        int raw_image_height = mOriginInputSize[0];
-        mNumOfClasses = tensors_host[0]->shape()[3]-4;
-        int num_cols = mNumOfClasses+4;
+        int raw_image_width = origin_input_sizes_[1];
+        int raw_image_height = origin_input_sizes_[0];
+        num_classes_ = tensors_host[0]->shape()[3]-4;
+        int num_cols = num_classes_+4;
 
         for(int i = 0; i < num_boxes; ++i)
         {
             // location decoding
-            float ycenter =     scores_and_boxes_dataPtr[i*num_cols + +mNumOfClasses+1] * mVariance[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
-            float xcenter =     scores_and_boxes_dataPtr[i*num_cols + mNumOfClasses+0] * mVariance[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
-            float h       = exp(scores_and_boxes_dataPtr[i*num_cols + mNumOfClasses+3] * mVariance[3]) * anchors_dataPtr[i*4 + 3];
-            float w       = exp(scores_and_boxes_dataPtr[i*num_cols + mNumOfClasses+2] * mVariance[2]) * anchors_dataPtr[i*4 + 2];
+            float ycenter =     scores_and_boxes_dataPtr[i*num_cols + +num_classes_+1] * mVariance[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
+            float xcenter =     scores_and_boxes_dataPtr[i*num_cols + num_classes_+0] * mVariance[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
+            float h       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+3] * mVariance[3]) * anchors_dataPtr[i*4 + 3];
+            float w       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+2] * mVariance[2]) * anchors_dataPtr[i*4 + 2];
 
             float ymin    = ( ycenter - h * 0.5 ) * raw_image_height;
             float xmin    = ( xcenter - w * 0.5 ) * raw_image_width;
@@ -124,7 +125,7 @@ namespace opengl{
             int max_id = 0;
             float max_prob=0;
 
-            for(int j=1;j<mNumOfClasses;j++){
+            for(int j=1;j<num_classes_;j++){
                 float logit = exp(scores_and_boxes_dataPtr[i*num_cols + j]);
                 total_sum  += logit;
                 if(max_prob<logit){
@@ -158,14 +159,10 @@ namespace opengl{
     }
 
     void Detector::Run(){
-
-        // prepare input image
-        ::opengl::TensorList outputs_cpu;
-
         // Run Session with input
         // do computation for the graph
-        session->Run({{"input", input_tensor}});
-        session->GetOutputs(mOutputNames, output_dformats_, &mOutputTensors);
+        session_->Run({{"input", input_tensors_[0]}});
+        session_->GetOutputs(output_names_, output_dformats_, &output_tensors_);
     }
 
 
@@ -177,16 +174,16 @@ namespace opengl{
 
 
         std::cout<<"Running "<<std::endl;
-        Run(image);
+        Run();
 
         std::cout<<"Postprocessing "<<std::endl;
         // postprocess
         std::vector<BoxInfo> boxInfos;
-        GenerateBoxInfo(boxInfos, mScoreThreshold);
+        GenerateBoxInfo(boxInfos, score_threshold_);
         // top k
-        GetTopK(boxInfos, mTopK);
+        GetTopK(boxInfos, topk_);
         // nms
-        NMS(boxInfos, finalBoxInfos, mNMSThreshold);
+        NMS(boxInfos, finalBoxInfos, nms_threshold_);
 
         // handle corner case
     }
@@ -194,12 +191,16 @@ namespace opengl{
 
     Detector::~Detector(){
         // clear input and output tensors
-        for(auto tensor:mOutputTensors){
-            delete tensor;
+        for(auto tensor:output_tensors_){
+            if(tensor){
+                delete tensor;
+            }
         }
 
-        for(auto tensor:mInputTensors){
-            delete tensor;
+        for(auto tensor:input_tensors_){
+            if(tensor){
+                delete tensor;
+            }
         }
     }
 } // namespace opengl

@@ -5,7 +5,8 @@
 #include <memory>
 #include <vector>
 #include <opencv2/opencv.hpp>
-#include "common.h"
+#include "opengl/examples/ssd/common.h"
+#include "opengl/core/types.h"
 
 #include <chrono>
 
@@ -19,6 +20,7 @@ namespace opengl{
         float score_threshold;
         int topk;
     };
+    class FBOSession;
 
     class Detector{
         public:
@@ -27,7 +29,7 @@ namespace opengl{
             void NMS(std::vector<BoxInfo>& boxInfos,std::vector<BoxInfo>& boxInfos_left, float threshold);
             virtual void Detect(const cv::Mat& raw_image, std::vector<BoxInfo>& finalBoxInfos);
 
-            virtual void Run(const cv::Mat& raw_image);
+            virtual void Run();
 
             virtual ~Detector();
 
@@ -49,19 +51,21 @@ namespace opengl{
             float nms_threshold_;
 
             // num of total classes including bg
-            int num_classes;
+            int num_classes_;
 
             // hw
-            IntList input_sizes;
-            IntList mOriginInputSize;
+            IntList input_sizes_;
+            IntList origin_input_sizes_;
 
             // input and output tensors and its names
-            std::vector<::opengl::Tensor*> mOutputTensors;
-            std::vector<::opengl::Tensor*> mInputTensors;
-            std::vector<std::string> mInputNames;
-            std::vector<std::string> mOutputNames;
+            std::vector<::opengl::Tensor*> output_tensors_;
+            std::vector<::opengl::Tensor*> input_tensors_;
+            std::vector<std::string> input_names_;
+            std::vector<std::string> output_names_;
 
             std::vector<std::string> output_dformats_;
+
+            std::unique_ptr<FBOSession> session_;
 
 
     };
