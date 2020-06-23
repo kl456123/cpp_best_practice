@@ -71,7 +71,7 @@ if(BUILD_NN)
     target_link_libraries(label_image ${GL_NN} ${OpenCV_LIBS})
 
     # object detection task
-    add_executable(ssd_detector ssd/main.cc)
+    add_executable(ssd_detector ssd/main.cc ssd/detector.cc)
     set_target_properties(ssd_detector PROPERTIES LINK_FLAGS -Wl,--no-as-needed)
     target_link_libraries(ssd_detector ${GL_NN} ${OpenCV_LIBS})
 

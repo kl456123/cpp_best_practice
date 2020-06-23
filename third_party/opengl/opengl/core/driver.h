@@ -45,5 +45,7 @@ namespace opengl{
             GLenum format=GL_RGBA, GLenum dtype=GL_FLOAT);
     void CopyTextureToHostDMA(void* data, GLint width, GLint height, GLuint texture,
             GLenum format=GL_RGBA, GLenum dtype=GL_FLOAT);
+
+    void Sync();
 }
 #endif

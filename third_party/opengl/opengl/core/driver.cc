@@ -235,4 +235,9 @@ namespace opengl{
 
         return shader;
     }
+
+
+    void Sync(){
+        OPENGL_CALL(glFinish());
+    }
 }//namespace opengl
