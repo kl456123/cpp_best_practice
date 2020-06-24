@@ -26,6 +26,10 @@ namespace opengl{
         struct ConvertTensorNCHWToHWN4C4{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
+
+        struct ConvertTensorHWN4C4ToNCHW{
+            void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
+        };
     } // namespace host_functor
 } // namespace opengl
 

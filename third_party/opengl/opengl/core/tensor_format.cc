@@ -238,6 +238,13 @@ namespace opengl{
             return (index<num_elements/last_dim*UP_ROUND(last_dim, 4))
                 && (index%UP_ROUND(last_dim, 4)<last_dim);
         }
+
+        if(dformat==dlxnet::TensorProto::HWN4C4){
+            // shape, oihw
+            const int o4 = UP_ROUND(shape[0], 4);
+            const int i4 = UP_ROUND(shape[1], 4);
+            LOG(FATAL)<<"unsupported now";
+        }
     }
 
 

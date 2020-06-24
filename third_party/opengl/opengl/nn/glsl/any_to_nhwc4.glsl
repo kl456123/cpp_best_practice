@@ -23,9 +23,12 @@ void main(){
     float res[4];
     for(int i=0;i<4;++i){
         int index = ((out_n_i*output_shape.y+out_h_i)*output_shape.z+out_w_i)*output_shape.w+out_c_i*4+i;
-        /* if(index>=output_num_elements){ */
-            /* continue; */
-        /* } */
+        if(out_c_i*4+i>=output_shape.w){
+            continue;
+        }
+        if(index>=output_num_elements){
+            continue;
+        }
         int offset = index/4;
         if(index%4==0){
             res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;

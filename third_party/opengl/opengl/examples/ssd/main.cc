@@ -24,13 +24,17 @@ int main(int argc, char** argv){
             {"cls_and_bbox", "anchors"});
 
     // prepare inputs
-    std::string image_fname = "../opengl/examples/label_image/cat.jpg";
+    std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
     auto raw_image = cv::imread(image_fname);
+    // graylize first
+    cv::cvtColor(raw_image, raw_image, CV_BGR2GRAY);
+    cv::cvtColor(raw_image, raw_image, CV_GRAY2BGR);
 
     while(true){
         auto t1 = std::chrono::system_clock::now();
         // detect
         std::vector<BoxInfo> finalBoxInfos;
+
         detector->Detect(raw_image, finalBoxInfos);
         auto t2 = std::chrono::system_clock::now();
         float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000;
