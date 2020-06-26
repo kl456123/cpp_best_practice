@@ -36,7 +36,8 @@ namespace opengl{
             virtual ~Detector();
 
             static std::unique_ptr<Detector> Create(const string& model_name,
-                    const TensorNameList& input_names, const TensorNameList& output_names);
+                    const TensorNameList& input_names, const TensorNameList& output_names,
+                    const IntList& shape);
             static std::unique_ptr<Detector> Create(const DetectorOptions& options);
 
 

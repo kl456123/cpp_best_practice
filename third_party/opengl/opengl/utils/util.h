@@ -8,6 +8,10 @@
 namespace opengl{
     void setLocalSize(std::vector<std::string>& prefix, int* localSize, std::vector<int> local_sizes);
     IntList AmendShape(const IntList& shape, const int amend_size=4);
+
+    void DumpTensor(const Tensor* tensor, const string& output_fn);
+
+    void CompareTXT(const string& output_fn1, const string& output_fn2);
 }//namespace opengl
 
 #endif

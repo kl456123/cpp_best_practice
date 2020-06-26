@@ -9,29 +9,22 @@
 
 
 namespace opengl{
-    namespace{
-    inline IntList ShapeToStride(const IntList& shape){
-            IntList stride;
-            int num_elements = 1;
-            for(auto item:shape){
-                num_elements*=item;
-            }
-
-            int temp = num_elements;
-            for(auto item:shape){
-                temp/=item;
-                stride.emplace_back(temp);
-            }
-            return stride;
-        }
-    }
     ReshapeKernel::ReshapeKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
         }
 
-    void ReshapeKernel::SetupAttr(const dlxnet::Attribute& attr){
+    void ReshapeKernel::SelectKernel(const TensorList& inputs){
+        if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
+            kernel_fname_ = "../opengl/nn/glsl/reshape_any4.glsl";
+        }else{
+            CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::NHWC4);
+            kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
+        }
+        // always output any4 dformat
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+    }
+
+    void ReshapeKernel::SetupAttr(const dlxnet::Attribute& attr){
     }
 
     void ReshapeKernel::Compute(TensorList& inputs, TensorList& outputs){

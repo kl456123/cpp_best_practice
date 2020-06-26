@@ -1,8 +1,11 @@
 #include <sstream>
+#include <fstream>
+#include <iomanip>
 
 #include "opengl/core/opengl.h"
 #include "opengl/utils/util.h"
 #include "opengl/utils/logging.h"
+#include "opengl/core/tensor.h"
 
 
 namespace opengl{
@@ -50,6 +53,49 @@ namespace opengl{
             amended_shape.insert(amended_shape.begin(), 1);
         }
         return amended_shape;
+    }
+
+
+    void DumpTensor(const Tensor* tensor, const string& output_fn){
+        std::ofstream file;
+        file.open(output_fn, std::ofstream::out);
+        if(file.fail()){
+            LOG(FATAL)<<"Open file Error: "<<output_fn;
+        }
+        const float* data = tensor->host<float>();
+        const int num_elements = tensor->num_elements();
+        auto shape = tensor->shape();
+        const int dims_size = shape.size();
+        for(int i=0;i<num_elements;++i){
+            file<<std::fixed<<std::setprecision(8)<<data[i]<<"\n";
+        }
+        file.close();
+    }
+
+
+    void CompareTXT(const string& output_fn1, const string& output_fn2){
+        std::ifstream file1;
+        file1.open(output_fn1, std::ifstream::in);
+        if(file1.fail()){
+            LOG(FATAL)<<"Open file Error: "<<output_fn1;
+        }
+
+        std::ifstream file2;
+        file2.open(output_fn2, std::ifstream::in);
+        if(file2.fail()){
+            LOG(FATAL)<<"Open file Error: "<<output_fn2;
+        }
+        string s1, s2;
+        float val1, val2;
+        const float precision=1e-3;
+        int index = 0;
+        while(file1&&file2){
+            file1>>val1;
+            file2>>val2;
+            CHECK_LE((val1), (val2)+(precision))<<" in index: "<<index;
+            CHECK_GE((val1), (val2)-(precision))<<" in index: "<<index;
+            ++index;
+        }
     }
 }//namespace opengl
 

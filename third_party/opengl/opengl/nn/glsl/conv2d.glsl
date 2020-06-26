@@ -37,7 +37,7 @@ void main() {
     int out_4_ind = pos.x%UP_DIV(output_shape.z, 4);
     int output_index_x = pos.x/UP_DIV(output_shape.z, 4);
 
-    if(all(lessThan(ivec3(output_index_y, output_index_x, out_4_ind*4), output_shape))){
+    /* if(all(lessThan(ivec3(output_index_y, output_index_x, out_4_ind*4), output_shape))){ */
 
 #ifdef USE_BIAS
         color = texelFetch(input_bias, ivec2(out_4_ind%MAX_TEXTURE_SIZE,   out_4_ind/MAX_TEXTURE_SIZE), 0);
@@ -88,5 +88,5 @@ void main() {
 #ifdef USE_RELU
         color = max(vec4(0.0), color);
 #endif
-    }
+    /* } */
 }

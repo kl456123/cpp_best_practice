@@ -4,13 +4,15 @@
 
 namespace opengl{
     /*static*/ std::unique_ptr<Detector> Detector::Create(const string& model_name,
-            const TensorNameList& input_names, const TensorNameList& output_names){
+            const TensorNameList& input_names, const TensorNameList& output_names,
+            const IntList& shape){
         // use default options here
         DetectorOptions options;
         options.model_name = model_name;
         // remain params keep default
-        options.input_width = 320;
-        options.input_height = 320;
+        // wh
+        options.input_width = shape[0];
+        options.input_height = shape[1];
         options.topk = 100;
         options.nms_threshold=0.45;
         options.score_threshold = 0.3;
@@ -107,14 +109,19 @@ namespace opengl{
     }
 
     void Detector::GenerateBoxInfo(std::vector<BoxInfo>& boxInfos, float score_threshold){
+        // (num_batches, num_samples, num_classes+4)
+        CHECK_EQ(output_tensors_[0]->shape().size(), 3);
+        // (num_samples, 4)
+        CHECK_EQ(output_tensors_[1]->shape().size(), 2);
         auto tensors_host = output_tensors_;
 
         auto scores_and_boxes_dataPtr = tensors_host[0]->host<float>();
         auto anchors_dataPtr = tensors_host[1]->host<float>();
         int num_boxes = tensors_host[0]->shape()[1];
+        CHECK_EQ(output_tensors_[1]->shape()[0], num_boxes);
         int raw_image_width = origin_input_sizes_[1];
         int raw_image_height = origin_input_sizes_[0];
-        num_classes_ = tensors_host[0]->shape()[3]-4;
+        num_classes_ = tensors_host[0]->shape()[2]-4;
         int num_cols = num_classes_+4;
 
         for(int i = 0; i < num_boxes; ++i)
@@ -171,7 +178,7 @@ namespace opengl{
 
     void Detector::LoadToInputTensors(const cv::Mat& image){
         void* data = input_tensors_[0]->host();
-        ::memcpy(data, image.data, input_tensors_[0]->num_elements());
+        ::memcpy(data, image.data, input_tensors_[0]->num_elements()*sizeof(float));
     }
 
     void Detector::Run(const cv::Mat& image){

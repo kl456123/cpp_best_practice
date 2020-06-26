@@ -21,16 +21,13 @@ int main(int argc, char** argv){
     // config detector
     std::string model_path = "./demo.dlx";
     auto detector = Detector::Create(model_path, {"input"},
-            {"cls_and_bbox", "anchors"});
-
-    // prepare inputs
-    std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
-    auto raw_image = cv::imread(image_fname);
-    // graylize first
-    cv::cvtColor(raw_image, raw_image, CV_BGR2GRAY);
-    cv::cvtColor(raw_image, raw_image, CV_GRAY2BGR);
+            {"cls_and_bbox", "anchors"}, {160, 160});
 
     while(true){
+        // prepare inputs
+        std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
+        auto raw_image = cv::imread(image_fname);
+
         auto t1 = std::chrono::system_clock::now();
         // detect
         std::vector<BoxInfo> finalBoxInfos;

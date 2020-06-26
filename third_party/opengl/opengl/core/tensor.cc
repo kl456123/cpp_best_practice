@@ -55,6 +55,7 @@ namespace opengl{
                         requested_size_ = CalcRequestSize();
                         host_ = cpu_allocator()->AllocateRaw(32, size*sizeof(float));
                         allocated_size_= size*sizeof(float);
+                        memset(host_, 0, allocated_size_);
                         // host_ = StrideAllocator::Allocate(cpu_allocator(),
                         // requested_size_, last_stride, AllocationAttributes());
                         float* target_data = static_cast<float*>(host_);
@@ -71,6 +72,7 @@ namespace opengl{
                         requested_size_ = CalcRequestSize();
                         host_ = cpu_allocator()->AllocateRaw(32, size*sizeof(int));
                         allocated_size_= size*sizeof(int);
+                        memset(host_, 0, allocated_size_);
                         float* target_data = static_cast<float*>(host_);
                         const int data_size = tensor_proto.int32_data_size();
                         for(int i=0;i<data_size;++i){

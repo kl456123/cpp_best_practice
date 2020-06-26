@@ -40,6 +40,11 @@ namespace opengl{
         // set output dformat first, then we can according
         // to dformat to infer output shape
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);
+
+        if(session_->IsONNX()&&inputs[0]->dformat()==dlxnet::TensorProto::NHWC4){
+            IntList mapping{0, 3, 1, 2};
+            axis_ = mapping[axis_];
+        }
     }
 
     void ConcatKernel::SetupAttr(const dlxnet::Attribute& attr){

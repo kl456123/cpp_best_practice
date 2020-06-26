@@ -2,6 +2,7 @@
 #include <memory>
 #include <random>
 #include "opengl/nn/kernels/kernel_test_utils.h"
+#include "opengl/core/tensor_format.h"
 #include "opengl/nn/kernels/conv2d.h"
 
 using namespace ::opengl::testing;
@@ -150,7 +151,7 @@ namespace opengl{
             ::opengl::NamedTensorList inputs(1);
             ::opengl::TensorList outputs_cpu;
             inputs[0].first = "input";
-            inputs[0].second = Tensor::Ones(Tensor::DT_FLOAT, image_shape, input_dformat);
+            inputs[0].second = Tensor::Random(Tensor::DT_FLOAT, image_shape, input_dformat);
 
             ::opengl::TensorNameList output_names({"output", weight_name});
             ::opengl::StringList dformats({"NHWC", "NCHW"});
@@ -180,7 +181,8 @@ namespace opengl{
             const int output_height = output_shape[1];
             const int output_channels = output_shape[3];
 
-            Tensor *cpu_output_tensor  = Tensor::Empty(Tensor::DT_FLOAT, output_shape);
+            Tensor *cpu_output_tensor  = Tensor::Zeros(Tensor::DT_FLOAT, output_shape,
+                    StrToFormat(output_dformat_str));
             const float* cpu_input_data = inputs[0].second->host<float>();
             float* cpu_output_data = cpu_output_tensor->host<float>();
             const float* cpu_bias_data = ogl_bias_data;
@@ -191,24 +193,27 @@ namespace opengl{
                     kernel_size, stride, padding, input_width, input_height,
                     output_width, output_height, input_channels, output_channels, dilation, groups);
 
-            for(int i=0;i<output_num_elements;++i){
-                float actual_value = ogl_output_data[i];
-                float expect_value = cpu_output_data[i];
-                EXPECT_TRUE(std::fabs(actual_value - expect_value)< precision)<<"Error When index: "<< i
-                    <<" Actualy Value: "<<actual_value<<" Extect Value: "<<expect_value;
-            }
+            CheckSameTensor(cpu_output_tensor, outputs_cpu[0]);
+
+            // for(int i=0;i<output_num_elements;++i){
+                // float actual_value = ogl_output_data[i];
+                // float expect_value = cpu_output_data[i];
+                // EXPECT_TRUE(std::fabs(actual_value - expect_value)< precision)<<"Error When index: "<< i
+                    // <<" Actualy Value: "<<actual_value<<" Extect Value: "<<expect_value;
+            // }
         }
     }//namespace
     TEST(Conv2dTest, SpecialInputTest){
         Reset();
-        for(int channel=6;channel<=7;++channel){
-            input_channels = channel;
-            const int size = 1;
-            input_height = size;
-            input_width = size;
+        input_channels = 2;
+        output_channels = 4;
+        const int size = 1;
+        input_height = size;
+        input_width = size;
+        use_bias = true;
+        groups=2;
 
-            SingleInference();
-        }
+        SingleInference();
 
     }
 
@@ -329,5 +334,22 @@ namespace opengl{
         use_bias = true;
         groups=1;
         SingleInference();
+    }
+
+    TEST(Conv2dTest, DepthwiseTest){
+        Reset();
+        // loop input shape
+        for(int size=1; size<=256; size*=2){
+            for(int channel=1;channel<=20;channel++){
+                input_channels = channel;
+                input_height = size;
+                input_width = size;
+                use_bias = true;
+                groups=channel;
+                output_channels = channel;
+
+                SingleInference();
+            }
+        }
     }
 }//namespace

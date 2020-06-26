@@ -25,6 +25,7 @@ namespace opengl{
             }else if(group_size_!=1){
                 // add insanity check here to make sure it is dw conv
                 // consider it as depthwise conv2d
+                CHECK_EQ(group_size_, inputs[0]->shape()[3]);
                 kernel_fname_="../opengl/nn/glsl/conv2d_dw_any4.glsl";
             }else{
                 // default conv2d shader
@@ -38,7 +39,11 @@ namespace opengl{
             }else if(group_size_!=1){
                 // add insanity check here to make sure it is dw conv
                 // consider it as depthwise conv2d
-                kernel_fname_="../opengl/nn/glsl/conv2d_dw.glsl";
+                if(group_size_==inputs[0]->shape()[3]&&group_size_==inputs[1]->shape()[0]){
+                    kernel_fname_="../opengl/nn/glsl/conv2d_dw.glsl";
+                }else{
+                    kernel_fname_ = "../opengl/nn/glsl/conv2d_grp.glsl";
+                }
             }else{
                 // default conv2d shader
                 kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
@@ -55,13 +60,6 @@ namespace opengl{
         }else if(activation_type_=="Relu"){
             build_options_ += "#define USE_RELU\n";
         }
-
-        // if(group_size_!=1){
-        // // more general conv2d case, commonly used by depthwise conv2d
-        // kernel_fname_ = "../opengl/nn/glsl/conv2d_any4.glsl";
-        // }else{
-        // kernel_fname_ = "../opengl/nn/glsl/conv2d.glsl";
-        // }
 
         output_tensor_dformats_.emplace_back(inputs[0]->dformat());
     }
