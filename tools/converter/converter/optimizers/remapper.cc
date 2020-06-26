@@ -119,6 +119,7 @@ namespace optimizer{
             }
 
             /// get conv2d params
+            contraction_node->set_name(batchnorm_node->name());
             auto weight_node = contraction_node->input_edge(1)->src();
             bool use_bias = contraction_node->num_inputs()>2;
             graph::Node* bias_node;
@@ -171,6 +172,7 @@ namespace optimizer{
 
 
             MergeBatchNormToConvolution(graph, base, nodes_to_delete);
+            contraction_node->set_name(act_node->name());
         }
     }
 

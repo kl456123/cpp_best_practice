@@ -70,6 +70,7 @@ namespace graph{
     int32_t Node::num_outputs() const { return props_->node_def.output_index().size(); }
     int32_t Node::num_inputs() const { return in_edges_.size(); }
     const std::string& Node::name() const { return props_->node_def.name(); }
+    void Node::set_name(std::string name) { return props_->node_def.set_name(name); }
     const std::string& Node::type_string() const { return props_->node_def.type(); }
     const ::dlxnet::NodeProto& Node::def() const { return props_->node_def; }
     ::dlxnet::NodeProto& Node::def() { return props_->node_def; }
