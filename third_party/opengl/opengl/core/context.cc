@@ -270,6 +270,9 @@ namespace opengl{
 
     Context::~Context(){
         OPENGL_CALL(glDeleteFramebuffers(1, &frame_buffer_));
+        for(auto iter:program_set_){
+            delete iter.second;
+        }
     }
 
     Program* Context::CreateProgram(const std::string& kernel_fname,
