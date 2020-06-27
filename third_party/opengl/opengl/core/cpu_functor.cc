@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "opengl/core/cpu_functor.h"
 #include "opengl/utils/logging.h"
 #include "opengl/core/tensor.h"
@@ -122,6 +124,33 @@ namespace opengl{
             float* dst_data = dst_tensor->host<float>();
             memset(dst_data, 0, dst_tensor->AllocatedSize());
             memcpy(dst_data, src_data, src_tensor->AllocatedSize());
+        }
+
+        void SSDBBoxDecoder::operator()(Context* ctx, const Tensor* box_preds,
+                const Tensor* anchor_tensor, Tensor* decoded_tensor,
+                const std::vector<float>& variances){
+            const float* box_preds_data = box_preds->host<float>();
+            const float* anchors_dataPtr = anchor_tensor->host<float>();
+            const int num_samples = box_preds->shape()[1];
+            float* decoded_boxes_data = decoded_tensor->host<float>();
+            CHECK_EQ(box_preds->shape()[2], 4);
+            const int num_cols = 4;
+
+            for(int i=0;i<num_samples;++i){
+                float ycenter =     box_preds_data[i*num_cols + 1] * variances[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
+                float xcenter =     box_preds_data[i*num_cols + 0] * variances[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
+                float h       = std::exp(box_preds_data[i*num_cols + 3] * variances[3]) * anchors_dataPtr[i*4 + 3];
+                float w       = std::exp(box_preds_data[i*num_cols + 2] * variances[2]) * anchors_dataPtr[i*4 + 2];
+
+                float ymin    = ( ycenter - h * 0.5 );
+                float xmin    = ( xcenter - w * 0.5 );
+                float ymax    = ( ycenter + h * 0.5 );
+                float xmax    = ( xcenter + w * 0.5 );
+                decoded_boxes_data[i*4] = xmin;
+                decoded_boxes_data[i*4+1] = ymin;
+                decoded_boxes_data[i*4+2] = xmax;
+                decoded_boxes_data[i*4+3] = ymax;
+            }
         }
 
     } // namespace host_functor

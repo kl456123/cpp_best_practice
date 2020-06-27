@@ -30,6 +30,12 @@ namespace opengl{
         struct ConvertTensorHWN4C4ToNCHW{
             void operator()(Context* ctx, const Tensor* src_tensor, Tensor* dst_tensor);
         };
+
+        struct SSDBBoxDecoder{
+            void operator()(Context* ctx, const Tensor* prediction_tensor,
+                    const Tensor* anchor_tensor, Tensor* decoded_tensor,
+                    const std::vector<float>& variances);
+        };
     } // namespace host_functor
 } // namespace opengl
 

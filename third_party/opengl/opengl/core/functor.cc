@@ -109,7 +109,6 @@ namespace opengl{
             // set input
             auto prediction_texture = prediction_tensor->device<Texture>();
             auto anchors_texture = anchor_tensor->device<Texture>();
-            program->set_vec4i("input_shape", prediction_tensor->shape());
             program->set_vec4("variances", variances);
             // prediction
             {

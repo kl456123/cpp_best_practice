@@ -30,7 +30,7 @@ namespace opengl{
             CHECK_EQ(cpu_tensor1->AllocatedElements(), cpu_tensor2->AllocatedElements());
             const int output_num_elements = cpu_tensor1->AllocatedElements();
             for(int i=0;i<output_num_elements;++i){
-                EXPECT_FLOAT_EQ(cpu_output_data[i], ogl_output_data[i])<<" When index: "<<i;
+                EXPECT_NEAR(cpu_output_data[i], ogl_output_data[i], 1e-5)<<" When index: "<<i;
             }
             // check dtype and dformat
             CHECK_EQ(cpu_tensor1->dformat(), cpu_tensor2->dformat());

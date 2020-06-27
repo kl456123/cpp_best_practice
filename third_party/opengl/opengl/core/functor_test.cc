@@ -293,4 +293,43 @@ namespace opengl{
         CheckSameTensor(expected_cpu_tensor, actual_cpu_tensor);
         DIFFERENT_SHAPE_LOOP_END;
     }
+
+
+    TEST(FunctorTest, SSDBBoxDecoderTest){
+        auto ctx = GetContext();
+        const std::vector<float> variances{0.1, 0.1, 0.2, 0.2};
+        IntList shape = {1, 100, 4};
+
+        auto cpu_anchors = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
+        auto gpu_anchors = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+
+        auto cpu_box_preds = std::unique_ptr<Tensor>(Tensor::Random(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
+        auto gpu_box_preds = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+
+        auto cpu_decoded_box = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
+        auto gpu_decoded_box = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT, shape,
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4));
+
+        auto actual_cpu_tensor = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
+        auto expected_cpu_tensor = std::unique_ptr<Tensor>(Tensor::Empty(Tensor::DT_FLOAT, shape,
+                    dlxnet::TensorProto::ANY4));
+
+        /// gpu version
+        CopyCPUTensorToDevice(cpu_anchors.get(), gpu_anchors.get());
+        CopyCPUTensorToDevice(cpu_box_preds.get(), gpu_box_preds.get());
+        functor::SSDBBoxDecoder()(ctx, gpu_box_preds.get(), gpu_anchors.get(), gpu_decoded_box.get(), variances);
+        CopyDeviceTensorToCPU(gpu_decoded_box.get(), actual_cpu_tensor.get());
+
+        // cpu version
+        host_functor::SSDBBoxDecoder()(ctx, cpu_box_preds.get(), cpu_anchors.get(), expected_cpu_tensor.get(),
+                variances);
+
+        CheckSameTensor(actual_cpu_tensor.get(), expected_cpu_tensor.get());
+    }
 }// namespace opengl

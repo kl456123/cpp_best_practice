@@ -40,6 +40,8 @@ namespace opengl{
                     const IntList& shape);
             static std::unique_ptr<Detector> Create(const DetectorOptions& options);
 
+            void LoadToOutputTensors(const TensorNameList& names);
+
 
         private:
             explicit Detector(const DetectorOptions& options);
@@ -73,7 +75,8 @@ namespace opengl{
 
             std::unique_ptr<FBOSession> session_;
 
-
+            // store intermedia tmp results
+            std::vector<::opengl::Tensor*> tmp_tensors_;
     };
 
 }//namespace opengl

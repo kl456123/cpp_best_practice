@@ -21,7 +21,7 @@ int main(int argc, char** argv){
     // config detector
     std::string model_path = "./demo.dlx";
     auto detector = Detector::Create(model_path, {"input"},
-            {"cls_and_bbox", "anchors"}, {160, 160});
+            {"cls_logits", "box_preds", "anchors"}, {160, 160});
 
     while(true){
         // prepare inputs

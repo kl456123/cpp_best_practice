@@ -1,5 +1,6 @@
 #include "opengl/examples/ssd/detector.h"
 #include "opengl/core/fbo_session.h"
+#include "opengl/core/functor.h"
 
 
 namespace opengl{
@@ -109,48 +110,42 @@ namespace opengl{
     }
 
     void Detector::GenerateBoxInfo(std::vector<BoxInfo>& boxInfos, float score_threshold){
-        // (num_batches, num_samples, num_classes+4)
+        // (num_batches, num_samples, num_classes)
         CHECK_EQ(output_tensors_[0]->shape().size(), 3);
-        // (num_samples, 4)
-        CHECK_EQ(output_tensors_[1]->shape().size(), 2);
+        // (num_batches, num_samples, 4)
+        CHECK_EQ(output_tensors_[1]->shape().size(), 3);
         auto tensors_host = output_tensors_;
 
-        auto scores_and_boxes_dataPtr = tensors_host[0]->host<float>();
-        auto anchors_dataPtr = tensors_host[1]->host<float>();
+        auto boxes_data = tensors_host[0]->host<float>();
+        auto scores_data = tensors_host[1]->host<float>();
         int num_boxes = tensors_host[0]->shape()[1];
-        CHECK_EQ(output_tensors_[1]->shape()[0], num_boxes);
+
         int raw_image_width = origin_input_sizes_[1];
         int raw_image_height = origin_input_sizes_[0];
-        num_classes_ = tensors_host[0]->shape()[2]-4;
-        int num_cols = num_classes_+4;
+        num_classes_ = tensors_host[1]->shape()[2];
+        int num_cols = num_classes_;
 
         for(int i = 0; i < num_boxes; ++i)
         {
-            // location decoding
-            float ycenter =     scores_and_boxes_dataPtr[i*num_cols + +num_classes_+1] * variances_[1]  * anchors_dataPtr[i*4 + 3] + anchors_dataPtr[i*4 + 1];
-            float xcenter =     scores_and_boxes_dataPtr[i*num_cols + num_classes_+0] * variances_[0]  * anchors_dataPtr[i*4 + 2] + anchors_dataPtr[i*4 + 0];
-            float h       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+3] * variances_[3]) * anchors_dataPtr[i*4 + 3];
-            float w       = exp(scores_and_boxes_dataPtr[i*num_cols + num_classes_+2] * variances_[2]) * anchors_dataPtr[i*4 + 2];
-
-            float ymin    = ( ycenter - h * 0.5 ) * raw_image_height;
-            float xmin    = ( xcenter - w * 0.5 ) * raw_image_width;
-            float ymax    = ( ycenter + h * 0.5 ) * raw_image_height;
-            float xmax    = ( xcenter + w * 0.5 ) * raw_image_width;
 
             // probability decoding, softmax
-            float total_sum = exp(scores_and_boxes_dataPtr[i*num_cols + 0]);
+            float total_sum = exp(scores_data[i*num_cols + 0]);
             // init
             int max_id = 0;
             float max_prob=0;
 
             for(int j=1;j<num_classes_;j++){
-                float logit = exp(scores_and_boxes_dataPtr[i*num_cols + j]);
+                float logit = exp(scores_data[i*num_cols + j]);
                 total_sum  += logit;
                 if(max_prob<logit){
                     max_prob = logit;
                     max_id = j;
                 }
             }
+            float xmin = boxes_data[i*4]*raw_image_width;
+            float ymin = boxes_data[i*4+1]*raw_image_height;
+            float xmax = boxes_data[i*4+2]*raw_image_width;
+            float ymax = boxes_data[i*4+3]*raw_image_height;
 
             max_prob /= total_sum;
 
@@ -185,9 +180,40 @@ namespace opengl{
         // load to cpu input tensor
         LoadToInputTensors(image);
         session_->Run({{"input", input_tensors_[0]}});
-        session_->GetOutputs(output_names_, output_dformats_, &output_tensors_);
+        LoadToOutputTensors(output_names_);
     }
 
+    void Detector::LoadToOutputTensors(const TensorNameList& names){
+        CHECK_EQ(names.size(), 3);
+        Tensor* cls_logits = session_->FindTensorByName(names[0]);
+        Tensor* box_preds = session_->FindTensorByName(names[1]);
+        Tensor* anchors = session_->FindTensorByName(names[2]);
+
+        Tensor* boxes=nullptr;
+        if(tmp_tensors_.empty()){
+            // cache here
+            boxes = new Tensor(Tensor::DT_FLOAT, box_preds->shape(),
+                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+        }else{
+            boxes = tmp_tensors_[0];
+        }
+
+        functor::SSDBBoxDecoder()(session_->context(), box_preds, anchors, boxes,
+                variances_);
+
+        if(output_tensors_.empty()){
+            Tensor* boxes_cpu = Tensor::Empty(Tensor::DT_FLOAT,
+                    boxes->shape(), dlxnet::TensorProto::ANY);
+            Tensor* cls_logits_cpu = Tensor::Empty(Tensor::DT_FLOAT,
+                    cls_logits->shape(), dlxnet::TensorProto::ANY);
+
+            output_tensors_.emplace_back(boxes_cpu);
+            output_tensors_.emplace_back(cls_logits_cpu);
+        }
+
+        session_->context()->CopyDeviceTensorToCPU(boxes, output_tensors_[0]);
+        session_->context()->CopyDeviceTensorToCPU(cls_logits, output_tensors_[1]);
+    }
 
     void Detector::Detect(const cv::Mat& raw_image, std::vector<BoxInfo>& finalBoxInfos){
         // preprocess
