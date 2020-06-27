@@ -10,6 +10,7 @@
 namespace opengl{
     class Allocator;
     class Program;
+    class TensorPoolAllocator;
     class Context{
         public:
             Context(Allocator* allocator);
@@ -70,6 +71,8 @@ namespace opengl{
             GLuint vertex_shader_;
             // output target in each kernel
             GLuint frame_buffer_;
+
+            std::unique_ptr<TensorPoolAllocator> tensor_pool_allocator_;
     };
 
     Context* GetContext();

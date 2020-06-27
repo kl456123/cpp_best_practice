@@ -19,6 +19,7 @@ namespace opengl{
                 virtual ~FlattenKernel();
             private:
                 int axis_;
+                Tensor* any4_tensor_=nullptr;
         };
 }//namespace opengl
 

@@ -7,6 +7,7 @@
 #include "opengl/core/driver.h"
 #include "opengl/core/tensor_format.h"
 #include "opengl/core/functor.h"
+#include "opengl/core/tensor_allocator.h"
 
 
 namespace opengl{
@@ -99,7 +100,8 @@ namespace opengl{
     }
 
     Context::Context(Allocator* allocator)
-        :allocator_(allocator){
+        :allocator_(allocator),
+        tensor_pool_allocator_(new TensorPoolAllocator){
             // max size allowed when using texture
             LOG(INFO)<<"max group invacations: "<<GetMaxTextureSize();
             // prepare framebuffer and vertex shader first
@@ -121,9 +123,9 @@ namespace opengl{
             return;
         }
 
-        auto src_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
-                    cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
-        Tensor* src_gpu_tensor = src_gpu_tensor_ptr.get();
+        Tensor* src_gpu_tensor =  tensor_pool_allocator_->AllocateTensor(
+                cpu_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY);
+
         internal::CopyCPUTensorToDevice(cpu_tensor, src_gpu_tensor);
         if(device_tensor->dformat()==dlxnet::TensorProto::ANY4){
             // any to any4 (device->device)
@@ -138,6 +140,7 @@ namespace opengl{
                 <<device_tensor->dformat()<<" -> cpu_dformat: "
                 <<cpu_tensor->dformat();
         }
+        tensor_pool_allocator_->DeallocateTensor(src_gpu_tensor);
     }
 
 
@@ -153,9 +156,8 @@ namespace opengl{
             internal::CopyDeviceTensorToCPU(device_tensor, cpu_tensor);
             return;
         }
-        auto dst_gpu_tensor_ptr = std::unique_ptr<Tensor>(new Tensor(Tensor::DT_FLOAT,
-                    device_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY));
-        Tensor* dst_gpu_tensor = dst_gpu_tensor_ptr.get();
+        Tensor* dst_gpu_tensor = tensor_pool_allocator_->AllocateTensor(
+                device_tensor->shape(), Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY);
         if(device_tensor->dformat()==dlxnet::TensorProto::ANY4
                 &&cpu_tensor->dformat()==dlxnet::TensorProto::ANY){
             functor::ConvertTensorANY4ToANY()(this, device_tensor, dst_gpu_tensor);
@@ -169,6 +171,7 @@ namespace opengl{
                 <<cpu_tensor->dformat();
         }
         internal::CopyDeviceTensorToCPU(dst_gpu_tensor, cpu_tensor);
+        tensor_pool_allocator_->DeallocateTensor(dst_gpu_tensor);
     }
 
     void Context::CopyImageToBuffer(Texture* texture, Buffer* buffer){

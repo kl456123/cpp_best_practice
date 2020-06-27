@@ -33,8 +33,13 @@ namespace opengl{
         auto input_tensor = inputs[0];
         if(input_tensor->dformat() == dlxnet::TensorProto::NHWC4){
             VLOG(1)<<"Convert Tensor From NHWC4 To ANY4";
-            any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
-                    Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            if(!any4_tensor_){
+                // cache here
+                any4_tensor = new Tensor(Tensor::DT_FLOAT, input_tensor->shape(),
+                        Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            }else{
+                any4_tensor = any4_tensor_;
+            }
             functor::ConvertTensorNHWC4ToANY4()(GetContext(), input_tensor, any4_tensor);
         }else{
             any4_tensor = inputs[0];
@@ -81,7 +86,11 @@ namespace opengl{
         output_shapes[0].emplace_back(num_elements);
     }
 
-    FlattenKernel::~FlattenKernel(){}
+    FlattenKernel::~FlattenKernel(){
+        if(any4_tensor_){
+            delete any4_tensor_;
+        }
+    }
 
     REGISTER_KERNEL_WITH_NAME(FlattenKernel, "Flatten");
 }//namespace opengl

@@ -46,7 +46,7 @@ namespace opengl{
         // allocate memory for input tensor
         ::opengl::IntList input_shape({1, input_sizes_[0], input_sizes_[1], 3});
         ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
-        ::opengl::Tensor* image_ptr = Tensor::Ones(Tensor::DT_FLOAT,
+        ::opengl::Tensor* image_ptr = Tensor::Empty(Tensor::DT_FLOAT,
                 input_shape, input_dformat);
 
         input_tensors_.emplace_back(image_ptr);
@@ -194,6 +194,7 @@ namespace opengl{
             // cache here
             boxes = new Tensor(Tensor::DT_FLOAT, box_preds->shape(),
                     Tensor::DEVICE_TEXTURE, dlxnet::TensorProto::ANY4);
+            tmp_tensors_.emplace_back(boxes);
         }else{
             boxes = tmp_tensors_[0];
         }
@@ -247,6 +248,11 @@ namespace opengl{
         }
 
         for(auto tensor:input_tensors_){
+            if(tensor){
+                delete tensor;
+            }
+        }
+        for(auto tensor:tmp_tensors_){
             if(tensor){
                 delete tensor;
             }

@@ -62,6 +62,7 @@ set(CORE_SRC_NAMES
     driver.cc
     tensor.cc
     allocator.cc
+    tensor_allocator.cc
     ogl_allocator.cc
     functor.cc
     cpu_functor.cc

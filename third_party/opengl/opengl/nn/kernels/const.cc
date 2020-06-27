@@ -8,6 +8,7 @@ namespace opengl{
         // get value and store it in tensor_
         auto& const_tensor = attr.const_attr().value();
 
+        CHECK(!tensor_);
         tensor_ = new Tensor(const_tensor);
         CHECK_GT(tensor_->shape().size(), 0)<<DebugString();
 
