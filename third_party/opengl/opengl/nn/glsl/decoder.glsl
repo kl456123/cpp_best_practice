@@ -1,9 +1,9 @@
-// (N, num_boxes, 1, num_entries)
-// (N*num_boxes* 1* num_entries/4, 4) (any4)
+// (N, num_boxes, 4)
+// (N*num_boxes, 4) (any4)
 uniform PRECISION sampler2D prediction;
 
 // any4
-// (N, H, W, 4)
+// (num_boxes, 4)
 uniform PRECISION sampler2D anchors;
 
 uniform vec4 variances;

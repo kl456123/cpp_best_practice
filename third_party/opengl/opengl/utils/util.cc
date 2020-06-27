@@ -73,7 +73,8 @@ namespace opengl{
     }
 
 
-    void CompareTXT(const string& output_fn1, const string& output_fn2){
+    void CompareTXT(const string& output_fn1, const string& output_fn2,
+            const float precision){
         std::ifstream file1;
         file1.open(output_fn1, std::ifstream::in);
         if(file1.fail()){
@@ -87,7 +88,6 @@ namespace opengl{
         }
         string s1, s2;
         float val1, val2;
-        const float precision=1e-3;
         int index = 0;
         while(file1&&file2){
             file1>>val1;

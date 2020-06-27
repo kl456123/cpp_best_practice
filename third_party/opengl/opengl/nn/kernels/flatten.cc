@@ -5,21 +5,25 @@
 #include "opengl/utils/macros.h"
 #include "opengl/core/kernel_registry.h"
 #include "opengl/utils/util.h"
+#include "opengl/core/fbo_session.h"
 #include "opengl/core/functor.h"
 
 
 namespace opengl{
     FlattenKernel::FlattenKernel(Context* context)
-        :Kernel(context){
-            // kernel_fname_ = "../opengl/nn/glsl/flatten.glsl";
-            kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
+        :Kernel(context){}
+
+    void FlattenKernel::SelectKernel(const TensorList& inputs){
+        kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
+        if(session_->IsONNX()&&inputs[0]->dformat()==dlxnet::TensorProto::NHWC4){
+            IntList mapping{0, 3, 1, 2};
+            axis_ = mapping[axis_];
         }
+    }
 
     void FlattenKernel::SetupAttr(const dlxnet::Attribute& attr){
         auto& flatten_params = attr.flatten_attr();
         axis_ = flatten_params.axis();
-
-
     }
 
     void FlattenKernel::Compute(TensorList& inputs, TensorList& outputs){

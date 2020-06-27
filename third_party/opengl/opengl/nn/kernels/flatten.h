@@ -13,8 +13,9 @@ namespace opengl{
                 FlattenKernel(Context* context);
                 virtual void Compute(TensorList& inputs, TensorList& outputs);
                 virtual void InferOutputShape(TensorShapeList& inputs,
-                        TensorShapeList& outputs);
-                virtual void SetupAttr(const dlxnet::Attribute& attr);
+                        TensorShapeList& outputs)override;
+                virtual void SetupAttr(const dlxnet::Attribute& attr)override;
+                virtual void SelectKernel(const TensorList& inputs)override;
                 virtual ~FlattenKernel();
             private:
                 int axis_;

@@ -11,7 +11,8 @@ namespace opengl{
 
     void DumpTensor(const Tensor* tensor, const string& output_fn);
 
-    void CompareTXT(const string& output_fn1, const string& output_fn2);
+    void CompareTXT(const string& output_fn1, const string& output_fn2,
+            const float precision=1e-3);
 }//namespace opengl
 
 #endif

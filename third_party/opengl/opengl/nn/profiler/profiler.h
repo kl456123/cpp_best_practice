@@ -9,18 +9,9 @@ namespace opengl{
     class StepStats;
     class Profiler{
         public:
-            struct StepStatsTime{
-                float total_micros=0;
-                float setup_micros=0;
-                float output_micros=0;
-
-                std::map<string, std::pair<float, int>> type2time;
-            };
-            void CollectData(StepStats* step_stats);
-
-            void PrintProfiling(const int num_iters);
-        private:
-            std::vector<StepStatsTime> steps_stats_time_;
+            typedef std::map<string, std::pair<float, int>> NamedStats;
+            void PrintProfiling(const StepStats& step_stats, const int num_iters,
+                    bool verbose=true);
     };
 }
 

@@ -21,6 +21,8 @@ using opengl::FBOSession;
 
 Tensor* PrepareInputs(std::string image_fname,
         const std::vector<int>& shape){
+    CHECK_GT(shape[0], 0);
+    CHECK_GT(shape[1], 0);
     auto raw_image = cv::imread(image_fname);
     cv::cvtColor(raw_image, raw_image, CV_BGR2RGB);
     cv::resize(raw_image, raw_image, cv::Size(shape[0], shape[1]));
@@ -42,28 +44,29 @@ int main(int argc, char** argv){
     // Initialize Google's logging library.
     google::InitGoogleLogging(argv[0]);
 
-    // glut_init(argc, argv);
+    // init opengl
     ::opengl::glfw_init();
 
-    int maxtexsize;
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE,&maxtexsize);
-    LOG(INFO)<<"GL_MAX_TEXTURE_SIZE: "<<maxtexsize;
-
-    // some params
+    // init params
     std::string model_path = "./demo.dlx";
     const int num_iters = 1;
-    const float precision = 1e-6;
+    int height=320;
+    int width=320;
+    std::string image_name = "../assets/container.jpg";
+    if(argc>=2){
+        model_path = std::string(argv[1]);
+    }
+
+    if(argc>=3){
+        width = atoi(argv[2]);
+        height = width;
+    }
 
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
     ::opengl::TensorNameList output_names({"cls_and_bbox"});
 
-    // ::opengl::IntList input_shape({1, 320, 320, 3});
-    // ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
-    // Tensor* input_tensor= Tensor::Ones(Tensor::DT_FLOAT,
-            // input_shape, input_dformat);
-    std::string image_name = "/home/breakpoint/Documents/MNN/demo/test/demo.jpg";
-    Tensor* input_tensor = PrepareInputs(image_name, {160, 160});
+    Tensor* input_tensor = PrepareInputs(image_name, {width, height});
     ::opengl::StringList dformats({"ANY"});
 
     auto session = std::unique_ptr<FBOSession>(new FBOSession);
@@ -82,8 +85,8 @@ int main(int argc, char** argv){
 
     auto env_time = EnvTime::Default();
     auto start_time1 = env_time->NowMicros();
-    std::string output_fn1 = "output.txt";
-    std::string output_fn2 = "/home/breakpoint/Documents/Learning/cpp_best_practice/tools/converter/build/output2.txt";
+    // std::string output_fn1 = "output1.txt";
+    // std::string output_fn2 = "output2.txt";
 
     for(int i=0;i<num_iters;++i){
         // init graph according to inputs

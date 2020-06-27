@@ -11,6 +11,28 @@ uniform ivec4 output_shape;
 // (1, nhwc/4, 4)
 out vec4 color;
 
+vec4 get_vec4(int index){
+    // get vec4 from any dformat
+    vec4 res;
+    int offset = index/4;
+    if(index%4==0){
+        res= texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0);
+    }else if(index%4==1){
+        res.xyz= texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).yzw;
+        offset+=1;
+        res.w = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
+    }else if(index%4==2){
+        res.xy= texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).zw;
+        offset+=1;
+        res.zw = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).xy;
+    }else if(index%4==3){
+        res.x= texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
+        offset+=1;
+        res.yzw = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).xyz;
+    }
+    return res;
+}
+
 void main(){
     ivec2 pos = ivec2(gl_FragCoord.xy);
 
@@ -21,28 +43,17 @@ void main(){
     if(pos.x+pos.y*MAX_TEXTURE_SIZE>=output_num_elements){
         return;
     }
-    float res[4];
-    for(int i=0;i<4;++i){
-        int output_4_index = (pos.x+pos.y*MAX_TEXTURE_SIZE)*4+i;
-        if(output_4_index%out_4_dim>=output_shape.w){
-            // skip due to stride
-            continue;
-        }
-        int index = output_4_index/out_4_dim*output_shape.w+output_4_index%out_4_dim;
-        int offset = index/4;
-        if(index%4==0){
-            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).x;
-        }else if(index%4==1){
-            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).y;
-        }else if(index%4==2){
-            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).z;
-        }else if(index%4==3){
-            res[i] = texelFetch(input_image, ivec2(offset%MAX_TEXTURE_SIZE, offset/MAX_TEXTURE_SIZE), 0).w;
-        }
-    }
 
-    color.x = res[0];
-    color.y = res[1];
-    color.z = res[2];
-    color.w = res[3];
+    int output_4_index = (pos.x+pos.y*MAX_TEXTURE_SIZE)*4;
+    int remain =  output_shape.w - output_4_index%out_4_dim;
+    int index = output_4_index/out_4_dim*output_shape.w+output_4_index%out_4_dim;
+    color = get_vec4(index);
+    if(remain>=4){
+    }else if(remain==1){
+        color.yzw = vec3(0.0);
+    }else if(remain==2){
+        color.zw = vec2(0.0);
+    }else if(remain==3){
+        color.w = 0.0;
+    }
 }
