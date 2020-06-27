@@ -82,7 +82,8 @@ namespace opengl{
             void SetVertexShader(){}
 
             // kernel program(opencl) or shader(opengl)
-            std::unique_ptr<Program> program_;
+            // not own
+            Program* program_;
 
             // opengl driver, it wrapping all API about platform(opengl or opencl)
             // not owned

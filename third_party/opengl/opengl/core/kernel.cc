@@ -18,7 +18,8 @@ namespace opengl{
     Kernel::~Kernel(){}
 
     void Kernel::SetupProgram(Program* program){
-        program_.reset(program);
+        // not own
+        program_=program;
     }
 
     void Kernel::SetFrameBuffer(const TensorList& outputs){

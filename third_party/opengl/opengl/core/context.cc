@@ -278,6 +278,10 @@ namespace opengl{
             // no kernel program needed for this op, like const op
             return nullptr;
         }
+
+        if(program_set_.find(kernel_fname)!=program_set_.end()){
+            return program_set_[kernel_fname];
+        }
         // set program
         // program_ .reset(new Program);
         auto program = new Program;
@@ -288,6 +292,7 @@ namespace opengl{
         // set vertex shader first
         // then you can set fragment shader to do actually computation
         program->SetVertexShader();
+        program_set_[kernel_fname] = program;
         return program;
     }
 

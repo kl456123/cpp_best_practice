@@ -22,7 +22,8 @@ namespace opengl{
             CHECK(!src_tensor->is_host());
             CHECK(!dst_tensor->is_host());
 
-            auto program = std::unique_ptr<Program>(ctx->CreateProgram(kernel_fname));
+            // not own it
+            auto program = ctx->CreateProgram(kernel_fname);
             // activate it before use
             program->Activate();
 
@@ -100,7 +101,7 @@ namespace opengl{
             CHECK(!anchor_tensor->is_host());
             CHECK(!decoded_tensor->is_host());
 
-            auto program = std::unique_ptr<Program>(ctx->CreateProgram("../opengl/nn/glsl/decoder.glsl"));
+            auto program = ctx->CreateProgram("../opengl/nn/glsl/decoder.glsl");
             // activate it before use
             program->Activate();
 
@@ -135,7 +136,7 @@ namespace opengl{
             CHECK(!final_boxes->is_host());
             CHECK_EQ(boxes->shape().size(), 3);
 
-            auto program = std::unique_ptr<Program>(ctx->CreateProgram("../opengl/nn/glsl/nms.glsl"));
+            auto program = ctx->CreateProgram("../opengl/nn/glsl/nms.glsl");
             // activate it before use
             program->Activate();
 

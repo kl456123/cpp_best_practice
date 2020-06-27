@@ -73,6 +73,9 @@ namespace opengl{
             GLuint frame_buffer_;
 
             std::unique_ptr<TensorPoolAllocator> tensor_pool_allocator_;
+            // cache all opengl programs
+            // std::unique_ptr<ProgramSet> program_set_;
+            std::map<string, Program*> program_set_;
     };
 
     Context* GetContext();

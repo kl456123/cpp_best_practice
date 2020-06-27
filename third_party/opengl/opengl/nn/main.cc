@@ -64,7 +64,7 @@ int main(int argc, char** argv){
 
     // prepare inputs and outputs
     ::opengl::TensorList outputs_cpu;
-    ::opengl::TensorNameList output_names({"cls_and_bbox"});
+    ::opengl::TensorNameList output_names({"cls_logits"});
 
     Tensor* input_tensor = PrepareInputs(image_name, {width, height});
     ::opengl::StringList dformats({"ANY"});
