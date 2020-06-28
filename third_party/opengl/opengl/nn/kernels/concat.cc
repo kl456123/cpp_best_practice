@@ -64,7 +64,7 @@ namespace opengl{
         int axis_offset=0;
         SetFrameBuffer(outputs);
         SetVertexShader();
-        OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+        // OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         program_->set_int("axis", axis);
         program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
 
