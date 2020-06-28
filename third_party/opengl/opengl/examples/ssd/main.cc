@@ -7,6 +7,7 @@
 #include "opengl/examples/ssd/detector.h"
 
 #include <opencv2/opencv.hpp>
+#include "opengl/examples/ssd/common.h"
 
 using opengl::FBOSession;
 using opengl::Tensor;
@@ -23,10 +24,13 @@ int main(int argc, char** argv){
     auto detector = Detector::Create(model_path, {"input"},
             {"cls_logits", "box_preds", "anchors"}, {160, 160});
 
+    auto cap = std::shared_ptr<cv::VideoCapture>(reinterpret_cast<cv::VideoCapture*>(open_video_stream("", -1, 640, 480, 0)));
+    cv::Mat raw_image;
     while(true){
         // prepare inputs
-        std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
-        auto raw_image = cv::imread(image_fname);
+        // std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
+        // raw_image = cv::imread(image_fname);
+        *(cap.get()) >> raw_image;
 
         auto t1 = std::chrono::system_clock::now();
         // detect
