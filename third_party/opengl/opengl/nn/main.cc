@@ -48,11 +48,11 @@ int main(int argc, char** argv){
     ::opengl::glfw_init();
 
     // init params
-    std::string model_path = "./demo.dlx";
+    std::string model_path = std::string(ROOT_DIR)+"/"+"./demo.dlx";
     const int num_iters = 1;
     int height=320;
     int width=320;
-    std::string image_name = "../assets/container.jpg";
+    std::string image_name = std::string(ROOT_DIR)+"/"+"../assets/container.jpg";
     if(argc>=2){
         model_path = std::string(argv[1]);
     }

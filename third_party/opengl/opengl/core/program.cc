@@ -2,9 +2,11 @@
 #include "opengl/utils/macros.h"
 #include "opengl/core/tensor.h"
 #include "opengl/core/driver.h"
+#include "opengl/utils/util.h"
 #include <fstream>
 #include <sstream>
 #include <glog/logging.h>
+
 
 namespace opengl{
     namespace{
@@ -32,10 +34,17 @@ namespace opengl{
         return *this;
     }
 
-    Program& Program::AttachSource(const std::string source, GLenum type){
+    Program& Program::AttachSource(const std::string source, GLenum type,
+            const string& build_options){
+        // add head
+        std::ostringstream tc;
+        tc << GetHead("rgba32f");
+        tc << build_options;
+        tc<<source;
+
         // Create a Shader Object
         int shader_id;
-        OGLStatus shader_status = CreateShader(source, type, &shader_id);
+        OGLStatus shader_status = CreateShader(tc.str(), type, &shader_id);
         // Display the Build Log on Error
         if (!shader_status){
             char infoLog[512];
@@ -51,19 +60,15 @@ namespace opengl{
     Program& Program::AttachFile(const std::string fname, GLenum type,
             const std::string& build_options){
         // Load GLSL Shader Source from File
-        std::ifstream fd(fname);
+        auto abs_path = string(ROOT_DIR)+"/"+fname;
+        std::ifstream fd(abs_path);
         std::string src = std::string(std::istreambuf_iterator<char>(fd),
                 (std::istreambuf_iterator<char>()));
         if(src.empty()){
-            LOG(FATAL)<<"Read File ERROR from "<<fname;
+            LOG(FATAL)<<"Read File ERROR from "<<abs_path;
         }
-        // add head
-        std::ostringstream tc;
-        tc << GetHead("rgba32f");
-        tc << build_options;
-        tc<<src;
 
-        return AttachSource(tc.str().c_str(), type);
+        return AttachSource(src, type, build_options);
     }
 
     OGLStatus Program::Link(){

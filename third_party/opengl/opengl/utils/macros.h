@@ -70,4 +70,7 @@ namespace opengl{
 #define PREDICT_TRUE(x) (x)
 #endif
 
+
+#define TO_STRING(ROOT_DIR) #ROOT_DIR
+
 #endif

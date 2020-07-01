@@ -9,7 +9,7 @@
 namespace opengl{
     UnsqueezeKernel::UnsqueezeKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/unsqueeze.glsl";
+            kernel_fname_ = glsl_unsqueeze_glsl;
         }
 
     void UnsqueezeKernel::SetupAttr(const dlxnet::Attribute& attr){

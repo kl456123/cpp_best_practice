@@ -9,7 +9,7 @@
 namespace opengl{
     GatherKernel::GatherKernel(Context* context)
         :Kernel(context){
-            kernel_fname_ = "../opengl/nn/glsl/gather.glsl";
+            kernel_fname_ = glsl_gather_glsl;
         }
 
     void GatherKernel::SetupAttr(const dlxnet::Attribute& attr){

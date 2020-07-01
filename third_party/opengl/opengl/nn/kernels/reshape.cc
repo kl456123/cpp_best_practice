@@ -15,10 +15,10 @@ namespace opengl{
 
     void ReshapeKernel::SelectKernel(const TensorList& inputs){
         if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
-            kernel_fname_ = "../opengl/nn/glsl/reshape_any4.glsl";
+            kernel_fname_ = glsl_reshape_any4_glsl;
         }else{
             CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::NHWC4);
-            kernel_fname_ = "../opengl/nn/glsl/reshape.glsl";
+            kernel_fname_ = glsl_reshape_glsl;
         }
         // always output any4 dformat
         output_tensor_dformats_.emplace_back(dlxnet::TensorProto::ANY4);

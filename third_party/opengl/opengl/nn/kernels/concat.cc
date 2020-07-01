@@ -32,7 +32,7 @@ namespace opengl{
     void ConcatKernel::SelectKernel(const TensorList& inputs){
         CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::ANY4);
         if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
-            kernel_fname_ = "../opengl/nn/glsl/concat_multi.glsl";
+            kernel_fname_ = glsl_concat_multi_glsl;
         }else{
             // kernel_fname_ = "../opengl/nn/glsl/concat.glsl";
         }

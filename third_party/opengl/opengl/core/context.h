@@ -6,6 +6,7 @@
 #include "opengl/core/opengl.h"
 #include "opengl/core/tensor.h"
 #include "opengl/core/buffer.h"
+#include "opengl/nn/all_shaders.h"
 
 namespace opengl{
     class Allocator;

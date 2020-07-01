@@ -291,7 +291,7 @@ namespace opengl{
         // set program
         // program_ .reset(new Program);
         auto program = new Program;
-        (*program).AttachFile(kernel_fname, GL_FRAGMENT_SHADER, build_options)
+        (*program).AttachSource(kernel_fname, GL_FRAGMENT_SHADER, build_options)
             .AttachShader(vertex_shader_);
         program->Link();
         program->Activate();

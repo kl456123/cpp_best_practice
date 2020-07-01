@@ -1,6 +1,7 @@
 #include "opengl/core/functor.h"
 #include "opengl/core/tensor.h"
 #include "opengl/core/context.h"
+#include "opengl/nn/all_shaders.h"
 #include "opengl/core/program.h"
 #include <glog/logging.h>
 
@@ -43,50 +44,50 @@ namespace opengl{
     namespace functor{
         void ConvertTensorNHWC4ToANY4::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/nhwc4_to_any4.glsl",
+            internal::RunOpenGLProgram(glsl_nhwc4_to_any4_glsl,
                     ctx, src_tensor, dst_tensor);
         }
 
         void ConvertTensorANYToANY4::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/any_to_any4.glsl",
+            internal::RunOpenGLProgram(glsl_any_to_any4_glsl,
                     ctx, src_tensor, dst_tensor);
 
         }
 
         void ConvertTensorANY4ToANY::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/any4_to_any.glsl",
+            internal::RunOpenGLProgram(glsl_any4_to_any_glsl,
                     ctx, src_tensor, dst_tensor);
         }
 
         void ConvertTensorANYToNHWC4::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/any_to_nhwc4.glsl",
+            internal::RunOpenGLProgram(glsl_any_to_nhwc4_glsl,
                     ctx, src_tensor, dst_tensor);
         };
 
         void ConvertTensorNCHWToHWN4C4::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/nchw_to_hwn4c4.glsl",
+            internal::RunOpenGLProgram(glsl_nchw_to_hwn4c4_glsl,
                     ctx, src_tensor, dst_tensor);
         }
 
         void ConvertTensorTest::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/layout_test.glsl",
+            internal::RunOpenGLProgram(glsl_layout_test_glsl,
                     ctx, src_tensor, dst_tensor);
         };
 
         void ConvertTensorNHWC4ToANY::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/nhwc4_to_any.glsl",
+            internal::RunOpenGLProgram(glsl_nhwc4_to_any_glsl,
                     ctx, src_tensor, dst_tensor);
         };
 
         void ConvertTensorHWN4C4ToNCHW::operator()(Context* ctx,
                 const Tensor* src_tensor, Tensor* dst_tensor){
-            internal::RunOpenGLProgram("../opengl/nn/glsl/hwn4c4_to_nchw.glsl",
+            internal::RunOpenGLProgram(glsl_hwn4c4_to_nchw_glsl,
                     ctx, src_tensor, dst_tensor);
         };
 
@@ -101,7 +102,7 @@ namespace opengl{
             CHECK(!anchor_tensor->is_host());
             CHECK(!decoded_tensor->is_host());
 
-            auto program = ctx->CreateProgram("../opengl/nn/glsl/decoder.glsl");
+            auto program = ctx->CreateProgram(glsl_decoder_glsl);
             // activate it before use
             program->Activate();
 
@@ -136,7 +137,7 @@ namespace opengl{
             CHECK(!final_boxes->is_host());
             CHECK_EQ(boxes->shape().size(), 3);
 
-            auto program = ctx->CreateProgram("../opengl/nn/glsl/nms.glsl");
+            auto program = ctx->CreateProgram(glsl_nms_glsl);
             // activate it before use
             program->Activate();
 

@@ -13,6 +13,7 @@ namespace opengl{
 
     void CompareTXT(const string& output_fn1, const string& output_fn2,
             const float precision=1e-3);
+    string GenerateAbsPath(const string& fname);
 }//namespace opengl
 
 #endif

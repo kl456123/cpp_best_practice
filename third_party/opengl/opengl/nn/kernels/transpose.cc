@@ -33,10 +33,10 @@ namespace opengl{
 
     void TransposeKernel::SelectKernel(const TensorList& inputs){
         if(inputs[0]->dformat()==dlxnet::TensorProto::ANY4){
-            kernel_fname_ = "../opengl/nn/glsl/transpose_any4.glsl";
+            kernel_fname_ = glsl_transpose_any4_glsl;
         }else{
             CHECK_EQ(inputs[0]->dformat(), dlxnet::TensorProto::NHWC4);
-            kernel_fname_ = "../opengl/nn/glsl/transpose.glsl";
+            kernel_fname_ = glsl_transpose_glsl;
         }
 
         // output dformat must be any4

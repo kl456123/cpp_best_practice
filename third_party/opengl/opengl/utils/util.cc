@@ -1,6 +1,7 @@
 #include <sstream>
 #include <fstream>
 #include <iomanip>
+#include <experimental/filesystem>
 
 #include "opengl/core/opengl.h"
 #include "opengl/utils/util.h"
@@ -9,6 +10,8 @@
 
 
 namespace opengl{
+    namespace fs = std::experimental::filesystem;
+
     void setLocalSize(std::vector<std::string>& prefix, int* localSize,
             std::vector<int> local_sizes){
         GLint maxLocalSizeX, maxLocalSizeY, maxLocalSizeZ;
@@ -96,6 +99,12 @@ namespace opengl{
             CHECK_GE((val1), (val2)-(precision))<<" in index: "<<index;
             ++index;
         }
+    }
+
+
+    string GenerateAbsPath(const string& fname){
+        fs::path p(fname);
+        return fs::absolute(p);
     }
 }//namespace opengl
 

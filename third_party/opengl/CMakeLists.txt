@@ -8,6 +8,9 @@ option(BUILD_NN "BUILD NERTUAL NETWORK" ON)
 option(BUILD_TEST "BUILD OPENGL TEST" ON)
 option(BUILD_ARM "USE GLES" OFF)
 option(BUILD_DEBUG "ENABLE DEBUG MODE" ON)
+include(cmake/Protobuf.cmake)
+
+add_definitions(-DROOT_DIR="${CMAKE_BINARY_DIR}")
 
 if(BUILD_ARM)
     add_definitions(-DARM_PLATFORM)
@@ -28,8 +31,7 @@ foreach(FIL ${ABS_ProtoFiles})
     FILE(RELATIVE_PATH RELA_FIL ${CMAKE_CURRENT_SOURCE_DIR} ${FIL})
     set(ProtoFiles ${ProtoFiles} ${RELA_FIL})
 endforeach()
-set(PROTOBUF_GENERATE_CPP_APPEND_PATH FALSE)
-protobuf_generate_cpp(ProtoSources ProtoHeaders ${ProtoFiles})
+CUSTOM_PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)
 set(UTIL_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/utils)
@@ -107,10 +109,11 @@ set(GL_CORE gl_core)
 
 # build core library
 add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES}
-    ${PROFILER_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources})
+    ${PROFILER_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources}
+    ${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn/all_shaders.cc)
 # use both in case anyone of them not found
 target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
-    ${PROTOBUF_LIBRARY})
+    ${PROTOBUF_LIBRARY} -lstdc++fs)
 
 
 # deeplearning framework using opengl backend

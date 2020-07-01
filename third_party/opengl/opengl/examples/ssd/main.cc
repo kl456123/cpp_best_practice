@@ -4,6 +4,7 @@
 #include "opengl/core/tensor.h"
 #include "opengl/core/init.h"
 #include "opengl/core/functor.h"
+#include "opengl/utils/util.h"
 #include "opengl/examples/ssd/detector.h"
 
 #include <opencv2/opencv.hpp>
@@ -20,7 +21,7 @@ int main(int argc, char** argv){
     ::opengl::glfw_init();
 
     // config detector
-    std::string model_path = "./demo.dlx";
+    std::string model_path = opengl::GenerateAbsPath("./demo.dlx");
     auto detector = Detector::Create(model_path, {"input"},
             {"cls_logits", "box_preds", "anchors"}, {160, 160});
 

@@ -19,7 +19,7 @@ namespace opengl{
 
     BinaryKernel::~BinaryKernel(){}
     void BinaryKernel::SelectKernel(const TensorList& inputs){
-        kernel_fname_ = "../opengl/nn/glsl/binary.glsl";
+        kernel_fname_ = glsl_binary_glsl;
         output_tensor_dformats_.emplace_back(inputs[0]->dformat());
     }
 
