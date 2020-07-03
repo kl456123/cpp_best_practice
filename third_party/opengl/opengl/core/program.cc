@@ -60,7 +60,7 @@ namespace opengl{
     Program& Program::AttachFile(const std::string fname, GLenum type,
             const std::string& build_options){
         // Load GLSL Shader Source from File
-        auto abs_path = string(ROOT_DIR)+"/"+fname;
+        auto abs_path = fname;
         std::ifstream fd(abs_path);
         std::string src = std::string(std::istreambuf_iterator<char>(fd),
                 (std::istreambuf_iterator<char>()));

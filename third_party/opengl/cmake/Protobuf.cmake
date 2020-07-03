@@ -20,6 +20,11 @@ function(CUSTOM_PROTOBUF_GENERATE_CPP SRCS HDRS)
     message(SEND_ERROR "Error: PROTOBUF_GENERATE_CPP() called without any proto files")
     return()
   endif()
+  foreach(FIL ${PROTO_FILES})
+    FILE(RELATIVE_PATH RELA_FIL ${CMAKE_CURRENT_SOURCE_DIR} ${FIL})
+    set(_proto_files ${_proto_files} ${RELA_FIL})
+  endforeach()
+  set(PROTO_FILES ${_proto_files})
 
   if(protobuf_EXPORT_MACRO)
     set(DLL_EXPORT_DECL "dllexport_decl=${protobuf_EXPORT_MACRO}:")
@@ -68,16 +73,17 @@ function(CUSTOM_PROTOBUF_GENERATE_CPP SRCS HDRS)
       set(_protobuf_protoc_desc "")
       set(_protobuf_protoc_flags "")
     endif()
+    set(PROTOBUF_PROTOC_EXECUTABLE /usr/local/bin/protoc)
 
     add_custom_command(
       OUTPUT "${_protobuf_protoc_src}"
              "${_protobuf_protoc_hdr}"
              ${_protobuf_protoc_desc}
-      COMMAND  protobuf::protoc
+             COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
                "--cpp_out=${DLL_EXPORT_DECL}${CMAKE_CURRENT_BINARY_DIR}"
                ${_protobuf_protoc_flags}
                ${_protobuf_include_path} ${ABS_FIL}
-      DEPENDS ${ABS_FIL} protobuf::protoc
+      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
       VERBATIM )
   endforeach()

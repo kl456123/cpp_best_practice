@@ -21,15 +21,6 @@ foreach(file_path ${APIS_SRC_FNAMES})
     set(APIS_SRC_FILES ${APIS_SRC_FILES} ${APIS_SRC_DIR}/${file_path})
 endforeach()
 
-# set(PROFILER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/profiler)
-# set(PROFILER_SRC_FNAMES profiler.cc traceme_recorder.cc
-    # host_tracer.cc host_tracer_utils.cc profiler_session.cc
-    # profiler_utils.cc profiler_interface.cc device_tracer.cc)
-
-# foreach(file_path ${PROFILER_SRC_FNAMES})
-    # set(PROFILER_SRC_FILES ${PROFILER_SRC_FILES} ${PROFILER_SRC_DIR}/${file_path})
-# endforeach()
-
 # build nn shared library
 add_library(gl_nn SHARED ${NN_SRC_FILES} ${APIS_SRC_FILES} ${PROFILER_SRC_FILES})
 target_link_libraries(gl_nn gl_core)

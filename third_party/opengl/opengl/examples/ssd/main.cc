@@ -23,7 +23,7 @@ int main(int argc, char** argv){
     // config detector
     std::string model_path = opengl::GenerateAbsPath("./demo.dlx");
     auto detector = Detector::Create(model_path, {"input"},
-            {"cls_logits", "box_preds", "anchors"}, {160, 160});
+            {"cls_logits", "box_preds", "anchors"}, {320, 320});
 
     auto cap = std::shared_ptr<cv::VideoCapture>(reinterpret_cast<cv::VideoCapture*>(open_video_stream("", -1, 640, 480, 0)));
     cv::Mat raw_image;

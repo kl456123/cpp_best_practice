@@ -26,11 +26,8 @@ find_package(Protobuf REQUIRED)
 
 include_directories(${Protobuf_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-file(GLOB ABS_ProtoFiles opengl/**/*.proto)
-foreach(FIL ${ABS_ProtoFiles})
-    FILE(RELATIVE_PATH RELA_FIL ${CMAKE_CURRENT_SOURCE_DIR} ${FIL})
-    set(ProtoFiles ${ProtoFiles} ${RELA_FIL})
-endforeach()
+file(GLOB ProtoFiles opengl/**/*.proto)
+
 CUSTOM_PROTOBUF_GENERATE_CPP(ProtoSources ProtoHeaders ${ProtoFiles})
 
 set(CORE_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opengl/core)

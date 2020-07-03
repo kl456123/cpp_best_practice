@@ -14,13 +14,16 @@ def findAllShader(path):
     return output
 
 def getName(fileName):
-    s1 = fileName.replace("/", "_")
-    s1 = s1.replace(".", "_")
-    return s1
+    s1 = os.path.basename(fileName)
+    s1 = os.path.splitext(s1)[0]
+    return "glsl_"+s1+"_glsl"
+    #  s1 = fileName.replace("/", "_")
+    #  s1 = s1.replace(".", "_")
+    #  return s1
 
 def generateFile(headfile, sourcefile, shaders):
     h = "#ifndef OPENGL_GLSL_SHADER_AUTO_GENERATE_H\n#define OPENGL_GLSL_SHADER_AUTO_GENERATE_H\n"
-    cpp = "#include \"AllShader.hpp\"\n"
+    cpp = "#include \"all_shaders.h\"\n"
     for s in shaders:
         name = getName(s)
         print(name)

@@ -98,9 +98,25 @@ namespace opengl{
                 const std::vector<float>& variances){
 
             // common used for copy from host to device
+            // (num_batches, num_samples, 4)
             CHECK(!prediction_tensor->is_host());
+            // (num_samples, 4)
             CHECK(!anchor_tensor->is_host());
+            // (num_batches, num_sampels, 4)
             CHECK(!decoded_tensor->is_host());
+
+            // check shape
+            auto box_preds_shape = prediction_tensor->shape();
+            auto anchor_shape = anchor_tensor->shape();
+            auto decoded_shape = decoded_tensor->shape();
+            CHECK_EQ(box_preds_shape.size(), 3);
+            CHECK_EQ(decoded_shape.size(), 3);
+            CHECK_EQ(anchor_shape.size(), 2);
+
+            CHECK_EQ(decoded_shape[2], 4);
+            CHECK_EQ(box_preds_shape[2], 4);
+            CHECK_EQ(anchor_shape[0], box_preds_shape[1]);
+            CHECK_EQ(anchor_shape[1], 4);
 
             auto program = ctx->CreateProgram(glsl_decoder_glsl);
             // activate it before use
