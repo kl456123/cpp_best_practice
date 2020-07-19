@@ -452,11 +452,25 @@ void Run(std::vector<int> shape){
     // << ((cpu_end - cpu_start).count() / niters);
 }
 
+void LogSystemInfo(){
+    printf("OpenGL info:\n"
+            "\tVendor   = \"%s\"\n"
+            "\tRenderer = \"%s\"\n"
+            "\tVersion  = \"%s\"\n"
+            "\tGLSL     = \"%s\"\n",
+            glGetString(GL_VENDOR),
+            glGetString(GL_RENDERER),
+            glGetString(GL_VERSION),
+            glGetString(GL_SHADING_LANGUAGE_VERSION)
+          );
+}
+
 int main(int argc, char* argv[]){
     // Initialize Google's logging library.
     google::InitGoogleLogging(argv[0]);
 
     ::opengl::example::InitContext();
+    LogSystemInfo();
     InitFrameBuffer();
 
     CreateVertexShader();

@@ -240,4 +240,17 @@ namespace opengl{
     void Sync(){
         OPENGL_CALL(glFinish());
     }
+
+    void LogSystemInfo(){
+        printf("OpenGL info:\n"
+                "\tVendor   = \"%s\"\n"
+                "\tRenderer = \"%s\"\n"
+                "\tVersion  = \"%s\"\n"
+                "\tGLSL     = \"%s\"\n",
+                glGetString(GL_VENDOR),
+                glGetString(GL_RENDERER),
+                glGetString(GL_VERSION),
+                glGetString(GL_SHADING_LANGUAGE_VERSION)
+              );
+    }
 }//namespace opengl

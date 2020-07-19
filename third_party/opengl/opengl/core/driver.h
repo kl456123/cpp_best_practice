@@ -47,5 +47,6 @@ namespace opengl{
             GLenum format=GL_RGBA, GLenum dtype=GL_FLOAT);
 
     void Sync();
+    void LogSystemInfo();
 }
 #endif

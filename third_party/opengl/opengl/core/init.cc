@@ -1,6 +1,7 @@
 #include <iostream>
 #include <glog/logging.h>
-#include "init.h"
+#include "opengl/core/init.h"
+#include "opengl/core/driver.h"
 
 namespace opengl{
 
@@ -35,6 +36,9 @@ namespace opengl{
 
         // Create Context and Load OpenGL Functions
         glfwMakeContextCurrent(window);
+
+        // log sys info of opengl
+        LogSystemInfo();
         return window;
     }
 
