@@ -40,7 +40,7 @@ if(BUILD_GLES)
 
     # use egl
     add_executable(egl_gles_demo ${CMAKE_CURRENT_SOURCE_DIR}/gles/egl.cc)
-    target_link_libraries(egl_gles_demo -lGLESv2 -lEGL glog::glog)
+    target_link_libraries(egl_gles_demo -lGLESv2 -lEGL ${GLOG_LIBRARIES})
 endif()
 
 if(BUILD_GLUT)
@@ -54,13 +54,13 @@ if(BUILD_FBO)
     add_executable(fbo_glfw ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/glfw_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_glfw -lGLESv2 -lglfw glog::glog)
+    target_link_libraries(fbo_glfw -lGLESv2 -lglfw ${GLOG_LIBRARIES})
 
     # use egl
     add_executable(fbo_egl ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/egl_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_egl -lGLESv2 -lEGL glog::glog)
+    target_link_libraries(fbo_egl -lGLESv2 -lEGL ${GLOG_LIBRARIES})
 endif()
 
 if(BUILD_NN)

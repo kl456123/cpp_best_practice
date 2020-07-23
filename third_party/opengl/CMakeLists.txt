@@ -9,6 +9,7 @@ option(BUILD_TEST "BUILD OPENGL TEST" ON)
 option(BUILD_ARM "USE GLES" OFF)
 option(BUILD_DEBUG "ENABLE DEBUG MODE" ON)
 include(cmake/Protobuf.cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules)
 
 add_definitions(-DROOT_DIR="${CMAKE_BINARY_DIR}")
 
@@ -21,10 +22,11 @@ if(BUILD_DEBUG)
 endif()
 
 find_package(OpenCV REQUIRED)
-find_package(glog REQUIRED)
+find_package(Glog REQUIRED)
 find_package(Protobuf REQUIRED)
 
 include_directories(${Protobuf_INCLUDE_DIRS})
+include_directories(${GLOG_INCLUDE_DIRS})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 file(GLOB ProtoFiles opengl/**/*.proto)
 
@@ -109,7 +111,7 @@ add_library(${GL_CORE} SHARED ${CORE_SRC_FILES} ${UTIL_SRC_FILES}
     ${PROFILER_SRC_FILES} ${LIB_SRC_FILES} ${ProtoSources}
     ${CMAKE_CURRENT_SOURCE_DIR}/opengl/nn/all_shaders.cc)
 # use both in case anyone of them not found
-target_link_libraries(${GL_CORE} ${OpenGL_LIB} glog::glog ${Protobuf_LIBRARIES}
+target_link_libraries(${GL_CORE} ${OpenGL_LIB} ${GLOG_LIBRARIES} ${Protobuf_LIBRARIES}
     ${PROTOBUF_LIBRARY} -lstdc++fs)
 
 
