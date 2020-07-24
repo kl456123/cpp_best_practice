@@ -98,7 +98,17 @@ void ReadFilesFromDir(const std::string& path_to_dir,
     struct dirent *ent;
     CHECK_NOTNULL(dir);
     while ((ent = readdir (dir)) != NULL) {
-        image_name_list->emplace_back(ent->d_name);
+        auto name= std::string(ent->d_name);
+        // ignore "." ".."
+        if(name.size()<4){
+            continue;
+        }
+        auto suffix = name.substr(name.size()-4, 4);
+        if(suffix==".png"||suffix==".jpg"){
+            // filter image
+            image_name_list->emplace_back(name);
+        }
     }
+
     closedir(dir);
 }
