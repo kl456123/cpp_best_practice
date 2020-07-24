@@ -1,9 +1,24 @@
 #include "opengl/examples/ssd/detector.h"
 #include "opengl/core/fbo_session.h"
 #include "opengl/core/functor.h"
+#include "opengl/utils/util.h"
 
 
 namespace opengl{
+    namespace{
+        class Counter{
+            public:
+                static void Increase(){count_++;}
+                static int Get(){return count_;}
+                static Counter Global(){
+                    static auto counter = new Counter;
+                    return counter;
+                }
+            private:
+                Counter()=default;
+                int count_=0;
+        };
+    }
     /*static*/ std::unique_ptr<Detector> Detector::Create(const string& model_name,
             const TensorNameList& input_names, const TensorNameList& output_names,
             const IntList& shape){
@@ -124,6 +139,15 @@ namespace opengl{
         CHECK_EQ(output_tensors_[0]->shape().size(), 3);
         // (num_batches, num_samples, 4)
         CHECK_EQ(output_tensors_[1]->shape().size(), 3);
+
+        auto counter = Counter::Global();
+        string txt = "demo.txt."+ string(itoa(counter->Get()));
+        DumpTensor(output_tensors_[0], txt);
+        if(counter.Get()==2){
+            CompareTXT("demo.txt.0", "demo.txt.2");
+        }
+        counter->Increase();
+
         auto tensors_host = output_tensors_;
 
         auto boxes_data = tensors_host[0]->host<float>();
@@ -200,6 +224,7 @@ namespace opengl{
         Tensor* anchors = session_->FindTensorByName(names[2]);
 
         Tensor* boxes=nullptr;
+        tmp_tensors_.clear();
         if(tmp_tensors_.empty()){
             // cache here
             boxes = new Tensor(Tensor::DT_FLOAT, box_preds->shape(),
@@ -212,6 +237,7 @@ namespace opengl{
         functor::SSDBBoxDecoder()(session_->context(), box_preds, anchors, boxes,
                 variances_);
 
+        output_tensors_.clear();
         if(output_tensors_.empty()){
             Tensor* boxes_cpu = Tensor::Empty(Tensor::DT_FLOAT,
                     boxes->shape(), dlxnet::TensorProto::ANY);
