@@ -55,4 +55,6 @@ float get_size(float w, float h);
 void softmax(float* data, int num);
 
 
+void ReadFilesFromDir(const std::string& path_to_dir,
+        std::vector<std::string>* image_name_list);
 #endif

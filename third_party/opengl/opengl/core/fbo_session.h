@@ -46,6 +46,10 @@ namespace opengl{
 
             Tensor* FindTensorByName(const std::string& name);
 
+            bool allow_resized(){return allow_resized_;}
+            bool set_allow_resized(bool flag){allow_resized_=flag;}
+            const IntList& default_input_sizes(){return default_input_sizes_;}
+
         private:
 
             void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
@@ -81,6 +85,10 @@ namespace opengl{
 
             friend class Kernel;
             Env* env_;
+
+            // input shapes info
+            bool allow_resized_=false;
+            IntList default_input_sizes_;
     };
 
     void SetTrackingStats(bool flag);

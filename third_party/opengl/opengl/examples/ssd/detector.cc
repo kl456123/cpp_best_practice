@@ -37,11 +37,21 @@ namespace opengl{
         nms_threshold_= options.nms_threshold;
         topk_ = options.topk;
 
-        input_sizes_.push_back(options.input_height);
-        input_sizes_.push_back(options.input_width);
-
         session_.reset(new FBOSession);
         session_->LoadGraph(options.model_name);
+        if(session_->allow_resized()){
+            input_sizes_.push_back(options.input_height);
+            input_sizes_.push_back(options.input_width);
+        }else{
+            LOG(WARNING)<<"resized input is not allowed in the session"
+                << "default input shape is used instead";
+            input_sizes_.clear();
+            input_sizes_ = session_->default_input_sizes();
+        }
+
+        CHECK_EQ(input_sizes_.size(), 2);
+
+
 
         // allocate memory for input tensor
         ::opengl::IntList input_shape({1, input_sizes_[0], input_sizes_[1], 3});

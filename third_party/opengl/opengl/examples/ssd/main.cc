@@ -26,7 +26,34 @@ int main(int argc, char** argv){
             {"cls_logits", "box_preds", "anchors"}, {160, 160});
 
     auto cap = std::shared_ptr<cv::VideoCapture>(reinterpret_cast<cv::VideoCapture*>(open_video_stream("", -1, 640, 480, 0)));
+    std::vector<std::string> image_name_list;
     cv::Mat raw_image;
+    std::string images_dir = "/data/test_images/tmp86/2020-07-02_17_13_ModuleData/cam0/data/";
+
+    // ReadFilesFromDir(images_dir, &image_name_list);
+    // for(auto& image_name: image_name_list){
+        // auto image_path = images_dir+"/"+image_name;
+        // raw_image = cv::imread(image_path);
+        // if(raw_image.data==nullptr){
+            // LOG(WARNING)<<"wrong image format or image not found: "<<image_path;
+            // continue;
+        // }
+
+        // auto t1 = std::chrono::system_clock::now();
+        // // detect
+        // std::vector<BoxInfo> finalBoxInfos;
+
+        // detector->Detect(raw_image, finalBoxInfos);
+        // auto t2 = std::chrono::system_clock::now();
+        // float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000;
+        // std::cout << "duration time:" << dur << "ms" << std::endl;
+
+        // drawBoxes(finalBoxInfos, raw_image);
+        // cv::namedWindow("dlxnet", CV_WINDOW_NORMAL);
+        // cv::imshow("dlxnet", raw_image);
+        // cv::waitKey(0);
+    // }
+
     while(true){
         // prepare inputs
         // std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";

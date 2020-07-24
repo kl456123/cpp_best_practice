@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sstream>
+#include <dirent.h>
+#include "opengl/utils/logging.h"
 
 static std::vector<std::string> class_names{"bg", "person", "pet_cat", "pet_dog",\
     "sofa", "table", "bed", "excrement", "wire", "key"};
@@ -87,4 +89,16 @@ void softmax(float* data_in,float* data_out, int num){
     for(int i=0;i<num;i++){
         data_out[i] = exp[i]/total_sum;
     }
+}
+
+void ReadFilesFromDir(const std::string& path_to_dir,
+        std::vector<std::string>* image_name_list){
+    DIR *dir;
+    dir = opendir(path_to_dir.c_str());
+    struct dirent *ent;
+    CHECK_NOTNULL(dir);
+    while ((ent = readdir (dir)) != NULL) {
+        image_name_list->emplace_back(ent->d_name);
+    }
+    closedir(dir);
 }

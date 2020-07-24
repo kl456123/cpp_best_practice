@@ -98,9 +98,15 @@ namespace opengl{
         std::unique_ptr<Kernel> kernel_ptr;
         for(auto& node: graph.node()){
             kernel=nullptr;
-            // TODO(breakpoint) handle with input node, ignore it for now
+
             if(node.type()=="Input"){
-                LOG(WARNING)<<"Ignore Node Type: "<<node.type();
+                auto& input_attr = node.attr().input_attr();
+                const int dims_size = input_attr.dims_size();
+                CHECK_GE(dims_size, 2);
+                for(int i=dims_size-2;i<dims_size;++i){
+                    default_input_sizes_.emplace_back(input_attr.dims(i));
+                }
+                // LOG(WARNING)<<"Ignore Node Type: "<<node.type();
                 continue;
             }
             KernelRegistry::Global()->CreateKernel(node.type(), &kernel, context_);
