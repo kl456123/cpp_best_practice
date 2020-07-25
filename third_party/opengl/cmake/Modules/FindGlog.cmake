@@ -119,6 +119,7 @@ LIST(APPEND GLOG_CHECK_INCLUDE_DIRS
 LIST(APPEND GLOG_CHECK_LIBRARY_DIRS
   /usr/local/lib
   /usr/local/homebrew/lib # Mac OS X.
+  /usr/lib/x86_64-linux-gnu/
   /opt/local/lib
   /usr/lib)
 
