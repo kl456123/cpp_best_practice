@@ -9,9 +9,9 @@ option(BUILD_FBO "BUILD FBO GPGPU DEMO" ON)
 if(BUILD_RENDER)
     add_executable(render ${CMAKE_CURRENT_SOURCE_DIR}/render/render.cc)
     if(BUILD_ARM)
-        target_link_libraries(render -lglfw -lGL ${OpenCV_LIBS})
-    else()
         target_link_libraries(render -lglfw -lGLESv2 ${OpenCV_LIBS})
+    else()
+        target_link_libraries(render -lglfw -lGL ${OpenCV_LIBS})
     endif()
 endif()
 
@@ -54,13 +54,13 @@ if(BUILD_FBO)
     add_executable(fbo_glfw ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/glfw_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_glfw -lGLESv2 -lglfw ${GLOG_LIBRARIES})
+    target_link_libraries(fbo_glfw -lGLESv2 -lglfw -lGL ${GLOG_LIBRARIES})
 
     # use egl
     add_executable(fbo_egl ${CMAKE_CURRENT_SOURCE_DIR}/fbo/fbo_demo.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/egl_context.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/fbo/context_util.cc)
-    target_link_libraries(fbo_egl -lGLESv2 -lEGL ${GLOG_LIBRARIES})
+    target_link_libraries(fbo_egl -lGLESv2 -lEGL -lGL ${GLOG_LIBRARIES})
 endif()
 
 if(BUILD_NN)

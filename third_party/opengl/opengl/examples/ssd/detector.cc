@@ -10,14 +10,15 @@ namespace opengl{
             public:
                 static void Increase(){count_++;}
                 static int Get(){return count_;}
-                static Counter Global(){
+                static Counter* Global(){
                     static auto counter = new Counter;
                     return counter;
                 }
             private:
                 Counter()=default;
-                int count_=0;
+                static int count_;
         };
+        int Counter::count_=0;
     }
     /*static*/ std::unique_ptr<Detector> Detector::Create(const string& model_name,
             const TensorNameList& input_names, const TensorNameList& output_names,
@@ -139,14 +140,6 @@ namespace opengl{
         CHECK_EQ(output_tensors_[0]->shape().size(), 3);
         // (num_batches, num_samples, 4)
         CHECK_EQ(output_tensors_[1]->shape().size(), 3);
-
-        auto counter = Counter::Global();
-        string txt = "demo.txt."+ string(itoa(counter->Get()));
-        DumpTensor(output_tensors_[0], txt);
-        if(counter.Get()==2){
-            CompareTXT("demo.txt.0", "demo.txt.2");
-        }
-        counter->Increase();
 
         auto tensors_host = output_tensors_;
 
