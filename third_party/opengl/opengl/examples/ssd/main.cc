@@ -30,37 +30,15 @@ int main(int argc, char** argv){
     cv::Mat raw_image;
     std::string images_dir = "/home/indemind/images";
 
-    while(true){
-        ReadFilesFromDir(images_dir, &image_name_list);
-        for(auto& image_name: image_name_list){
-            auto image_path = images_dir+"/"+image_name;
-            raw_image = cv::imread(image_path);
-            if(raw_image.data==nullptr){
-                LOG(WARNING)<<"wrong image format or image not found: "<<image_path;
-                continue;
-            }
-
-            auto t1 = std::chrono::system_clock::now();
-            // detect
-            std::vector<BoxInfo> finalBoxInfos;
-
-            detector->Detect(raw_image, finalBoxInfos);
-            auto t2 = std::chrono::system_clock::now();
-            float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000;
-            std::cout << "duration time:" << dur << "ms" << std::endl;
-
-            drawBoxes(finalBoxInfos, raw_image);
-            cv::namedWindow("dlxnet", CV_WINDOW_NORMAL);
-            cv::imshow("dlxnet", raw_image);
-            cv::waitKey(0);
-        }
-    }
-
+    ReadFilesFromDir(images_dir, &image_name_list);
     // while(true){
-    // // prepare inputs
-    // // std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
-    // // raw_image = cv::imread(image_fname);
-    // *(cap.get()) >> raw_image;
+    // for(auto& image_name: image_name_list){
+    // auto image_path = images_dir+"/"+image_name;
+    // raw_image = cv::imread(image_path);
+    // if(raw_image.data==nullptr){
+    // LOG(WARNING)<<"wrong image format or image not found: "<<image_path;
+    // continue;
+    // }
 
     // auto t1 = std::chrono::system_clock::now();
     // // detect
@@ -74,7 +52,29 @@ int main(int argc, char** argv){
     // drawBoxes(finalBoxInfos, raw_image);
     // cv::namedWindow("dlxnet", CV_WINDOW_NORMAL);
     // cv::imshow("dlxnet", raw_image);
-    // cv::waitKey(1);
+    // cv::waitKey(0);
     // }
+    // }
+
+    while(true){
+        // prepare inputs
+        // std::string image_fname = "../opengl/examples/ssd/000000145679.jpg";
+        // raw_image = cv::imread(image_fname);
+        *(cap.get()) >> raw_image;
+
+        auto t1 = std::chrono::system_clock::now();
+        // detect
+        std::vector<BoxInfo> finalBoxInfos;
+
+        detector->Detect(raw_image, finalBoxInfos);
+        auto t2 = std::chrono::system_clock::now();
+        float dur = (float)std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count() / 1000;
+        std::cout << "duration time:" << dur << "ms" << std::endl;
+
+        drawBoxes(finalBoxInfos, raw_image);
+        cv::namedWindow("dlxnet", CV_WINDOW_NORMAL);
+        cv::imshow("dlxnet", raw_image);
+        cv::waitKey(1);
+    }
     return 0;
 }

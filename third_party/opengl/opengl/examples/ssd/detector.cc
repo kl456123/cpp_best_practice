@@ -41,7 +41,23 @@ namespace opengl{
     }
 
     /*static*/ std::unique_ptr<Detector> Detector::Create(const DetectorOptions& options){
-        return std::unique_ptr<Detector>(new Detector(options));
+        auto detector = std::unique_ptr<Detector>(new Detector(options));
+        detector->PrintDetectorInfo();
+        return detector;
+    }
+
+    void Detector::PrintDetectorInfo(){
+        std::cout<<"Detector Info: "<<std::endl;
+        std::cout<<"variances: "<<variances_[0]<<" "<<variances_[1]
+            <<" "<<variances_[2]<<" "<<variances_[3]<<std::endl;
+        std::cout<<"input_height: "<<input_sizes_[0]<<std::endl;
+        std::cout<<"input_width: "<<input_sizes_[1]<<std::endl;
+        std::cout<<"mode_name: "<<model_name_<<std::endl;
+        std::cout<<"input_names: "<<input_names_[0]<<std::endl;
+        std::cout<<"output_names: "<<output_names_[0]<<std::endl;
+        std::cout<<"score_threshold: "<<score_threshold_<<std::endl;
+        std::cout<<"nms_threshold: "<<nms_threshold_<<std::endl;
+        std::cout<<"topk: "<<topk_<<std::endl;
     }
 
     Detector::Detector(const DetectorOptions& options){
@@ -68,8 +84,6 @@ namespace opengl{
 
         CHECK_EQ(input_sizes_.size(), 2);
 
-
-
         // allocate memory for input tensor
         ::opengl::IntList input_shape({1, input_sizes_[0], input_sizes_[1], 3});
         ::opengl::DataFormat input_dformat = ::dlxnet::TensorProto::NHWC;
@@ -78,9 +92,6 @@ namespace opengl{
 
         input_tensors_.emplace_back(image_ptr);
         output_tensors_.clear();
-        // output_names_ = {"cls_and_bbox", "anchors"};
-        // input_names_ = {"input"};
-        output_dformats_ = {"ANY", "ANY"};
     }
 
 
@@ -153,9 +164,9 @@ namespace opengl{
         // session_->GetOutputs({"780"}, {"ANY"}, &outputs_cpu);
         // DumpTensor(outputs_cpu[0], fname);
         // if(counter->Get()>=2){
-            // char fname2[100];
-            // sprintf(fname2, "demo.txt.%d", counter->Get()-2);
-            // CompareTXT(fname, fname2);
+        // char fname2[100];
+        // sprintf(fname2, "demo.txt.%d", counter->Get()-2);
+        // CompareTXT(fname, fname2);
         // }
         // counter->Increase();
 

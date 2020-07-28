@@ -41,6 +41,7 @@ namespace opengl{
             static std::unique_ptr<Detector> Create(const DetectorOptions& options);
 
             void LoadToOutputTensors(const TensorNameList& names);
+            void PrintDetectorInfo();
 
 
         private:
@@ -70,8 +71,6 @@ namespace opengl{
             std::vector<::opengl::Tensor*> input_tensors_;
             std::vector<std::string> input_names_;
             std::vector<std::string> output_names_;
-
-            std::vector<std::string> output_dformats_;
 
             std::unique_ptr<FBOSession> session_;
 
