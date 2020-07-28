@@ -56,6 +56,10 @@ namespace opengl{
 
             Program* CreateProgram(const std::string& kernel_fname,
                     const std::string& build_options="");
+
+            Tensor* AllocateTensor(const IntList& shape,
+                    Tensor::MemoryType mem_type, DataFormat dformat);
+            void DeallocateTensor(Tensor* ptr);
         private:
             // used to allocator new buffer or texture duration runtime
             Allocator* allocator_;

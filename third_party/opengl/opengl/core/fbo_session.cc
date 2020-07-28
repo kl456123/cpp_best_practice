@@ -165,17 +165,6 @@ namespace opengl{
             context_->Reset();
         }
 
-    void FBOSession::AllocateTensor(const TensorShapeList& shapes, TensorList& tensors){
-        // tensors.resize(shapes.size());
-        tensors.clear();
-        for(auto& shape: shapes){
-            // only allocate texture tensor in session
-            // due to that only texture 2d tensor is used to feed or output
-            tensors.emplace_back(new Tensor(Tensor::DT_FLOAT, shape,
-                        Tensor::DEVICE_TEXTURE));
-        }
-    }
-
     void FBOSession::Setup(const NamedTensorList& inputs_cpu){
         CHECK(graph_created_)<<"No Graph Loaded!";
         // allocate memory for each tensor

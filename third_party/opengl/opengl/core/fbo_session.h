@@ -52,8 +52,6 @@ namespace opengl{
 
         private:
 
-            void AllocateTensor(const TensorShapeList& shapes, TensorList& tensors);
-
             // reorder all nodes in nodes_ topologically
             void TopologicalSort();
 

@@ -67,6 +67,8 @@ namespace opengl{
         // OPENGL_CALL(glClear(GL_COLOR_BUFFER_BIT));
         program_->set_int("axis", axis);
         program_->set_vec4i("output_shape", AmendShape(outputs[0]->shape()));
+        // Tensor* tmp_tensor = context_->AllocateTensor(outputs[0]->shape(),
+                // outputs[0]->mem_type(), outputs[0]->dformat());
 
         for(int i=0;i<inputs.size();++i){
             program_->set_int("axis_offset", axis_offset);

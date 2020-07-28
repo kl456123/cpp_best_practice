@@ -2,6 +2,7 @@
 #include "opengl/core/fbo_session.h"
 #include "opengl/core/functor.h"
 #include "opengl/utils/util.h"
+#include <stdio.h>
 
 
 namespace opengl{
@@ -140,6 +141,23 @@ namespace opengl{
         CHECK_EQ(output_tensors_[0]->shape().size(), 3);
         // (num_batches, num_samples, 4)
         CHECK_EQ(output_tensors_[1]->shape().size(), 3);
+
+        /////////////////////////////
+        // Debug
+        // char fname[100];
+        // auto counter = Counter::Global();
+        // sprintf(fname, "demo.txt.%d", counter->Get());
+
+        // // get cpu outputs from device
+        // TensorList outputs_cpu;
+        // session_->GetOutputs({"780"}, {"ANY"}, &outputs_cpu);
+        // DumpTensor(outputs_cpu[0], fname);
+        // if(counter->Get()>=2){
+            // char fname2[100];
+            // sprintf(fname2, "demo.txt.%d", counter->Get()-2);
+            // CompareTXT(fname, fname2);
+        // }
+        // counter->Increase();
 
         auto tensors_host = output_tensors_;
 

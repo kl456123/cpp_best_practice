@@ -109,6 +109,16 @@ namespace opengl{
             Reset();
         }
 
+    Tensor* Context::AllocateTensor(const IntList& shape,
+            Tensor::MemoryType mem_type, DataFormat dformat){
+        return tensor_pool_allocator_->AllocateTensor(
+                shape, mem_type, dformat);
+    }
+
+    void Context::DeallocateTensor(Tensor* ptr){
+        return tensor_pool_allocator_->DeallocateTensor(ptr);
+    }
+
 
     void Context::CopyCPUTensorToDevice(const Tensor* cpu_tensor, Tensor* device_tensor){
         // optimize for special case
