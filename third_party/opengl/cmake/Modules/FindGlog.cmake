@@ -114,6 +114,7 @@ LIST(APPEND GLOG_CHECK_INCLUDE_DIRS
   /usr/local/include
   /usr/local/homebrew/include # Mac OS X
   /opt/local/var/macports/software # Mac OS X.
+  /usr/include
   /opt/local/include
   /usr/include)
 LIST(APPEND GLOG_CHECK_LIBRARY_DIRS
