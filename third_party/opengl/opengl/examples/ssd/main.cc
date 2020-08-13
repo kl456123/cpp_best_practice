@@ -30,7 +30,7 @@ int main(int argc, char** argv){
     cv::Mat raw_image;
     std::string images_dir = "/home/indemind/images";
 
-    ReadFilesFromDir(images_dir, &image_name_list);
+    // ReadFilesFromDir(images_dir, &image_name_list);
     // while(true){
     // for(auto& image_name: image_name_list){
     // auto image_path = images_dir+"/"+image_name;
